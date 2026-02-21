@@ -2,9 +2,17 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // Projekty (klienci / sprawy)
+  // Foldery / Gabinety (grupujące pacjentów)
+  folders: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    archived: v.boolean(),
+  }).index("by_userId", ["userId"]),
+
+  // Projekty (klienci / pacjenci)
   projects: defineTable({
     userId: v.string(),
+    folderId: v.optional(v.id("folders")),
     name: v.string(),
     description: v.optional(v.string()),
     archived: v.boolean(),

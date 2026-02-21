@@ -8,6 +8,7 @@ export const list = query({
             _id: v.id("projects"),
             _creationTime: v.number(),
             userId: v.string(),
+            folderId: v.optional(v.id("folders")),
             name: v.string(),
             description: v.optional(v.string()),
             archived: v.boolean(),
@@ -28,6 +29,7 @@ export const get = query({
             _id: v.id("projects"),
             _creationTime: v.number(),
             userId: v.string(),
+            folderId: v.optional(v.id("folders")),
             name: v.string(),
             description: v.optional(v.string()),
             archived: v.boolean(),
@@ -44,6 +46,7 @@ export const create = mutation({
         userId: v.string(),
         name: v.string(),
         description: v.optional(v.string()),
+        folderId: v.optional(v.id("folders")),
     },
     returns: v.id("projects"),
     handler: async (ctx, args) => {
@@ -51,8 +54,30 @@ export const create = mutation({
             userId: args.userId,
             name: args.name,
             description: args.description,
+            folderId: args.folderId,
             archived: false,
         });
+    },
+});
+
+export const update = mutation({
+    args: {
+        projectId: v.id("projects"),
+        name: v.optional(v.string()),
+        description: v.optional(v.string()),
+        folderId: v.optional(v.union(v.id("folders"), v.null())), // allow null to remove from folder
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        const { projectId, folderId, ...updates } = args;
+
+        const patchData: any = { ...updates };
+        if (folderId !== undefined) {
+            patchData.folderId = folderId === null ? undefined : folderId;
+        }
+
+        await ctx.db.patch(projectId, patchData);
+        return null;
     },
 });
 

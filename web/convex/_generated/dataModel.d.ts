@@ -84,6 +84,23 @@ export type DataModel = {
       };
     };
   };
+  folders: {
+    document: {
+      archived: boolean;
+      name: string;
+      userId: string;
+      _id: Id<"folders">;
+      _creationTime: number;
+    };
+    fieldPaths: "_creationTime" | "_id" | "archived" | "name" | "userId";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_userId: ["userId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   messages: {
     document: {
       content: string;
@@ -116,6 +133,7 @@ export type DataModel = {
     document: {
       archived: boolean;
       description?: string;
+      folderId?: Id<"folders">;
       name: string;
       userId: string;
       _id: Id<"projects">;
@@ -126,6 +144,7 @@ export type DataModel = {
       | "_id"
       | "archived"
       | "description"
+      | "folderId"
       | "name"
       | "userId";
     indexes: {

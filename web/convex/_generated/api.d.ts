@@ -87,6 +87,51 @@ export declare const api: {
         title?: string;
       }>
     >;
+    listByTranscription: FunctionReference<
+      "query",
+      "public",
+      { transcriptionId: Id<"transcriptions"> },
+      Array<{
+        _creationTime: number;
+        _id: Id<"conversations">;
+        chatMode?: "transcription" | "project";
+        projectId: Id<"projects">;
+        scopedTranscriptionIds?: Array<Id<"transcriptions">>;
+        title?: string;
+      }>
+    >;
+  };
+  folders: {
+    archive: FunctionReference<
+      "mutation",
+      "public",
+      { folderId: Id<"folders"> },
+      null
+    >;
+    create: FunctionReference<
+      "mutation",
+      "public",
+      { name: string; userId: string },
+      Id<"folders">
+    >;
+    list: FunctionReference<
+      "query",
+      "public",
+      { userId: string },
+      Array<{
+        _creationTime: number;
+        _id: Id<"folders">;
+        archived: boolean;
+        name: string;
+        userId: string;
+      }>
+    >;
+    update: FunctionReference<
+      "mutation",
+      "public",
+      { folderId: Id<"folders">; name: string },
+      null
+    >;
   };
   messages: {
     addAssistant: FunctionReference<
@@ -137,7 +182,12 @@ export declare const api: {
     create: FunctionReference<
       "mutation",
       "public",
-      { description?: string; name: string; userId: string },
+      {
+        description?: string;
+        folderId?: Id<"folders">;
+        name: string;
+        userId: string;
+      },
       Id<"projects">
     >;
     get: FunctionReference<
@@ -149,6 +199,7 @@ export declare const api: {
         _id: Id<"projects">;
         archived: boolean;
         description?: string;
+        folderId?: Id<"folders">;
         name: string;
         userId: string;
       } | null
@@ -162,9 +213,21 @@ export declare const api: {
         _id: Id<"projects">;
         archived: boolean;
         description?: string;
+        folderId?: Id<"folders">;
         name: string;
         userId: string;
       }>
+    >;
+    update: FunctionReference<
+      "mutation",
+      "public",
+      {
+        description?: string;
+        folderId?: Id<"folders"> | null;
+        name?: string;
+        projectId: Id<"projects">;
+      },
+      null
     >;
   };
   rag: {

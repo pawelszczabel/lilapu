@@ -20,6 +20,9 @@ export default function DashboardPage() {
     // When a chat is started from a transcription
     const [chatInitTranscriptionId, setChatInitTranscriptionId] =
         useState<Id<"transcriptions"> | null>(null);
+    // When opening an existing conversation
+    const [chatInitConversationId, setChatInitConversationId] =
+        useState<Id<"conversations"> | null>(null);
 
     // Auth check
     useEffect(() => {
@@ -56,7 +59,18 @@ export default function DashboardPage() {
     // Start chat from a specific transcription
     const handleStartTranscriptionChat = useCallback(
         (transcriptionId: Id<"transcriptions">) => {
+            setChatInitConversationId(null);
             setChatInitTranscriptionId(transcriptionId);
+            setActiveTab("chat");
+        },
+        []
+    );
+
+    // Open an existing conversation
+    const handleOpenExistingChat = useCallback(
+        (conversationId: Id<"conversations">) => {
+            setChatInitTranscriptionId(null);
+            setChatInitConversationId(conversationId);
             setActiveTab("chat");
         },
         []
@@ -132,6 +146,7 @@ export default function DashboardPage() {
                                 <TranscriptionList
                                     projectId={activeProject._id}
                                     onStartChat={handleStartTranscriptionChat}
+                                    onOpenExistingChat={handleOpenExistingChat}
                                 />
                             )}
                             {activeTab === "record" && (
@@ -144,7 +159,11 @@ export default function DashboardPage() {
                                 <ChatPanel
                                     projectId={activeProject._id}
                                     initialTranscriptionId={chatInitTranscriptionId}
-                                    onTranscriptionUsed={() => setChatInitTranscriptionId(null)}
+                                    initialConversationId={chatInitConversationId}
+                                    onTranscriptionUsed={() => {
+                                        setChatInitTranscriptionId(null);
+                                        setChatInitConversationId(null);
+                                    }}
                                 />
                             )}
                         </div>

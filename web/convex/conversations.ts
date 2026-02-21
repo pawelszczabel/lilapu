@@ -86,3 +86,36 @@ export const get = query({
         return await ctx.db.get(args.conversationId);
     },
 });
+
+export const listByTranscription = query({
+    args: { transcriptionId: v.id("transcriptions") },
+    returns: v.array(
+        v.object({
+            _id: v.id("conversations"),
+            _creationTime: v.number(),
+            projectId: v.id("projects"),
+            title: v.optional(v.string()),
+            chatMode: v.optional(
+                v.union(v.literal("transcription"), v.literal("project"))
+            ),
+            scopedTranscriptionIds: v.optional(
+                v.array(v.id("transcriptions"))
+            ),
+        })
+    ),
+    handler: async (ctx, args) => {
+        const transcription = await ctx.db.get(args.transcriptionId);
+        if (!transcription) return [];
+
+        const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_projectId", (q) =>
+                q.eq("projectId", transcription.projectId)
+            )
+            .collect();
+
+        return conversations.filter(
+            (c) => c.scopedTranscriptionIds?.includes(args.transcriptionId)
+        );
+    },
+});

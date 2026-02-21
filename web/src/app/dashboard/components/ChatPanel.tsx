@@ -8,12 +8,14 @@ import { Id } from "@convex/_generated/dataModel";
 interface ChatPanelProps {
     projectId: Id<"projects">;
     initialTranscriptionId?: Id<"transcriptions"> | null;
+    initialConversationId?: Id<"conversations"> | null;
     onTranscriptionUsed?: () => void;
 }
 
 export default function ChatPanel({
     projectId,
     initialTranscriptionId,
+    initialConversationId,
     onTranscriptionUsed,
 }: ChatPanelProps) {
     const [activeConversationId, setActiveConversationId] =
@@ -54,9 +56,19 @@ export default function ChatPanel({
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Handle initialConversationId — open existing conversation
+    useEffect(() => {
+        if (!initialConversationId) return;
+        setActiveConversationId(initialConversationId);
+        onTranscriptionUsed?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialConversationId]);
+
     // Handle initialTranscriptionId — create scoped conversation
     useEffect(() => {
         if (!initialTranscriptionId) return;
+        // Skip if already opened via initialConversationId
+        if (initialConversationId) return;
 
         const transcription = transcriptions?.find(
             (t) => t._id === initialTranscriptionId
@@ -312,9 +324,8 @@ export default function ChatPanel({
                         className="sidebar-add-btn"
                         onClick={handleNewChat}
                         title="Nowa rozmowa"
-                        style={{ width: 28, height: 28, fontSize: "0.875rem" }}
                     >
-                        +
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
                 </div>
                 <div className="chat-sidebar-list">
