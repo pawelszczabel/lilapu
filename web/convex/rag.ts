@@ -5,7 +5,11 @@ import { v } from "convex/values";
 import { internal, api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
-const AI_SERVER_URL = process.env.AI_SERVER_URL ?? "http://localhost:8080";
+// ── Config ───────────────────────────────────────────────────────────
+const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY ?? "";
+const BIELIK_ENDPOINT_ID = process.env.BIELIK_ENDPOINT_ID ?? "";
+const LOCAL_AI_URL = process.env.AI_SERVER_URL ?? "http://localhost:8080";
+const USE_RUNPOD = !!(RUNPOD_API_KEY && BIELIK_ENDPOINT_ID);
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -25,7 +29,28 @@ function chunkText(text: string, maxWords = 300, overlap = 50): string[] {
 }
 
 async function generateEmbedding(text: string): Promise<number[]> {
-    const response = await fetch(`${AI_SERVER_URL}/embedding`, {
+    if (USE_RUNPOD) {
+        const url = `https://api.runpod.ai/v2/${BIELIK_ENDPOINT_ID}/runsync`;
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${RUNPOD_API_KEY}`,
+            },
+            body: JSON.stringify({
+                input: { openai_route: "/embedding", openai_input: { content: text } },
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`RunPod embedding error: ${response.status}`);
+        }
+        const result = await response.json();
+        const output = result.output ?? result;
+        return output.embedding ?? [];
+    }
+
+    // Local fallback
+    const response = await fetch(`${LOCAL_AI_URL}/embedding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text }),
