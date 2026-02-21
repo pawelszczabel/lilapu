@@ -33,7 +33,7 @@ echo "🧠 Starting Bielik-7B (llama.cpp) on :8080..."
 "$LILAPU_DIR/llama.cpp/build/bin/llama-server" \
   -m "$BIELIK_MODEL" \
   --host 0.0.0.0 --port 8080 \
-  -ngl 0 -c 2048 &
+  -ngl 0 -c 2048 --embeddings &
 # TODO: Zwiększ -ngl do 99 kiedy będzie więcej GPU VRAM (np. RunPod RTX A5000 24GB)
 # Na M1 8GB: -ngl 25 = kompromis z whisper-medium. Na GPU serwerze: -ngl 99 = pełna prędkość.
 LLAMA_PID=$!

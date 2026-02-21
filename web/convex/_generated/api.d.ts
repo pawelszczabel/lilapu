@@ -174,6 +174,12 @@ export declare const api: {
       { transcriptionId: Id<"transcriptions"> },
       number
     >;
+    reindexAll: FunctionReference<
+      "action",
+      "public",
+      {},
+      { indexed: number; total: number }
+    >;
     search: FunctionReference<
       "action",
       "public",
@@ -272,6 +278,7 @@ export declare const internal: {
       { transcriptionId: Id<"transcriptions"> },
       any
     >;
+    getAllTranscriptions: FunctionReference<"query", "internal", {}, any>;
     getChunksByIds: FunctionReference<
       "query",
       "internal",

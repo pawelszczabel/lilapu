@@ -2,7 +2,7 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 const AI_SERVER_URL = process.env.AI_SERVER_URL ?? "http://localhost:8080";
@@ -244,5 +244,44 @@ export const searchByTranscriptions = action({
         }
 
         return scopedChunks;
+    },
+});
+
+/**
+ * Re-index ALL transcriptions — migration to add projectId to embeddings.
+ * Run once, then can be removed.
+ */
+export const reindexAll = action({
+    args: {},
+    returns: v.object({
+        total: v.number(),
+        indexed: v.number(),
+    }),
+    handler: async (ctx) => {
+        // Get all transcriptions via a helper
+        const allTranscriptions = await ctx.runQuery(
+            internal.ragHelpers.getAllTranscriptions
+        );
+
+        let total = 0;
+        let indexed = 0;
+
+        for (const t of allTranscriptions) {
+            total++;
+            try {
+                const count = await ctx.runAction(api.rag.indexTranscription, {
+                    transcriptionId: t._id,
+                });
+                indexed += count;
+                console.log(
+                    `Re-indexed "${t.title ?? "untitled"}" (${t._id}): ${count} chunks`
+                );
+            } catch (err) {
+                console.error(`Failed to re-index ${t._id}:`, err);
+            }
+        }
+
+        console.log(`Migration done: ${total} transcriptions, ${indexed} chunks`);
+        return { total, indexed };
     },
 });

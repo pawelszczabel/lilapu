@@ -68,3 +68,10 @@ export const getTranscriptionTitles = internalQuery({
         return results;
     },
 });
+
+export const getAllTranscriptions = internalQuery({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.db.query("transcriptions").collect();
+    },
+});
