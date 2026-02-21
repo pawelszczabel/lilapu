@@ -316,23 +316,34 @@ export default function RecordPanel({
                 </div>
             )}
 
+            {!isRecording && !isSaving && (
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-2)" }}>
+                    <input
+                        className="record-title-input"
+                        type="text"
+                        placeholder="O czym będziesz mówić? Wpisz temat..."
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        style={{
+                            fontSize: "var(--text-lg)",
+                            padding: "var(--space-4)",
+                            border: "1px solid rgba(124, 92, 252, 0.3)",
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                            fontWeight: 500
+                        }}
+                    />
+                    <label style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>Tytuł nagrania (opcjonalny)</label>
+                </div>
+            )}
+
             <button
                 className={`record-btn ${isRecording ? "record-btn-stop" : "record-btn-start"}`}
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={isSaving}
+                style={{ marginTop: isRecording ? 0 : "var(--space-4)" }}
             >
                 {isSaving ? "⏳" : isRecording ? "■" : "●"}
             </button>
-
-            {!isRecording && !isSaving && (
-                <input
-                    className="record-title-input"
-                    type="text"
-                    placeholder="Tytuł nagrania (opcjonalny)"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                />
-            )}
 
             {(isRecording || transcript) && (
                 <div className="live-transcript">
@@ -353,13 +364,73 @@ export default function RecordPanel({
 
             {!isRecording && !isSaving && !transcript && (
                 <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', opacity: 0.8 }}>
-                    <img
-                        src="/logo.png"
-                        alt="Lilapu Logo"
-                        width={180}
-                        height={180}
-                        style={{ filter: 'drop-shadow(0 0 20px rgba(124, 92, 252, 0.4))' }}
-                    />
+                    <svg
+                        width="120"
+                        height="120"
+                        viewBox="0 0 100 100"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ filter: 'drop-shadow(0 0 24px rgba(124, 92, 252, 0.5))' }}
+                    >
+                        <style>
+                            {`
+                                @keyframes floatLilac {
+                                    0% { transform: translateY(0px) rotate(0deg); }
+                                    25% { transform: translateY(-3px) rotate(1deg); }
+                                    50% { transform: translateY(-6px) rotate(0deg); }
+                                    75% { transform: translateY(-3px) rotate(-1deg); }
+                                    100% { transform: translateY(0px) rotate(0deg); }
+                                }
+                                @keyframes pulseGlow {
+                                    0% { fill-opacity: 0.8; }
+                                    50% { fill-opacity: 1; }
+                                    100% { fill-opacity: 0.8; }
+                                }
+                                .lilac-animated {
+                                    transform-origin: center;
+                                    animation: floatLilac 4s ease-in-out infinite;
+                                }
+                                .lilac-petal {
+                                    animation: pulseGlow 3s ease-in-out infinite alternate;
+                                }
+                            `}
+                        </style>
+                        <g className="lilac-animated">
+                            {/* Stem */}
+                            <path d="M50 85 Q45 60 50 45" stroke="#7c5cfc" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+                            <path d="M50 65 Q40 55 35 45" stroke="#7c5cfc" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+                            <path d="M50 70 Q60 60 65 50" stroke="#7c5cfc" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+
+                            {/* Bottom Leaves */}
+                            <path d="M50 80 Q35 70 30 55 Q45 60 50 80" fill="#4B0082" opacity="0.7" />
+                            <path d="M50 80 Q65 70 70 55 Q55 60 50 80" fill="#4B0082" opacity="0.7" />
+
+                            {/* Main Flower Cluster */}
+                            {/* Bottom row */}
+                            <circle cx="40" cy="50" r="6" fill="#a78bfa" className="lilac-petal" style={{ animationDelay: '0s' }} />
+                            <circle cx="50" cy="52" r="7" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.5s' }} />
+                            <circle cx="60" cy="50" r="6" fill="#8b5cf6" className="lilac-petal" style={{ animationDelay: '1s' }} />
+
+                            {/* Middle row */}
+                            <circle cx="43" cy="40" r="6.5" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.2s' }} />
+                            <circle cx="57" cy="40" r="6.5" fill="#a78bfa" className="lilac-petal" style={{ animationDelay: '0.7s' }} />
+                            <circle cx="50" cy="42" r="8" fill="#ddd6fe" className="lilac-petal" style={{ animationDelay: '1.2s' }} />
+
+                            {/* Top row */}
+                            <circle cx="46" cy="30" r="5.5" fill="#8b5cf6" className="lilac-petal" style={{ animationDelay: '0.4s' }} />
+                            <circle cx="54" cy="30" r="5.5" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.9s' }} />
+
+                            {/* Apex */}
+                            <circle cx="50" cy="22" r="5" fill="#ddd6fe" className="lilac-petal" style={{ animationDelay: '1.4s' }} />
+
+                            {/* Core dark spots (details) */}
+                            <circle cx="40" cy="50" r="1.5" fill="#4c1d95" opacity="0.8" />
+                            <circle cx="50" cy="52" r="2" fill="#4c1d95" opacity="0.8" />
+                            <circle cx="60" cy="50" r="1.5" fill="#4c1d95" opacity="0.8" />
+                            <circle cx="50" cy="42" r="2" fill="#4c1d95" opacity="0.8" />
+                            <circle cx="50" cy="22" r="1.5" fill="#4c1d95" opacity="0.8" />
+                        </g>
+                    </svg>
                 </div>
             )}
 
