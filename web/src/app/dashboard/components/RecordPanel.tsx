@@ -10,8 +10,6 @@ interface RecordPanelProps {
     onRecordingComplete: () => void;
 }
 
-const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_URL ?? "http://localhost:8081";
-
 export default function RecordPanel({
     projectId,
     onRecordingComplete,
@@ -33,13 +31,12 @@ export default function RecordPanel({
 
     const createTranscription = useMutation(api.transcriptions.create);
     const indexTranscription = useAction(api.rag.indexTranscription);
+    const transcribeAudio = useAction(api.ai.transcribe);
 
     // Timer
     useEffect(() => {
         if (isRecording) {
             timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
         }
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
@@ -53,39 +50,41 @@ export default function RecordPanel({
     };
 
     /**
-     * Send an audio chunk directly to local whisper.cpp server.
-     * This runs in the browser → localhost:8081 (no Convex round-trip).
+     * Convert blob to base64 string.
+     */
+    const blobToBase64 = (blob: Blob): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                resolve(dataUrl.split(",")[1]); // Strip data:...;base64, prefix
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+
+    /**
+     * Send audio chunk via Convex action → whisper.cpp (no CORS issues).
      */
     const transcribeChunk = useCallback(async (audioBlob: Blob) => {
         try {
             setIsTranscribing(true);
-            const formData = new FormData();
-            formData.append("file", audioBlob, "chunk.wav");
-            formData.append("language", "pl");
-            formData.append("response_format", "json");
-
-            const response = await fetch(`${WHISPER_URL}/inference`, {
-                method: "POST",
-                body: formData,
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                const text = result.text?.trim();
-                if (text && text !== "[BLANK_AUDIO]" && text.length > 1) {
-                    transcriptRef.current += (transcriptRef.current ? " " : "") + text;
-                    setTranscript(transcriptRef.current);
-                }
+            const base64 = await blobToBase64(audioBlob);
+            const text = await transcribeAudio({ audioBase64: base64 });
+            const trimmed = text?.trim();
+            if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
+                transcriptRef.current += (transcriptRef.current ? " " : "") + trimmed;
+                setTranscript(transcriptRef.current);
             }
         } catch (err) {
-            console.warn("Whisper chunk error (server may be offline):", err);
+            console.warn("Transcription error:", err);
         } finally {
             setIsTranscribing(false);
         }
-    }, []);
+    }, [transcribeAudio]);
 
     /**
-     * Process pending audio chunks sequentially to avoid overwhelming whisper.
+     * Process pending audio chunks sequentially.
      */
     const processQueue = useCallback(async () => {
         if (processingRef.current) return;
@@ -121,13 +120,11 @@ export default function RecordPanel({
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     chunksRef.current.push(event.data);
-                    // Queue chunk for live transcription
                     pendingChunksRef.current.push(event.data);
                     processQueue();
                 }
             };
 
-            // Every 5s, send a chunk to whisper.cpp for live transcription
             mediaRecorder.start(5000);
             setIsRecording(true);
             setSeconds(0);
@@ -143,11 +140,9 @@ export default function RecordPanel({
 
         setIsSaving(true);
 
-        // Stop recording
         mediaRecorderRef.current.stop();
         streamRef.current.getTracks().forEach((track) => track.stop());
 
-        // Wait for final chunks
         await new Promise<void>((resolve) => {
             if (mediaRecorderRef.current) {
                 mediaRecorderRef.current.onstop = () => resolve();
@@ -156,36 +151,26 @@ export default function RecordPanel({
 
         setIsRecording(false);
 
-        // Process any remaining chunks
+        // Wait for pending chunks
         while (pendingChunksRef.current.length > 0 || processingRef.current) {
             await new Promise((r) => setTimeout(r, 500));
         }
 
-        // If no transcript from live streaming, try full-file transcription
+        // If no live transcript, try full-file transcription via Convex
         let finalTranscript = transcriptRef.current;
         if (!finalTranscript && chunksRef.current.length > 0) {
             try {
                 const fullBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-                const formData = new FormData();
-                formData.append("file", fullBlob, "recording.wav");
-                formData.append("language", "pl");
-                formData.append("response_format", "json");
-
-                const response = await fetch(`${WHISPER_URL}/inference`, {
-                    method: "POST",
-                    body: formData,
-                });
-                if (response.ok) {
-                    const result = await response.json();
-                    finalTranscript = result.text?.trim() || "";
-                }
+                const base64 = await blobToBase64(fullBlob);
+                finalTranscript = await transcribeAudio({ audioBase64: base64 });
+                finalTranscript = finalTranscript?.trim() || "";
             } catch {
                 console.warn("Full transcription failed, saving with placeholder");
             }
         }
 
         const durationSeconds = seconds;
-        const content = finalTranscript || "[Transkrypcja niedostępna — uruchom whisper.cpp]";
+        const content = finalTranscript || "[Transkrypcja niedostępna — sprawdź serwer AI]";
 
         try {
             const transcriptionId = await createTranscription({
@@ -195,8 +180,7 @@ export default function RecordPanel({
                 durationSeconds,
             });
 
-            // Index for RAG (async, don't block)
-            indexTranscription({ transcriptionId }).catch((err) =>
+            indexTranscription({ transcriptionId }).catch((err: unknown) =>
                 console.warn("RAG indexing skipped:", err)
             );
 
@@ -209,7 +193,7 @@ export default function RecordPanel({
         } finally {
             setIsSaving(false);
         }
-    }, [seconds, title, projectId, createTranscription, indexTranscription, onRecordingComplete]);
+    }, [seconds, title, projectId, createTranscription, indexTranscription, transcribeAudio, onRecordingComplete]);
 
     return (
         <div className="record-panel">
@@ -264,7 +248,7 @@ export default function RecordPanel({
 
             {isRecording && (
                 <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", textAlign: "center" }}>
-                    💡 Audio jest przesyłane do whisper.cpp co 5s. Upewnij się, że serwer działa na :8081
+                    💡 Audio wysyłane co 5s do transkrypcji przez Convex
                 </p>
             )}
         </div>
