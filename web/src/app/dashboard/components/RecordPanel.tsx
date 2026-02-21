@@ -10,6 +10,54 @@ interface RecordPanelProps {
     onRecordingComplete: () => void;
 }
 
+// ── WAV encoder (PCM → WAV) ─────────────────────────────────────────
+
+function encodeWavFromFloat32(samples: Float32Array, sampleRate: number): Blob {
+    const numChannels = 1;
+    const bitsPerSample = 16;
+    const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+    const blockAlign = numChannels * (bitsPerSample / 8);
+    const dataLength = samples.length * (bitsPerSample / 8);
+    const buffer = new ArrayBuffer(44 + dataLength);
+    const view = new DataView(buffer);
+
+    // RIFF header
+    writeString(view, 0, "RIFF");
+    view.setUint32(4, 36 + dataLength, true);
+    writeString(view, 8, "WAVE");
+
+    // fmt chunk
+    writeString(view, 12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+
+    // data chunk
+    writeString(view, 36, "data");
+    view.setUint32(40, dataLength, true);
+
+    // PCM samples
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++, offset += 2) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+
+    return new Blob([buffer], { type: "audio/wav" });
+}
+
+function writeString(view: DataView, offset: number, str: string) {
+    for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+
 export default function RecordPanel({
     projectId,
     onRecordingComplete,
@@ -21,13 +69,22 @@ export default function RecordPanel({
     const [isSaving, setIsSaving] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
 
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef = useRef<Blob[]>([]);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const processorRef = useRef<ScriptProcessorNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const transcriptRef = useRef("");
-    const pendingChunksRef = useRef<Blob[]>([]);
     const processingRef = useRef(false);
+    const pendingChunksRef = useRef<Float32Array[]>([]);
+    const allSamplesRef = useRef<Float32Array[]>([]);
+
+    // Accumulate samples for chunked sending
+    const chunkBufferRef = useRef<Float32Array[]>([]);
+    const chunkSampleCountRef = useRef(0);
+
+    const SAMPLE_RATE = 16000;
+    const CHUNK_DURATION_SEC = 5;
+    const CHUNK_SAMPLE_THRESHOLD = SAMPLE_RATE * CHUNK_DURATION_SEC;
 
     const createTranscription = useMutation(api.transcriptions.create);
     const indexTranscription = useAction(api.rag.indexTranscription);
@@ -49,39 +106,54 @@ export default function RecordPanel({
         return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
     };
 
-    /**
-     * Convert blob to base64 string.
-     */
     const blobToBase64 = (blob: Blob): Promise<string> =>
         new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const dataUrl = reader.result as string;
-                resolve(dataUrl.split(",")[1]); // Strip data:...;base64, prefix
+                resolve(dataUrl.split(",")[1]);
             };
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         });
 
     /**
-     * Send audio chunk via Convex action → whisper.cpp (no CORS issues).
+     * Merge Float32Array chunks into a single array.
      */
-    const transcribeChunk = useCallback(async (audioBlob: Blob) => {
-        try {
-            setIsTranscribing(true);
-            const base64 = await blobToBase64(audioBlob);
-            const text = await transcribeAudio({ audioBase64: base64 });
-            const trimmed = text?.trim();
-            if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
-                transcriptRef.current += (transcriptRef.current ? " " : "") + trimmed;
-                setTranscript(transcriptRef.current);
-            }
-        } catch (err) {
-            console.warn("Transcription error:", err);
-        } finally {
-            setIsTranscribing(false);
+    const mergeFloat32Arrays = (arrays: Float32Array[]): Float32Array => {
+        const totalLength = arrays.reduce((sum, a) => sum + a.length, 0);
+        const result = new Float32Array(totalLength);
+        let offset = 0;
+        for (const arr of arrays) {
+            result.set(arr, offset);
+            offset += arr.length;
         }
-    }, [transcribeAudio]);
+        return result;
+    };
+
+    /**
+     * Transcribe a WAV blob via Convex action.
+     */
+    const transcribeChunk = useCallback(
+        async (samples: Float32Array) => {
+            try {
+                setIsTranscribing(true);
+                const wavBlob = encodeWavFromFloat32(samples, SAMPLE_RATE);
+                const base64 = await blobToBase64(wavBlob);
+                const text = await transcribeAudio({ audioBase64: base64 });
+                const trimmed = text?.trim();
+                if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
+                    transcriptRef.current += (transcriptRef.current ? " " : "") + trimmed;
+                    setTranscript(transcriptRef.current);
+                }
+            } catch (err) {
+                console.warn("Transcription error:", err);
+            } finally {
+                setIsTranscribing(false);
+            }
+        },
+        [transcribeAudio]
+    );
 
     /**
      * Process pending audio chunks sequentially.
@@ -103,29 +175,49 @@ export default function RecordPanel({
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     channelCount: 1,
-                    sampleRate: 16000,
+                    sampleRate: SAMPLE_RATE,
                     echoCancellation: true,
                     noiseSuppression: true,
                 },
             });
             streamRef.current = stream;
 
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: "audio/webm;codecs=opus",
-            });
-            mediaRecorderRef.current = mediaRecorder;
-            chunksRef.current = [];
+            const audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
+            audioContextRef.current = audioContext;
+
+            const source = audioContext.createMediaStreamSource(stream);
+
+            // ScriptProcessorNode to capture raw PCM
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processorRef.current = processor;
+
+            chunkBufferRef.current = [];
+            chunkSampleCountRef.current = 0;
+            allSamplesRef.current = [];
             transcriptRef.current = "";
 
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    chunksRef.current.push(event.data);
-                    pendingChunksRef.current.push(event.data);
+            processor.onaudioprocess = (event) => {
+                const inputData = event.inputBuffer.getChannelData(0);
+                const copy = new Float32Array(inputData.length);
+                copy.set(inputData);
+
+                allSamplesRef.current.push(copy);
+                chunkBufferRef.current.push(copy);
+                chunkSampleCountRef.current += copy.length;
+
+                // When we have enough samples for a chunk, queue it
+                if (chunkSampleCountRef.current >= CHUNK_SAMPLE_THRESHOLD) {
+                    const merged = mergeFloat32Arrays(chunkBufferRef.current);
+                    pendingChunksRef.current.push(merged);
+                    chunkBufferRef.current = [];
+                    chunkSampleCountRef.current = 0;
                     processQueue();
                 }
             };
 
-            mediaRecorder.start(5000);
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+
             setIsRecording(true);
             setSeconds(0);
             setTranscript("");
@@ -136,32 +228,45 @@ export default function RecordPanel({
     }, [processQueue]);
 
     const stopRecording = useCallback(async () => {
-        if (!mediaRecorderRef.current || !streamRef.current) return;
-
         setIsSaving(true);
 
-        mediaRecorderRef.current.stop();
-        streamRef.current.getTracks().forEach((track) => track.stop());
-
-        await new Promise<void>((resolve) => {
-            if (mediaRecorderRef.current) {
-                mediaRecorderRef.current.onstop = () => resolve();
-            }
-        });
+        // Stop audio processing
+        if (processorRef.current) {
+            processorRef.current.disconnect();
+            processorRef.current = null;
+        }
+        if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+        }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+        }
 
         setIsRecording(false);
 
-        // Wait for pending chunks
+        // Queue any remaining samples in the chunk buffer
+        if (chunkBufferRef.current.length > 0) {
+            const merged = mergeFloat32Arrays(chunkBufferRef.current);
+            pendingChunksRef.current.push(merged);
+            chunkBufferRef.current = [];
+            chunkSampleCountRef.current = 0;
+            processQueue();
+        }
+
+        // Wait for all pending chunks to finish
         while (pendingChunksRef.current.length > 0 || processingRef.current) {
             await new Promise((r) => setTimeout(r, 500));
         }
 
-        // If no live transcript, try full-file transcription via Convex
+        // If no live transcript, try full-file transcription
         let finalTranscript = transcriptRef.current;
-        if (!finalTranscript && chunksRef.current.length > 0) {
+        if (!finalTranscript && allSamplesRef.current.length > 0) {
             try {
-                const fullBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-                const base64 = await blobToBase64(fullBlob);
+                const allSamples = mergeFloat32Arrays(allSamplesRef.current);
+                const wavBlob = encodeWavFromFloat32(allSamples, SAMPLE_RATE);
+                const base64 = await blobToBase64(wavBlob);
                 finalTranscript = await transcribeAudio({ audioBase64: base64 });
                 finalTranscript = finalTranscript?.trim() || "";
             } catch {
@@ -193,7 +298,7 @@ export default function RecordPanel({
         } finally {
             setIsSaving(false);
         }
-    }, [seconds, title, projectId, createTranscription, indexTranscription, transcribeAudio, onRecordingComplete]);
+    }, [seconds, title, projectId, createTranscription, indexTranscription, transcribeAudio, onRecordingComplete, processQueue]);
 
     return (
         <div className="record-panel">
@@ -248,7 +353,7 @@ export default function RecordPanel({
 
             {isRecording && (
                 <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", textAlign: "center" }}>
-                    💡 Audio wysyłane co 5s do transkrypcji przez Convex
+                    💡 Audio wysyłane co 5s do transkrypcji (format WAV)
                 </p>
             )}
         </div>
