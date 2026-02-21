@@ -25,7 +25,7 @@ fi
 echo "🎙️  Starting whisper.cpp server on :8081..."
 "$LILAPU_DIR/whisper.cpp/build/bin/whisper-server" \
   -m "$LILAPU_DIR/whisper.cpp/models/ggml-medium.bin" \
-  --host 0.0.0.0 --port 8081 &
+  --host 0.0.0.0 --port 8081 --language pl &
 WHISPER_PID=$!
 
 # Start Bielik/llama.cpp server
