@@ -91,7 +91,6 @@ export default function DashboardPage() {
                     setActiveTab("transcriptions");
                     setChatInitTranscriptionId(null);
                 }}
-                onCreateProject={handleCreateProject}
                 userEmail={userId}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}

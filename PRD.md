@@ -86,7 +86,11 @@ Projekt: "Klient X — Umowa dostawy"
 
 **Funkcje:**
 - Tworzenie nowego projektu: nazwa + opcjonalny opis
+- **Foldery** — grupowanie projektów w foldery (np. per klient)
 - Wszystkie nagrania w projekcie → RAG chat ma kontekst **tylko z tego projektu**
+- **1 transkrypcja = 1 czat** — każda transkrypcja ma dropdown z listą czatów:
+  - "➕ Rozpocznij nowy czat" (zawsze na górze)
+  - Lista istniejących czatów powiązanych z tą transkrypcją
 - Historia chatów zapisywana jak w Gemini — w sidebarze, per projekt
 - Archiwizacja starych projektów
 - Wyszukiwanie across all projects (cross-project search)
@@ -234,12 +238,19 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Foldery (grupowanie projektów)
+  folders: defineTable({
+    userId: v.string(),
+    name: v.string(),
+  }).index("by_userId", ["userId"]),
+
   // Projekty (klienci / sprawy)
   projects: defineTable({
     userId: v.string(),              // z Convex Auth
     name: v.string(),                // np. "Klient X — Umowa"
     description: v.optional(v.string()),
     archived: v.boolean(),
+    folderId: v.optional(v.id("folders")),
   }).index("by_user", ["userId"]),
 
   // Transkrypcje (nagrania w projekcie)
@@ -256,7 +267,13 @@ export default defineSchema({
   conversations: defineTable({
     projectId: v.id("projects"),
     title: v.optional(v.string()),   // auto-generowany
-  }).index("by_project", ["projectId"]),
+    chatMode: v.optional(
+      v.union(v.literal("transcription"), v.literal("project"))
+    ),
+    scopedTranscriptionIds: v.optional(
+      v.array(v.id("transcriptions"))
+    ),
+  }).index("by_projectId", ["projectId"]),
 
   // Wiadomości w rozmowie
   messages: defineTable({
@@ -272,16 +289,24 @@ export default defineSchema({
 
   // Embeddingi do RAG (vector search)
   embeddings: defineTable({
+    projectId: v.id("projects"),
     transcriptionId: v.id("transcriptions"),
     chunkText: v.string(),
     chunkIndex: v.number(),
     embedding: v.array(v.float64()),  // wektor 384-dim
   })
     .index("by_transcription", ["transcriptionId"])
+    .index("by_projectId", ["projectId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 384,               // all-MiniLM-L6-v2
+      filterFields: ["projectId"],
     }),
+
+  // Waitlist
+  waitlist: defineTable({
+    email: v.string(),
+  }),
 });
 ```
 
