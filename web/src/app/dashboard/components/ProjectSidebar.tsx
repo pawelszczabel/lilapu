@@ -278,7 +278,7 @@ export default function ProjectSidebar({
         <>
             <aside className={`sidebar ${isOpen ? "" : "collapsed"}`}>
                 <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="sidebar-brand">Lilapu</span>
+                    <img src="/logo.svg" alt="Lilapu" style={{ height: 36, width: 'auto' }} />
                     <button
                         className="sidebar-toggle-btn"
                         onClick={onClose}
