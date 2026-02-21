@@ -10,7 +10,7 @@ interface RecordPanelProps {
     onRecordingComplete: () => void;
 }
 
-const WHISPER_URL = "http://localhost:8081";
+const WHISPER_URL = process.env.NEXT_PUBLIC_WHISPER_URL ?? "http://localhost:8081";
 
 export default function RecordPanel({
     projectId,
