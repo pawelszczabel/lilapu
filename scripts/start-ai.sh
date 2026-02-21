@@ -8,7 +8,7 @@ echo "🚀 Starting Lilapu AI servers..."
 echo "   Directory: $LILAPU_DIR"
 
 # Check if models exist
-if [ ! -f "$LILAPU_DIR/whisper.cpp/models/ggml-small.bin" ]; then
+if [ ! -f "$LILAPU_DIR/whisper.cpp/models/ggml-medium.bin" ]; then
   echo "❌ Whisper model not found. Run:"
   echo "   cd $LILAPU_DIR/whisper.cpp && bash models/download-ggml-model.sh small"
   exit 1
@@ -24,7 +24,7 @@ fi
 # Start Whisper server
 echo "🎙️  Starting whisper.cpp server on :8081..."
 "$LILAPU_DIR/whisper.cpp/build/bin/whisper-server" \
-  -m "$LILAPU_DIR/whisper.cpp/models/ggml-small.bin" \
+  -m "$LILAPU_DIR/whisper.cpp/models/ggml-medium.bin" \
   --host 0.0.0.0 --port 8081 &
 WHISPER_PID=$!
 
@@ -33,7 +33,9 @@ echo "🧠 Starting Bielik-7B (llama.cpp) on :8080..."
 "$LILAPU_DIR/llama.cpp/build/bin/llama-server" \
   -m "$BIELIK_MODEL" \
   --host 0.0.0.0 --port 8080 \
-  -ngl 99 -c 2048 &
+  -ngl 0 -c 2048 &
+# TODO: Zwiększ -ngl do 99 kiedy będzie więcej GPU VRAM (np. RunPod RTX A5000 24GB)
+# Na M1 8GB: -ngl 25 = kompromis z whisper-medium. Na GPU serwerze: -ngl 99 = pełna prędkość.
 LLAMA_PID=$!
 
 echo ""
