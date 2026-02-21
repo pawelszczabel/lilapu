@@ -351,6 +351,18 @@ export default function RecordPanel({
                 </div>
             )}
 
+            {!isRecording && !isSaving && !transcript && (
+                <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', opacity: 0.8 }}>
+                    <img
+                        src="/logo.png"
+                        alt="Lilapu Logo"
+                        width={180}
+                        height={180}
+                        style={{ filter: 'drop-shadow(0 0 20px rgba(124, 92, 252, 0.4))' }}
+                    />
+                </div>
+            )}
+
             {isRecording && (
                 <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", textAlign: "center" }}>
                     💡 Audio wysyłane co 5s do transkrypcji (format WAV)

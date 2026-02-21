@@ -16,6 +16,7 @@ export default function DashboardPage() {
     const [activeProjectId, setActiveProjectId] =
         useState<Id<"projects"> | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>("transcriptions");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     // When a chat is started from a transcription
     const [chatInitTranscriptionId, setChatInitTranscriptionId] =
         useState<Id<"transcriptions"> | null>(null);
@@ -67,7 +68,7 @@ export default function DashboardPage() {
     if (!userId) return null;
 
     return (
-        <div className="dashboard">
+        <div className={`dashboard ${isSidebarOpen ? "" : "sidebar-collapsed"}`}>
             <ProjectSidebar
                 projects={projects ?? []}
                 activeProjectId={activeProjectId}
@@ -78,13 +79,26 @@ export default function DashboardPage() {
                 }}
                 onCreateProject={handleCreateProject}
                 userEmail={userId}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
 
             <div className="main">
                 {activeProject ? (
                     <>
                         <div className="main-header">
-                            <h1>{activeProject.name}</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {!isSidebarOpen && (
+                                    <button
+                                        className="sidebar-toggle-btn"
+                                        onClick={() => setIsSidebarOpen(true)}
+                                        title="Rozwiń pasek boczny"
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                                    </button>
+                                )}
+                                <h1>{activeProject.name}</h1>
+                            </div>
                             <div className="main-tabs">
                                 <button
                                     className={`main-tab ${activeTab === "transcriptions" ? "active" : ""}`}
@@ -136,7 +150,17 @@ export default function DashboardPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="empty-state">
+                    <div className="empty-state" style={{ position: 'relative' }}>
+                        {!isSidebarOpen && (
+                            <button
+                                className="sidebar-toggle-btn"
+                                onClick={() => setIsSidebarOpen(true)}
+                                title="Rozwiń pasek boczny"
+                                style={{ position: 'absolute', top: '16px', left: '16px' }}
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                            </button>
+                        )}
                         <div className="empty-state-icon">📁</div>
                         <h2>Witaj w Lilapu</h2>
                         <p>
