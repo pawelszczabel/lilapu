@@ -93,8 +93,15 @@ export default function ChatPanel({ projectId }: ChatPanelProps) {
             let response: string;
             try {
                 response = await chatAction({
-                    systemPrompt:
-                        "Jesteś asystentem Lilapu — prywatnym asystentem wiedzy. Odpowiadaj po polsku na podstawie kontekstu z notatek użytkownika. Cytuj źródła [Źródło X] gdy to istotne. Bądź zwięzły, precyzyjny i przydatny.",
+                    systemPrompt: [
+                        "Jesteś Lilapu — prywatny asystent wiedzy. ZASADY:",
+                        "1. Odpowiadaj WYŁĄCZNIE po polsku.",
+                        "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
+                        "3. Jeśli poniżej jest kontekst z notatek, odpowiadaj TYLKO na jego podstawie.",
+                        "4. Jeśli nie ma kontekstu lub kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w Twoich notatkach.'",
+                        "5. NIE wymyślaj cytatów. NIE dodawaj komentarzy w nawiasach kwadratowych.",
+                        "6. NIE pisz po angielsku. NIE dodawaj [Source:] ani [Źródło:].",
+                    ].join("\n"),
                     userMessage: userMsg,
                     context: context || undefined,
                 });
