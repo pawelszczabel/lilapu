@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# AI Models (too large for git)
+whisper.cpp/
+llama.cpp/
+
+# Build
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PID files
+*.pid
+
+# Convex
+.convex/
