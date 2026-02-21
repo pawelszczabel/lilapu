@@ -24,6 +24,13 @@ export default defineSchema({
   conversations: defineTable({
     projectId: v.id("projects"),
     title: v.optional(v.string()),
+    // "transcription" = czat z konkretnymi transkrypcjami
+    // "project" = czat z dostępem do całego projektu (domyślny)
+    chatMode: v.optional(
+      v.union(v.literal("transcription"), v.literal("project"))
+    ),
+    // Lista transkrypcji stanowiących bazę wiedzy (tryb "transcription")
+    scopedTranscriptionIds: v.optional(v.array(v.id("transcriptions"))),
   }).index("by_projectId", ["projectId"]),
 
   // Wiadomości w rozmowie
@@ -44,15 +51,18 @@ export default defineSchema({
 
   // Embeddingi do RAG (vector search)
   embeddings: defineTable({
+    projectId: v.id("projects"),
     transcriptionId: v.id("transcriptions"),
     chunkText: v.string(),
     chunkIndex: v.number(),
     embedding: v.array(v.float64()),
   })
     .index("by_transcriptionId", ["transcriptionId"])
+    .index("by_projectId", ["projectId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 384,
+      filterFields: ["projectId"],
     }),
 
   // Waitlist (landing page signups)

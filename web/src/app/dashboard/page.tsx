@@ -16,6 +16,9 @@ export default function DashboardPage() {
     const [activeProjectId, setActiveProjectId] =
         useState<Id<"projects"> | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>("transcriptions");
+    // When a chat is started from a transcription
+    const [chatInitTranscriptionId, setChatInitTranscriptionId] =
+        useState<Id<"transcriptions"> | null>(null);
 
     // Auth check
     useEffect(() => {
@@ -49,6 +52,15 @@ export default function DashboardPage() {
         [userId, createProject]
     );
 
+    // Start chat from a specific transcription
+    const handleStartTranscriptionChat = useCallback(
+        (transcriptionId: Id<"transcriptions">) => {
+            setChatInitTranscriptionId(transcriptionId);
+            setActiveTab("chat");
+        },
+        []
+    );
+
     // Get active project
     const activeProject = projects?.find((p) => p._id === activeProjectId);
 
@@ -62,6 +74,7 @@ export default function DashboardPage() {
                 onSelectProject={(id) => {
                     setActiveProjectId(id);
                     setActiveTab("transcriptions");
+                    setChatInitTranscriptionId(null);
                 }}
                 onCreateProject={handleCreateProject}
                 userEmail={userId}
@@ -75,7 +88,10 @@ export default function DashboardPage() {
                             <div className="main-tabs">
                                 <button
                                     className={`main-tab ${activeTab === "transcriptions" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("transcriptions")}
+                                    onClick={() => {
+                                        setActiveTab("transcriptions");
+                                        setChatInitTranscriptionId(null);
+                                    }}
                                 >
                                     📝 Transkrypcje
                                 </button>
@@ -87,7 +103,10 @@ export default function DashboardPage() {
                                 </button>
                                 <button
                                     className={`main-tab ${activeTab === "chat" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("chat")}
+                                    onClick={() => {
+                                        setChatInitTranscriptionId(null);
+                                        setActiveTab("chat");
+                                    }}
                                 >
                                     💬 Czat AI
                                 </button>
@@ -96,7 +115,10 @@ export default function DashboardPage() {
 
                         <div className="main-body">
                             {activeTab === "transcriptions" && (
-                                <TranscriptionList projectId={activeProject._id} />
+                                <TranscriptionList
+                                    projectId={activeProject._id}
+                                    onStartChat={handleStartTranscriptionChat}
+                                />
                             )}
                             {activeTab === "record" && (
                                 <RecordPanel
@@ -105,7 +127,11 @@ export default function DashboardPage() {
                                 />
                             )}
                             {activeTab === "chat" && (
-                                <ChatPanel projectId={activeProject._id} />
+                                <ChatPanel
+                                    projectId={activeProject._id}
+                                    initialTranscriptionId={chatInitTranscriptionId}
+                                    onTranscriptionUsed={() => setChatInitTranscriptionId(null)}
+                                />
                             )}
                         </div>
                     </>

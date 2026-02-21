@@ -29,12 +29,20 @@ import type { GenericId } from "convex/values";
 export type DataModel = {
   conversations: {
     document: {
+      chatMode?: "transcription" | "project";
       projectId: Id<"projects">;
+      scopedTranscriptionIds?: Array<Id<"transcriptions">>;
       title?: string;
       _id: Id<"conversations">;
       _creationTime: number;
     };
-    fieldPaths: "_creationTime" | "_id" | "projectId" | "title";
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "chatMode"
+      | "projectId"
+      | "scopedTranscriptionIds"
+      | "title";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -48,6 +56,7 @@ export type DataModel = {
       chunkIndex: number;
       chunkText: string;
       embedding: Array<number>;
+      projectId: Id<"projects">;
       transcriptionId: Id<"transcriptions">;
       _id: Id<"embeddings">;
       _creationTime: number;
@@ -58,10 +67,12 @@ export type DataModel = {
       | "chunkIndex"
       | "chunkText"
       | "embedding"
+      | "projectId"
       | "transcriptionId";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
       by_transcriptionId: ["transcriptionId", "_creationTime"];
     };
     searchIndexes: {};
@@ -69,7 +80,7 @@ export type DataModel = {
       by_embedding: {
         vectorField: "embedding";
         dimensions: number;
-        filterFields: never;
+        filterFields: "projectId";
       };
     };
   };

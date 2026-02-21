@@ -839,6 +839,104 @@ textarea:focus {
   cursor: not-allowed;
 }
 
+/* Chat scope bar */
+.chat-scope-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-subtle);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+}
+
+.chat-scope-label {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.chat-scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  background: rgba(124, 92, 252, 0.2);
+  border: 1px solid rgba(124, 92, 252, 0.3);
+  border-radius: var(--radius-full);
+  color: var(--accent);
+  font-size: var(--text-xs);
+}
+
+.chat-scope-hint {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: auto;
+}
+
+/* @mention dropdown */
+.mention-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 60px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  margin-bottom: var(--space-2);
+}
+
+.mention-option {
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+
+.mention-option:last-child {
+  border-bottom: none;
+}
+
+.mention-option:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+/* Transcription card actions */
+.transcription-card-clickable {
+  cursor: pointer;
+}
+
+.transcription-card-actions {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.transcription-chat-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(124, 92, 252, 0.2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.transcription-chat-btn:hover {
+  background: rgba(124, 92, 252, 0.2);
+  border-color: var(--accent);
+}
+
 /* ============ Modal ============ */
 .modal-overlay {
   position: fixed;

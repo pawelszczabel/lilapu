@@ -41,11 +41,38 @@ export declare const api: {
     >;
   };
   conversations: {
+    addTranscriptionScope: FunctionReference<
+      "mutation",
+      "public",
+      {
+        conversationId: Id<"conversations">;
+        transcriptionId: Id<"transcriptions">;
+      },
+      null
+    >;
     create: FunctionReference<
       "mutation",
       "public",
-      { projectId: Id<"projects">; title?: string },
+      {
+        chatMode?: "transcription" | "project";
+        projectId: Id<"projects">;
+        scopedTranscriptionIds?: Array<Id<"transcriptions">>;
+        title?: string;
+      },
       Id<"conversations">
+    >;
+    get: FunctionReference<
+      "query",
+      "public",
+      { conversationId: Id<"conversations"> },
+      {
+        _creationTime: number;
+        _id: Id<"conversations">;
+        chatMode?: "transcription" | "project";
+        projectId: Id<"projects">;
+        scopedTranscriptionIds?: Array<Id<"transcriptions">>;
+        title?: string;
+      } | null
     >;
     listByProject: FunctionReference<
       "query",
@@ -54,7 +81,9 @@ export declare const api: {
       Array<{
         _creationTime: number;
         _id: Id<"conversations">;
+        chatMode?: "transcription" | "project";
         projectId: Id<"projects">;
+        scopedTranscriptionIds?: Array<Id<"transcriptions">>;
         title?: string;
       }>
     >;
@@ -153,6 +182,23 @@ export declare const api: {
         chunkText: string;
         score: number;
         transcriptionId: Id<"transcriptions">;
+        transcriptionTitle: string;
+      }>
+    >;
+    searchByTranscriptions: FunctionReference<
+      "action",
+      "public",
+      {
+        projectId: Id<"projects">;
+        query: string;
+        topK?: number;
+        transcriptionIds: Array<Id<"transcriptions">>;
+      },
+      Array<{
+        chunkText: string;
+        score: number;
+        transcriptionId: Id<"transcriptions">;
+        transcriptionTitle: string;
       }>
     >;
   };
@@ -238,6 +284,18 @@ export declare const internal: {
       { transcriptionId: Id<"transcriptions"> },
       any
     >;
+    getTranscriptionProjectId: FunctionReference<
+      "query",
+      "internal",
+      { transcriptionId: Id<"transcriptions"> },
+      any
+    >;
+    getTranscriptionTitles: FunctionReference<
+      "query",
+      "internal",
+      { ids: Array<Id<"transcriptions">> },
+      any
+    >;
     insertEmbedding: FunctionReference<
       "mutation",
       "internal",
@@ -245,6 +303,7 @@ export declare const internal: {
         chunkIndex: number;
         chunkText: string;
         embedding: Array<number>;
+        projectId: Id<"projects">;
         transcriptionId: Id<"transcriptions">;
       },
       any

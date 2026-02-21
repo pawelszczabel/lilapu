@@ -8,9 +8,10 @@ import TranscriptionView from "./TranscriptionView";
 
 interface TranscriptionListProps {
     projectId: Id<"projects">;
+    onStartChat?: (transcriptionId: Id<"transcriptions">) => void;
 }
 
-export default function TranscriptionList({ projectId }: TranscriptionListProps) {
+export default function TranscriptionList({ projectId, onStartChat }: TranscriptionListProps) {
     const [viewingId, setViewingId] = useState<Id<"transcriptions"> | null>(null);
 
     const transcriptions = useQuery(api.transcriptions.listByProject, { projectId });
@@ -62,22 +63,40 @@ export default function TranscriptionList({ projectId }: TranscriptionListProps)
                     <div
                         key={t._id}
                         className="transcription-card"
-                        onClick={() => setViewingId(t._id)}
                     >
-                        <div className="transcription-card-header">
-                            <span className="transcription-card-title">
-                                {t.title || "Nagranie bez tytułu"}
-                            </span>
-                            {t.blockchainVerified && (
-                                <span className="transcription-card-badge">✅ Zabezpieczone</span>
-                            )}
+                        <div
+                            className="transcription-card-clickable"
+                            onClick={() => setViewingId(t._id)}
+                        >
+                            <div className="transcription-card-header">
+                                <span className="transcription-card-title">
+                                    {t.title || "Nagranie bez tytułu"}
+                                </span>
+                                {t.blockchainVerified && (
+                                    <span className="transcription-card-badge">✅ Zabezpieczone</span>
+                                )}
+                            </div>
+                            <div className="transcription-card-meta">
+                                <span>📅 {dateStr}, {timeStr}</span>
+                                {duration && <span>⏱️ {duration}</span>}
+                                <span>📝 {t.content.split(/\s+/).length} słów</span>
+                            </div>
+                            <div className="transcription-card-preview">{t.content}</div>
                         </div>
-                        <div className="transcription-card-meta">
-                            <span>📅 {dateStr}, {timeStr}</span>
-                            {duration && <span>⏱️ {duration}</span>}
-                            <span>📝 {t.content.split(/\s+/).length} słów</span>
-                        </div>
-                        <div className="transcription-card-preview">{t.content}</div>
+                        {onStartChat && (
+                            <div className="transcription-card-actions">
+                                <button
+                                    className="transcription-chat-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onStartChat(t._id);
+                                    }}
+                                    title="Rozpocznij czat AI o tej transkrypcji"
+                                >
+                                    💬 Czat o transkrypcji
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
             })}
