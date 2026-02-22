@@ -282,9 +282,10 @@ export default function ChatPanel({
                     userMessage: userMsg,
                     context: context || undefined,
                 });
-            } catch {
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : "Nieznany błąd";
                 response =
-                    "⚠️ Serwer AI (Bielik-7B) nie jest uruchomiony. Uruchom `./scripts/start-ai.sh` aby połączyć się z lokalnym modelem.";
+                    `⚠️ Nie udało się połączyć z serwerem AI. Spróbuj ponownie za chwilę. (${msg})`;
                 sources = [];
             }
 

@@ -275,7 +275,7 @@ export default function RecordPanel({
         }
 
         const durationSeconds = seconds;
-        const content = finalTranscript || "[Transkrypcja niedostępna — sprawdź serwer AI]";
+        const content = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
 
         try {
             const transcriptionId = await createTranscription({
