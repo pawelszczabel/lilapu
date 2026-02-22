@@ -108,18 +108,17 @@ export const chat = action({
     },
     returns: v.string(),
     handler: async (_ctx, args) => {
-        const messages = [
-            { role: "system", content: args.systemPrompt },
-        ];
-
+        // Merge system prompt and context into one system message
+        // (vLLM requires strict user/assistant alternation, no consecutive system messages)
+        let systemContent = args.systemPrompt;
         if (args.context) {
-            messages.push({
-                role: "system",
-                content: `Kontekst z notatek:\n${args.context}`,
-            });
+            systemContent += `\n\nKontekst z notatek:\n${args.context}`;
         }
 
-        messages.push({ role: "user", content: args.userMessage });
+        const messages = [
+            { role: "system", content: systemContent },
+            { role: "user", content: args.userMessage },
+        ];
 
         const chatPayload = {
             messages,
