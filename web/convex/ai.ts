@@ -58,19 +58,58 @@ export const transcribe = action({
     returns: v.string(),
     handler: async (_ctx, args) => {
         if (USE_RUNPOD) {
-            // RunPod Faster Whisper endpoint
+            // RunPod Faster Whisper endpoint — optimized for anti-hallucination
             const result = await runpodRequest(WHISPER_ENDPOINT_ID, {
                 audio_base64: args.audioBase64,
                 language: "pl",
                 model: "large-v3",
                 word_timestamps: false,
+                // Anti-hallucination: VAD filters silence/noise before transcription
+                enable_vad: true,
+                vad_parameters: {
+                    threshold: 0.5,
+                    min_speech_duration_ms: 250,
+                    min_silence_duration_ms: 500,
+                    speech_pad_ms: 200,
+                },
+                // Anti-hallucination: contextual prompt guides transcription
+                initial_prompt: "Transkrypcja rozmowy po polsku. Nagranie zawiera wypowiedzi osób.",
+                // Anti-hallucination: deterministic output
+                temperature: 0,
             });
+
             // Faster Whisper worker returns { text: "..." } or { transcription: "..." }
-            return (
+            let text =
                 (result as { text?: string; transcription?: string }).text ??
                 (result as { transcription?: string }).transcription ??
-                ""
-            );
+                "";
+
+            // Anti-hallucination: post-processing blacklist
+            const HALLUCINATION_PATTERNS = [
+                "wszelkie prawa zastrzeżone",
+                "napisy stworzone przez",
+                "napisy wykonał",
+                "subskrybuj",
+                "subscribe",
+                "dziękuję za uwagę",
+                "dziękuję za obejrzenie",
+                "do zobaczenia",
+                "thanks for watching",
+                "copyright",
+                "all rights reserved",
+                "tłumaczenie",
+                "amara.org",
+            ];
+
+            const lowerText = text.toLowerCase().trim();
+            for (const pattern of HALLUCINATION_PATTERNS) {
+                if (lowerText === pattern || lowerText === pattern + ".") {
+                    console.log(`Whisper hallucination filtered: "${text}"`);
+                    return "";
+                }
+            }
+
+            return text;
         }
 
         // Local whisper.cpp fallback
