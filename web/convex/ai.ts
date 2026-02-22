@@ -129,14 +129,24 @@ export const chat = action({
         };
 
         if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
-            // RunPod llama.cpp endpoint (OpenAI-compatible)
+            // RunPod vLLM endpoint — messages + sampling_params directly in input
             const result = await runpodRequest(
                 BIELIK_ENDPOINT_ID,
-                { openai_route: "/v1/chat/completions", openai_input: chatPayload },
+                {
+                    messages,
+                    sampling_params: {
+                        max_tokens: 1024,
+                        temperature: 0.7,
+                    },
+                },
                 180_000
             );
-            // Extract response from RunPod wrapper
-            const choices = (result as { choices?: Array<{ message?: { content?: string } }> }).choices;
+            // vLLM worker returns { text: ["..."] } or { choices: [...] }
+            const resAny = result as Record<string, unknown>;
+            if (Array.isArray(resAny.text)) {
+                return (resAny.text as string[])[0] ?? "";
+            }
+            const choices = (resAny as { choices?: Array<{ message?: { content?: string } }> }).choices;
             return choices?.[0]?.message?.content ?? "";
         }
 
@@ -165,12 +175,17 @@ export const embed = action({
     returns: v.array(v.float64()),
     handler: async (_ctx, args) => {
         if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
-            // RunPod llama.cpp embedding endpoint
+            // RunPod vLLM embedding — pass text directly
             const result = await runpodRequest(BIELIK_ENDPOINT_ID, {
-                openai_route: "/embedding",
-                openai_input: { content: args.text },
+                input: args.text,
             });
-            return (result as { embedding?: number[] }).embedding ?? [];
+            // vLLM returns { data: [{ embedding: [...] }] } or { embedding: [...] }
+            const resAny = result as Record<string, unknown>;
+            if (Array.isArray(resAny.data)) {
+                const first = (resAny.data as Array<{ embedding?: number[] }>)[0];
+                return first?.embedding ?? [];
+            }
+            return (resAny as { embedding?: number[] }).embedding ?? [];
         }
 
         // Local llama.cpp fallback
