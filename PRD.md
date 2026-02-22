@@ -102,13 +102,30 @@ Użytkownik klika "Nagrywaj" → tekst pojawia się na ekranie w czasie rzeczywi
 **Przepływ:**
 1. Kliknięcie przycisku **"● Nagrywaj"**
 2. Mikrofon przeglądarki (Web Audio API / MediaRecorder)
-3. Chunki audio (~3s) wysyłane na backend via WebSocket
-4. Backend: Whisper (self-hosted lub API) → tekst
+3. Chunki audio (~5s) wysyłane na backend via Convex action
+4. Backend: Whisper (self-hosted GPU) → tekst
 5. Tekst streamowany z powrotem do UI w czasie rzeczywistym
 6. Kliknięcie **"■ Stop"** → automatyczny zapis + blockchain notaryzacja w tle
 
+**Tryby nagrywania:**
+
+| Tryb | Źródło audio | Przypadek użycia |
+|------|-------------|------------------|
+| **Mikrofon** | Wbudowany/zewnętrzny mic | Spotkanie na żywo, wizyta |
+| **Rozmowa online** | Mikrofon + system audio (`getDisplayMedia`) | Google Meet, Zoom, Teams |
+
+**Nagrywanie rozmów online (Faza 2):**
+- Chrome API `getDisplayMedia({ audio: true })` — przechwytuje audio z wybranej zakładki
+- Miksowanie z mikrofonu (Ty) + system audio (rozmówca) → jeden strumień
+- Użytkownik wybiera zakładkę Meet/Zoom → przeglądarka łapie jej audio
+- Alternatywa: instrukcja dla użytkownika (BlackHole / Loopback na macOS)
+
+**Speaker diarization (Faza 3):**
+- `pyannote-audio` jako post-processing po Whisper
+- Rozpoznawanie kto mówi: `[Lekarz]: ... [Pacjent]: ...`
+
 **Wymagania techniczne:**
-- Frontend: Web Audio API + WebSocket streaming
+- Frontend: Web Audio API + `getDisplayMedia` (Chrome)
 - Backend: `faster-whisper` (Python, self-hosted GPU)
 - Modele: `whisper-large-v3` (najlepsza jakość, GPU serwer)
 - Język MVP: **polski** (jedyny w MVP)
@@ -228,7 +245,13 @@ Dane szyfrowane **na serwerze** — użytkownik nigdy nie traci danych.
 | **Realtime** | Convex reactive queries | Wbudowany real-time, zero konfiguracji |
 | **Blockchain** | ethers.js + Solidity (Base L2) | Automatyczne, tanie notaryzacje |
 | **Szyfrowanie** | AES-256 at rest (Convex) | Standard, zero data loss risk |
-| **Hosting** | Vercel (frontend) + Railway/Fly (GPU) | Skalowalny, tani start |
+| **Hosting frontend** | Vercel | SSR, CDN, auto-deploy z GitHub |
+| **Hosting AI (dev/test)** | RunPod Serverless | Testy, demo, benchmarki |
+| **Hosting AI (produkcja)** | **Oracle Cloud (OCI)** | Confidential Computing (AMD SEV), GPU Bare Metal, RODO EU (Frankfurt), HIPAA/SOC 2 certified |
+
+> **⚠️ Kluczowe:** RunPod = shared infrastructure, nie nadaje się do danych medycznych w produkcji.
+> Oracle Cloud oferuje Confidential Computing (szyfrowanie RAM podczas przetwarzania) + dedykowane GPU + serwery w EU.
+> Dane pacjentów **nigdy** nie trafiają na RunPod w produkcji.
 
 ### 4.2 Schema Bazy Danych (Convex TypeScript)
 
@@ -621,11 +644,15 @@ Pytanie: Jaki jest termin dostawy?" \
 - [ ] **Screeny** pod marketing i social media
 
 ### Faza 3: SaaS — tylko po walidacji (Tydzień 5–6) 🚀
-- [ ] `AI_SERVER_URL=https://gpu.server.com` — zmiana 1 linijki
-- [ ] GPU server setup (Railway/Fly.io): whisper + Bielik-7B
+- [ ] **Migracja AI z RunPod → Oracle Cloud (OCI)**
+  - [ ] Instancja GPU (A10/V100) w OCI Frankfurt (EU)
+  - [ ] Confidential Computing (AMD SEV) — szyfrowanie RAM
+  - [ ] VCN (prywatna sieć) — kontener AI niedostępny publicznie
 - [ ] Multi-user support (wielu użytkowników jednocześnie)
 - [ ] Pricing page + Stripe integration
 - [ ] System prompt anti-hallucination (project-scoped)
+- [ ] **Nagrywanie rozmów online** (`getDisplayMedia` + mikrofon)
+- [ ] **Speaker diarization** (pyannote-audio)
 
 ### Faza 4: Blockchain (Tydzień 7)
 - [ ] Deploy NoteNotary.sol na Base Sepolia
