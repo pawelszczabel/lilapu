@@ -377,6 +377,8 @@ export default function ChatPanel({
             let systemPrompt: string;
             const hasScope = scopedTranscriptionIds.length > 0 || scopedNoteIds.length > 0 || scopedConversationIds.length > 0;
 
+            const formatRule = "FORMATOWANIE: Używaj akapitów, wypunktowań (- lub •), numeracji i pogrubionych nagłówków. NIE pisz ścian tekstu. Oddzielaj sekcje pustą linią.";
+
             if (hasScope) {
                 const scopeDescriptions = scopedItems.map((s) => `${s.icon} "${s.title}"`).join(", ");
                 systemPrompt = [
@@ -387,6 +389,7 @@ export default function ChatPanel({
                     "4. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
                     "5. Podawaj z jakiego źródła pochodzi informacja.",
                     "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                    formatRule,
                 ].join("\n");
             } else {
                 systemPrompt = [
@@ -397,6 +400,7 @@ export default function ChatPanel({
                     "4. ZAWSZE podawaj z jakiej transkrypcji pochodzi informacja.",
                     "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w Twoich notatkach.'",
                     "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                    formatRule,
                 ].join("\n");
             }
 
@@ -437,6 +441,55 @@ export default function ChatPanel({
         transcription: "📝 TRANSKRYPCJE",
         note: "📓 NOTATKI",
         conversation: "💬 KONWERSACJE",
+    };
+
+    // Simple markdown renderer for chat messages
+    const renderChatMarkdown = (text: string) => {
+        // Pre-process: if text has no newlines but has numbered items, split them
+        let processed = text;
+        if (!processed.includes("\n") && /\d+[.)]\s/.test(processed)) {
+            // Insert newlines before numbered items: "1. " "2. " etc.
+            processed = processed.replace(/\s+(\d+[.)]\s)/g, "\n$1");
+        }
+
+        const lines = processed.split("\n");
+        const elements: React.ReactNode[] = [];
+
+        lines.forEach((line, i) => {
+            const trimmed = line.trim();
+
+            if (trimmed === "") {
+                elements.push(<div key={i} style={{ height: "0.5em" }} />);
+            } else if (trimmed.startsWith("### ")) {
+                elements.push(<p key={i} style={{ fontWeight: 700, marginTop: "0.6em" }}>{formatInlineStyles(trimmed.slice(4))}</p>);
+            } else if (trimmed.startsWith("## ")) {
+                elements.push(<p key={i} style={{ fontWeight: 700, fontSize: "1.1em", marginTop: "0.6em" }}>{formatInlineStyles(trimmed.slice(3))}</p>);
+            } else if (trimmed.startsWith("# ")) {
+                elements.push(<p key={i} style={{ fontWeight: 700, fontSize: "1.2em", marginTop: "0.6em" }}>{formatInlineStyles(trimmed.slice(2))}</p>);
+            } else if (/^[-•*]\s/.test(trimmed)) {
+                elements.push(<p key={i} style={{ paddingLeft: "1em", marginTop: "0.2em" }}>• {formatInlineStyles(trimmed.replace(/^[-•*]\s/, ""))}</p>);
+            } else if (/^\d+[.)]\s/.test(trimmed)) {
+                const match = trimmed.match(/^(\d+[.)]\s)(.*)/);
+                elements.push(<p key={i} style={{ paddingLeft: "1em", marginTop: "0.4em" }}><strong>{match?.[1]}</strong>{formatInlineStyles(match?.[2] ?? "")}</p>);
+            } else {
+                elements.push(<p key={i} style={{ marginTop: "0.3em" }}>{formatInlineStyles(trimmed)}</p>);
+            }
+        });
+
+        return <>{elements}</>;
+    };
+
+    // Handle **bold**, {{bold}} (Bielik format), and *italic*
+    const formatInlineStyles = (text: string): React.ReactNode => {
+        // First normalize {{...}} to **...**
+        const normalized = text.replace(/\{\{([^}]+)\}\}/g, "**$1**");
+        const parts = normalized.split(/(\*\*[^*]+\*\*)/g);
+        return <>{parts.map((part, i) => {
+            if (part.startsWith("**") && part.endsWith("**")) {
+                return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+        })}</>;
     };
 
     return (
@@ -510,7 +563,9 @@ export default function ChatPanel({
                             className={`chat-message ${msg.role === "user" ? "chat-message-user" : "chat-message-assistant"
                                 }`}
                         >
-                            <div className="chat-message-content">{msg.content}</div>
+                            <div className="chat-message-content">
+                                {msg.role === "assistant" ? renderChatMarkdown(msg.content) : msg.content}
+                            </div>
                             {msg.sources && msg.sources.length > 0 && (
                                 <div className="chat-message-sources">
                                     📎 Źródła:
