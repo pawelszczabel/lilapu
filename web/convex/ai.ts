@@ -64,25 +64,28 @@ export const transcribe = action({
                 language: "pl",
                 model: "large-v3",
                 word_timestamps: false,
-                // Anti-hallucination: VAD filters silence/noise before transcription
-                enable_vad: true,
-                vad_parameters: {
-                    threshold: 0.5,
-                    min_speech_duration_ms: 250,
-                    min_silence_duration_ms: 500,
-                    speech_pad_ms: 200,
-                },
                 // Anti-hallucination: contextual prompt guides transcription
-                initial_prompt: "Transkrypcja rozmowy po polsku. Nagranie zawiera wypowiedzi osób.",
+                initial_prompt: "Transkrypcja rozmowy po polsku.",
                 // Anti-hallucination: deterministic output
                 temperature: 0,
             });
 
+            // DEBUG: log raw Whisper response
+            console.log("Whisper raw result:", JSON.stringify(result).slice(0, 1000));
+
             // Faster Whisper worker returns { text: "..." } or { transcription: "..." }
-            let text =
-                (result as { text?: string; transcription?: string }).text ??
-                (result as { transcription?: string }).transcription ??
-                "";
+            const resAny = result as Record<string, unknown>;
+            let text = "";
+            if (typeof resAny.text === "string") {
+                text = resAny.text;
+            } else if (typeof resAny.transcription === "string") {
+                text = resAny.transcription;
+            } else if (Array.isArray(resAny.segments)) {
+                // Some workers return { segments: [{ text: "..." }] }
+                text = (resAny.segments as Array<{ text?: string }>)
+                    .map((s) => s.text ?? "")
+                    .join(" ");
+            }
 
             // Anti-hallucination: post-processing blacklist
             const HALLUCINATION_PATTERNS = [

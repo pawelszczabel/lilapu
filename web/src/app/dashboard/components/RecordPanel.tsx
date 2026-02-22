@@ -230,7 +230,7 @@ export default function RecordPanel({
     const chunkSampleCountRef = useRef(0);
 
     const SAMPLE_RATE = 16000;
-    const CHUNK_DURATION_SEC = 5;
+    const CHUNK_DURATION_SEC = 15;
     const CHUNK_SAMPLE_THRESHOLD = SAMPLE_RATE * CHUNK_DURATION_SEC;
 
     const createTranscription = useMutation(api.transcriptions.create);
@@ -357,7 +357,12 @@ export default function RecordPanel({
             };
 
             source.connect(processor);
-            processor.connect(audioContext.destination);
+            // Connect to a silent destination (required for ScriptProcessor to work)
+            // but do NOT connect to audioContext.destination to avoid feedback
+            const silentGain = audioContext.createGain();
+            silentGain.gain.value = 0;
+            processor.connect(silentGain);
+            silentGain.connect(audioContext.destination);
 
             setIsRecording(true);
             setSeconds(0);
