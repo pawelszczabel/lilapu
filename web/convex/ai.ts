@@ -129,7 +129,7 @@ export const chat = action({
         };
 
         if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
-            // RunPod vLLM endpoint — messages + sampling_params directly in input
+            // RunPod vLLM endpoint
             const result = await runpodRequest(
                 BIELIK_ENDPOINT_ID,
                 {
@@ -141,13 +141,48 @@ export const chat = action({
                 },
                 180_000
             );
-            // vLLM worker returns { text: ["..."] } or { choices: [...] }
-            const resAny = result as Record<string, unknown>;
-            if (Array.isArray(resAny.text)) {
-                return (resAny.text as string[])[0] ?? "";
+
+            console.log("RunPod chat raw result:", JSON.stringify(result).slice(0, 2000));
+
+            // vLLM RunPod worker returns:
+            // [{choices:[{tokens:["token1","token2",...]}], usage:{...}}]
+            // or sometimes just the inner object
+
+            let parsed: unknown = result;
+
+            // If it's an array, take the first element
+            if (Array.isArray(parsed)) {
+                parsed = parsed[0];
             }
-            const choices = (resAny as { choices?: Array<{ message?: { content?: string } }> }).choices;
-            return choices?.[0]?.message?.content ?? "";
+
+            const obj = parsed as Record<string, unknown>;
+
+            // Format: choices[0].tokens[] (vLLM native)
+            if (Array.isArray(obj?.choices)) {
+                const choice = (obj.choices as Array<Record<string, unknown>>)[0];
+                if (choice) {
+                    // tokens array → join
+                    if (Array.isArray(choice.tokens)) {
+                        return (choice.tokens as string[]).join("").trim();
+                    }
+                    // OpenAI format: message.content
+                    const msg = choice.message as Record<string, unknown> | undefined;
+                    if (msg?.content) return String(msg.content).trim();
+                    // Alt: choice.text
+                    if (typeof choice.text === "string") return choice.text.trim();
+                }
+            }
+
+            // Fallback: text array or string
+            if (Array.isArray(obj?.text)) {
+                return ((obj.text as string[])[0] ?? "").trim();
+            }
+            if (typeof obj?.text === "string") {
+                return obj.text.trim();
+            }
+
+            console.log("RunPod chat: unrecognized format, returning raw");
+            return JSON.stringify(result);
         }
 
         // Local llama.cpp fallback
