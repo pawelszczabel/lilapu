@@ -23,6 +23,7 @@ export default defineSchema({
     projectId: v.id("projects"),
     title: v.optional(v.string()),
     content: v.string(),
+    audioStorageId: v.optional(v.id("_storage")),
     durationSeconds: v.optional(v.number()),
     blockchainTxHash: v.optional(v.string()),
     blockchainVerified: v.boolean(),
@@ -32,13 +33,12 @@ export default defineSchema({
   conversations: defineTable({
     projectId: v.id("projects"),
     title: v.optional(v.string()),
-    // "transcription" = czat z konkretnymi transkrypcjami
-    // "project" = czat z dostępem do całego projektu (domyślny)
     chatMode: v.optional(
       v.union(v.literal("transcription"), v.literal("project"))
     ),
-    // Lista transkrypcji stanowiących bazę wiedzy (tryb "transcription")
     scopedTranscriptionIds: v.optional(v.array(v.id("transcriptions"))),
+    scopedNoteIds: v.optional(v.array(v.id("notes"))),
+    scopedConversationIds: v.optional(v.array(v.id("conversations"))),
   }).index("by_projectId", ["projectId"]),
 
   // Wiadomości w rozmowie
@@ -72,6 +72,14 @@ export default defineSchema({
       dimensions: 384,
       filterFields: ["projectId"],
     }),
+
+  // Notatki per projekt
+  notes: defineTable({
+    projectId: v.id("projects"),
+    title: v.string(),
+    content: v.string(),
+    format: v.optional(v.union(v.literal("md"), v.literal("txt"))),
+  }).index("by_projectId", ["projectId"]),
 
   // Waitlist (landing page signups)
   waitlist: defineTable({

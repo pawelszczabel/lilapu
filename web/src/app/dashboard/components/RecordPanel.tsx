@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useMutation, useAction } from "convex/react";
+import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
+import { getOrCreateUserKey, encryptBlob, decryptBlob, exportUserKey, importUserKey, hasUserKey } from "../crypto";
 
 interface RecordPanelProps {
     projectId: Id<"projects">;
@@ -56,7 +57,147 @@ function writeString(view: DataView, offset: number, str: string) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────
+// ── Audio Player sub-component ───────────────────────────────────────
+
+function AudioPlayer({ audioStorageId }: { audioStorageId: Id<"_storage"> }) {
+    const audioUrl = useQuery(api.transcriptions.getAudioUrl, { storageId: audioStorageId });
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [error, setError] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const objectUrlRef = useRef<string | null>(null);
+    const animFrameRef = useRef<number | null>(null);
+
+    // Cleanup object URL on unmount
+    useEffect(() => {
+        return () => {
+            if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+            if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
+
+    const updateProgress = useCallback(() => {
+        if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+            if (!audioRef.current.paused) {
+                animFrameRef.current = requestAnimationFrame(updateProgress);
+            }
+        }
+    }, []);
+
+    const loadAndDecrypt = useCallback(async () => {
+        if (!audioUrl) return;
+        if (objectUrlRef.current) return; // Already loaded
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(audioUrl);
+            const encryptedBlob = await response.blob();
+
+            const key = await getOrCreateUserKey();
+            const decryptedBlob = await decryptBlob(key, encryptedBlob);
+
+            const url = URL.createObjectURL(decryptedBlob);
+            objectUrlRef.current = url;
+
+            const audio = new Audio(url);
+            audioRef.current = audio;
+
+            audio.addEventListener("loadedmetadata", () => {
+                setDuration(audio.duration);
+            });
+            audio.addEventListener("ended", () => {
+                setIsPlaying(false);
+                setCurrentTime(0);
+            });
+
+            // Wait for audio to be ready
+            await new Promise<void>((resolve, reject) => {
+                audio.addEventListener("canplaythrough", () => resolve(), { once: true });
+                audio.addEventListener("error", () => reject(new Error("Audio load error")), { once: true });
+            });
+        } catch (err) {
+            console.error("Decryption/load error:", err);
+            setError("Nie udało się odszyfrować nagrania");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [audioUrl]);
+
+    const togglePlay = useCallback(async () => {
+        if (!audioRef.current) {
+            await loadAndDecrypt();
+        }
+        if (!audioRef.current) return;
+
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            animFrameRef.current = requestAnimationFrame(updateProgress);
+        }
+    }, [isPlaying, loadAndDecrypt, updateProgress]);
+
+    const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!audioRef.current || !duration) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        audioRef.current.currentTime = ratio * duration;
+        setCurrentTime(audioRef.current.currentTime);
+    }, [duration]);
+
+    const formatTime = (s: number) => {
+        if (!isFinite(s)) return "00:00";
+        const mins = Math.floor(s / 60);
+        const secs = Math.floor(s % 60);
+        return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    };
+
+    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+    if (error) {
+        return <div className="audio-player-error">🔒 {error}</div>;
+    }
+
+    return (
+        <div className="audio-player">
+            <button
+                className={`audio-player-btn ${isPlaying ? "playing" : ""}`}
+                onClick={togglePlay}
+                disabled={isLoading || !audioUrl}
+                title={isPlaying ? "Pauza" : "Odtwórz"}
+            >
+                {isLoading ? (
+                    <span className="audio-player-spinner" />
+                ) : isPlaying ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+                ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                )}
+            </button>
+
+            <span className="audio-player-time">{formatTime(currentTime)}</span>
+
+            <div className="audio-player-track" onClick={handleSeek}>
+                <div className="audio-player-progress" style={{ width: `${progress}%` }} />
+                <div className="audio-player-thumb" style={{ left: `${progress}%` }} />
+            </div>
+
+            <span className="audio-player-time">{formatTime(duration)}</span>
+        </div>
+    );
+}
+
+// ── Main RecordPanel ─────────────────────────────────────────────────
 
 export default function RecordPanel({
     projectId,
@@ -68,6 +209,12 @@ export default function RecordPanel({
     const [seconds, setSeconds] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
+
+    // Key management UI
+    const [showKeyDialog, setShowKeyDialog] = useState(false);
+    const [keyExport, setKeyExport] = useState("");
+    const [keyImportValue, setKeyImportValue] = useState("");
+    const [keyMessage, setKeyMessage] = useState("");
 
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -87,8 +234,13 @@ export default function RecordPanel({
     const CHUNK_SAMPLE_THRESHOLD = SAMPLE_RATE * CHUNK_DURATION_SEC;
 
     const createTranscription = useMutation(api.transcriptions.create);
+    const generateUploadUrl = useMutation(api.transcriptions.generateUploadUrl);
     const indexTranscription = useAction(api.rag.indexTranscription);
     const transcribeAudio = useAction(api.ai.transcribe);
+
+    // Fetch recordings for this project (only those with audio)
+    const transcriptions = useQuery(api.transcriptions.listByProject, { projectId });
+    const recordings = transcriptions?.filter((t) => t.audioStorageId) ?? [];
 
     // Timer
     useEffect(() => {
@@ -117,9 +269,6 @@ export default function RecordPanel({
             reader.readAsDataURL(blob);
         });
 
-    /**
-     * Merge Float32Array chunks into a single array.
-     */
     const mergeFloat32Arrays = (arrays: Float32Array[]): Float32Array => {
         const totalLength = arrays.reduce((sum, a) => sum + a.length, 0);
         const result = new Float32Array(totalLength);
@@ -131,9 +280,6 @@ export default function RecordPanel({
         return result;
     };
 
-    /**
-     * Transcribe a WAV blob via Convex action.
-     */
     const transcribeChunk = useCallback(
         async (samples: Float32Array) => {
             try {
@@ -155,9 +301,6 @@ export default function RecordPanel({
         [transcribeAudio]
     );
 
-    /**
-     * Process pending audio chunks sequentially.
-     */
     const processQueue = useCallback(async () => {
         if (processingRef.current) return;
         processingRef.current = true;
@@ -187,7 +330,6 @@ export default function RecordPanel({
 
             const source = audioContext.createMediaStreamSource(stream);
 
-            // ScriptProcessorNode to capture raw PCM
             const processor = audioContext.createScriptProcessor(4096, 1, 1);
             processorRef.current = processor;
 
@@ -205,7 +347,6 @@ export default function RecordPanel({
                 chunkBufferRef.current.push(copy);
                 chunkSampleCountRef.current += copy.length;
 
-                // When we have enough samples for a chunk, queue it
                 if (chunkSampleCountRef.current >= CHUNK_SAMPLE_THRESHOLD) {
                     const merged = mergeFloat32Arrays(chunkBufferRef.current);
                     pendingChunksRef.current.push(merged);
@@ -246,7 +387,7 @@ export default function RecordPanel({
 
         setIsRecording(false);
 
-        // Queue any remaining samples in the chunk buffer
+        // Queue any remaining samples
         if (chunkBufferRef.current.length > 0) {
             const merged = mergeFloat32Arrays(chunkBufferRef.current);
             pendingChunksRef.current.push(merged);
@@ -255,12 +396,12 @@ export default function RecordPanel({
             processQueue();
         }
 
-        // Wait for all pending chunks to finish
+        // Wait for pending chunks
         while (pendingChunksRef.current.length > 0 || processingRef.current) {
             await new Promise((r) => setTimeout(r, 500));
         }
 
-        // If no live transcript, try full-file transcription
+        // Full-file transcription fallback
         let finalTranscript = transcriptRef.current;
         if (!finalTranscript && allSamplesRef.current.length > 0) {
             try {
@@ -270,7 +411,7 @@ export default function RecordPanel({
                 finalTranscript = await transcribeAudio({ audioBase64: base64 });
                 finalTranscript = finalTranscript?.trim() || "";
             } catch {
-                console.warn("Full transcription failed, saving with placeholder");
+                console.warn("Full transcription failed");
             }
         }
 
@@ -278,10 +419,37 @@ export default function RecordPanel({
         const content = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
 
         try {
+            // ── E2EE: Encrypt and upload audio ──
+            let audioStorageId: Id<"_storage"> | undefined;
+            if (allSamplesRef.current.length > 0) {
+                try {
+                    const allSamples = mergeFloat32Arrays(allSamplesRef.current);
+                    const wavBlob = encodeWavFromFloat32(allSamples, SAMPLE_RATE);
+
+                    // Encrypt in browser
+                    const key = await getOrCreateUserKey();
+                    const encryptedBlob = await encryptBlob(key, wavBlob);
+
+                    // Upload encrypted blob to Convex Storage
+                    const uploadUrl = await generateUploadUrl();
+                    const uploadResponse = await fetch(uploadUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/octet-stream" },
+                        body: encryptedBlob,
+                    });
+                    if (!uploadResponse.ok) throw new Error("Upload failed");
+                    const { storageId } = await uploadResponse.json();
+                    audioStorageId = storageId;
+                } catch (err) {
+                    console.warn("Audio upload failed (transcription will still be saved):", err);
+                }
+            }
+
             const transcriptionId = await createTranscription({
                 projectId,
                 title: title || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`,
                 content,
+                audioStorageId,
                 durationSeconds,
             });
 
@@ -298,7 +466,24 @@ export default function RecordPanel({
         } finally {
             setIsSaving(false);
         }
-    }, [seconds, title, projectId, createTranscription, indexTranscription, transcribeAudio, onRecordingComplete, processQueue]);
+    }, [seconds, title, projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio, onRecordingComplete, processQueue]);
+
+    // ── Key management handlers ──
+    const handleExportKey = useCallback(async () => {
+        const b64 = await exportUserKey();
+        setKeyExport(b64);
+        setKeyMessage("");
+    }, []);
+
+    const handleImportKey = useCallback(async () => {
+        try {
+            await importUserKey(keyImportValue);
+            setKeyMessage("✅ Klucz zaimportowany pomyślnie");
+            setKeyImportValue("");
+        } catch {
+            setKeyMessage("❌ Nieprawidłowy klucz");
+        }
+    }, [keyImportValue]);
 
     return (
         <div className="record-panel">
@@ -396,34 +581,20 @@ export default function RecordPanel({
                             `}
                         </style>
                         <g className="lilac-animated">
-                            {/* Stem */}
                             <path d="M50 85 Q45 60 50 45" stroke="#7c5cfc" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
                             <path d="M50 65 Q40 55 35 45" stroke="#7c5cfc" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
                             <path d="M50 70 Q60 60 65 50" stroke="#7c5cfc" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-
-                            {/* Bottom Leaves */}
                             <path d="M50 80 Q35 70 30 55 Q45 60 50 80" fill="#4B0082" opacity="0.7" />
                             <path d="M50 80 Q65 70 70 55 Q55 60 50 80" fill="#4B0082" opacity="0.7" />
-
-                            {/* Main Flower Cluster */}
-                            {/* Bottom row */}
                             <circle cx="40" cy="50" r="6" fill="#a78bfa" className="lilac-petal" style={{ animationDelay: '0s' }} />
                             <circle cx="50" cy="52" r="7" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.5s' }} />
                             <circle cx="60" cy="50" r="6" fill="#8b5cf6" className="lilac-petal" style={{ animationDelay: '1s' }} />
-
-                            {/* Middle row */}
                             <circle cx="43" cy="40" r="6.5" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.2s' }} />
                             <circle cx="57" cy="40" r="6.5" fill="#a78bfa" className="lilac-petal" style={{ animationDelay: '0.7s' }} />
                             <circle cx="50" cy="42" r="8" fill="#ddd6fe" className="lilac-petal" style={{ animationDelay: '1.2s' }} />
-
-                            {/* Top row */}
                             <circle cx="46" cy="30" r="5.5" fill="#8b5cf6" className="lilac-petal" style={{ animationDelay: '0.4s' }} />
                             <circle cx="54" cy="30" r="5.5" fill="#c4b5fd" className="lilac-petal" style={{ animationDelay: '0.9s' }} />
-
-                            {/* Apex */}
                             <circle cx="50" cy="22" r="5" fill="#ddd6fe" className="lilac-petal" style={{ animationDelay: '1.4s' }} />
-
-                            {/* Core dark spots (details) */}
                             <circle cx="40" cy="50" r="1.5" fill="#4c1d95" opacity="0.8" />
                             <circle cx="50" cy="52" r="2" fill="#4c1d95" opacity="0.8" />
                             <circle cx="60" cy="50" r="1.5" fill="#4c1d95" opacity="0.8" />
@@ -438,6 +609,100 @@ export default function RecordPanel({
                 <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", textAlign: "center" }}>
                     💡 Audio wysyłane co 5s do transkrypcji (format WAV)
                 </p>
+            )}
+
+            {/* ── Recording History ─── */}
+            {!isRecording && !isSaving && recordings.length > 0 && (
+                <div className="recordings-history">
+                    <h3 className="recordings-history-title">🎧 Nagrane rozmowy</h3>
+                    {recordings.map((rec) => (
+                        <div key={rec._id} className="recording-item">
+                            <div className="recording-item-header">
+                                <span className="recording-item-title">
+                                    {rec.title || "Nagranie"}
+                                </span>
+                                <span className="recording-item-meta">
+                                    {new Date(rec._creationTime).toLocaleDateString("pl-PL", {
+                                        day: "numeric", month: "short", year: "numeric",
+                                        hour: "2-digit", minute: "2-digit"
+                                    })}
+                                    {rec.durationSeconds ? ` · ${formatTime(rec.durationSeconds)}` : ""}
+                                </span>
+                            </div>
+                            {rec.audioStorageId && (
+                                <AudioPlayer audioStorageId={rec.audioStorageId} />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Key Management ─── */}
+            {!isRecording && !isSaving && (
+                <div className="key-management">
+                    <button
+                        className="key-management-btn"
+                        onClick={() => setShowKeyDialog(!showKeyDialog)}
+                    >
+                        🔑 {showKeyDialog ? "Zamknij" : "Klucz szyfrowania"}
+                    </button>
+
+                    {showKeyDialog && (
+                        <div className="key-dialog">
+                            <p className="key-dialog-info">
+                                Twoje nagrania są szyfrowane kluczem E2EE. Wyeksportuj klucz aby zabezpieczyć się przed utratą danych.
+                            </p>
+
+                            <div className="key-dialog-section">
+                                <button className="key-dialog-action" onClick={handleExportKey}>
+                                    📤 Eksportuj klucz
+                                </button>
+                                {keyExport && (
+                                    <div className="key-export-value">
+                                        <code>{keyExport}</code>
+                                        <button
+                                            className="key-copy-btn"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(keyExport);
+                                                setKeyMessage("📋 Skopiowano do schowka");
+                                            }}
+                                        >
+                                            📋
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="key-dialog-section">
+                                <label className="key-dialog-label">📥 Importuj klucz</label>
+                                <div className="key-import-row">
+                                    <input
+                                        type="text"
+                                        className="key-import-input"
+                                        placeholder="Wklej klucz base64..."
+                                        value={keyImportValue}
+                                        onChange={(e) => setKeyImportValue(e.target.value)}
+                                    />
+                                    <button
+                                        className="key-dialog-action"
+                                        onClick={handleImportKey}
+                                        disabled={!keyImportValue.trim()}
+                                    >
+                                        Importuj
+                                    </button>
+                                </div>
+                            </div>
+
+                            {keyMessage && <p className="key-message">{keyMessage}</p>}
+
+                            {!hasUserKey() && (
+                                <p className="key-warning">
+                                    ⚠️ Brak klucza — zaimportuj klucz lub rozpocznij nagrywanie aby wygenerować nowy.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );

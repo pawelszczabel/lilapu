@@ -31,6 +31,8 @@ export type DataModel = {
     document: {
       chatMode?: "transcription" | "project";
       projectId: Id<"projects">;
+      scopedConversationIds?: Array<Id<"conversations">>;
+      scopedNoteIds?: Array<Id<"notes">>;
       scopedTranscriptionIds?: Array<Id<"transcriptions">>;
       title?: string;
       _id: Id<"conversations">;
@@ -41,6 +43,8 @@ export type DataModel = {
       | "_id"
       | "chatMode"
       | "projectId"
+      | "scopedConversationIds"
+      | "scopedNoteIds"
       | "scopedTranscriptionIds"
       | "title";
     indexes: {
@@ -129,6 +133,30 @@ export type DataModel = {
     searchIndexes: {};
     vectorIndexes: {};
   };
+  notes: {
+    document: {
+      content: string;
+      format?: "md" | "txt";
+      projectId: Id<"projects">;
+      title: string;
+      _id: Id<"notes">;
+      _creationTime: number;
+    };
+    fieldPaths:
+      | "_creationTime"
+      | "_id"
+      | "content"
+      | "format"
+      | "projectId"
+      | "title";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
   projects: {
     document: {
       archived: boolean;
@@ -157,6 +185,7 @@ export type DataModel = {
   };
   transcriptions: {
     document: {
+      audioStorageId?: Id<"_storage">;
       blockchainTxHash?: string;
       blockchainVerified: boolean;
       content: string;
@@ -169,6 +198,7 @@ export type DataModel = {
     fieldPaths:
       | "_creationTime"
       | "_id"
+      | "audioStorageId"
       | "blockchainTxHash"
       | "blockchainVerified"
       | "content"

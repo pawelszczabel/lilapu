@@ -7,9 +7,10 @@ import { Id } from "@convex/_generated/dataModel";
 import ProjectSidebar from "./components/ProjectSidebar";
 import TranscriptionList from "./components/TranscriptionList";
 import RecordPanel from "./components/RecordPanel";
+import NotesPanel from "./components/NotesPanel";
 import ChatPanel from "./components/ChatPanel";
 
-type Tab = "transcriptions" | "record" | "chat";
+type Tab = "transcriptions" | "notes" | "record" | "chat";
 
 export default function DashboardPage() {
     const [userId, setUserId] = useState<string | null>(null);
@@ -123,6 +124,12 @@ export default function DashboardPage() {
                                     📝 Transkrypcje
                                 </button>
                                 <button
+                                    className={`main-tab ${activeTab === "notes" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("notes")}
+                                >
+                                    📓 Notatki
+                                </button>
+                                <button
                                     className={`main-tab ${activeTab === "record" ? "active" : ""}`}
                                     onClick={() => setActiveTab("record")}
                                 >
@@ -146,6 +153,11 @@ export default function DashboardPage() {
                                     projectId={activeProject._id}
                                     onStartChat={handleStartTranscriptionChat}
                                     onOpenExistingChat={handleOpenExistingChat}
+                                />
+                            )}
+                            {activeTab === "notes" && (
+                                <NotesPanel
+                                    projectId={activeProject._id}
                                 />
                             )}
                             {activeTab === "record" && (

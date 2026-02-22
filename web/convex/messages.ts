@@ -60,3 +60,30 @@ export const addAssistant = mutation({
         });
     },
 });
+
+export const listByConversations = query({
+    args: { conversationIds: v.array(v.id("conversations")) },
+    returns: v.array(
+        v.object({
+            _id: v.id("messages"),
+            _creationTime: v.number(),
+            conversationId: v.id("conversations"),
+            role: v.union(v.literal("user"), v.literal("assistant")),
+            content: v.string(),
+            sources: v.optional(v.array(sourceValidator)),
+        })
+    ),
+    handler: async (ctx, args) => {
+        const allMessages = [];
+        for (const convId of args.conversationIds) {
+            const msgs = await ctx.db
+                .query("messages")
+                .withIndex("by_conversationId", (q) =>
+                    q.eq("conversationId", convId)
+                )
+                .collect();
+            allMessages.push(...msgs);
+        }
+        return allMessages;
+    },
+});

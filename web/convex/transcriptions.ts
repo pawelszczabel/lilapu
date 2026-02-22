@@ -1,6 +1,26 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// ── Upload URL for encrypted audio ──────────────────────────────────
+
+export const generateUploadUrl = mutation({
+    handler: async (ctx) => {
+        return await ctx.storage.generateUploadUrl();
+    },
+});
+
+// ── Get audio URL ───────────────────────────────────────────────────
+
+export const getAudioUrl = query({
+    args: { storageId: v.id("_storage") },
+    returns: v.union(v.string(), v.null()),
+    handler: async (ctx, args) => {
+        return await ctx.storage.getUrl(args.storageId);
+    },
+});
+
+// ── List transcriptions by project ──────────────────────────────────
+
 export const listByProject = query({
     args: { projectId: v.id("projects") },
     returns: v.array(
@@ -10,6 +30,7 @@ export const listByProject = query({
             projectId: v.id("projects"),
             title: v.optional(v.string()),
             content: v.string(),
+            audioStorageId: v.optional(v.id("_storage")),
             durationSeconds: v.optional(v.number()),
             blockchainTxHash: v.optional(v.string()),
             blockchainVerified: v.boolean(),
@@ -23,6 +44,8 @@ export const listByProject = query({
     },
 });
 
+// ── Get single transcription ────────────────────────────────────────
+
 export const get = query({
     args: { transcriptionId: v.id("transcriptions") },
     returns: v.union(
@@ -32,6 +55,7 @@ export const get = query({
             projectId: v.id("projects"),
             title: v.optional(v.string()),
             content: v.string(),
+            audioStorageId: v.optional(v.id("_storage")),
             durationSeconds: v.optional(v.number()),
             blockchainTxHash: v.optional(v.string()),
             blockchainVerified: v.boolean(),
@@ -43,11 +67,14 @@ export const get = query({
     },
 });
 
+// ── Create transcription ────────────────────────────────────────────
+
 export const create = mutation({
     args: {
         projectId: v.id("projects"),
         title: v.optional(v.string()),
         content: v.string(),
+        audioStorageId: v.optional(v.id("_storage")),
         durationSeconds: v.optional(v.number()),
     },
     returns: v.id("transcriptions"),
@@ -56,6 +83,7 @@ export const create = mutation({
             projectId: args.projectId,
             title: args.title,
             content: args.content,
+            audioStorageId: args.audioStorageId,
             durationSeconds: args.durationSeconds,
             blockchainTxHash: undefined,
             blockchainVerified: false,

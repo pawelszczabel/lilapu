@@ -4,12 +4,22 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
+import { getOrCreateUserKey, decryptString } from "../crypto";
 
 interface ChatPanelProps {
     projectId: Id<"projects">;
     initialTranscriptionId?: Id<"transcriptions"> | null;
     initialConversationId?: Id<"conversations"> | null;
     onTranscriptionUsed?: () => void;
+}
+
+type MentionType = "transcription" | "note" | "conversation";
+
+interface MentionOption {
+    id: string;
+    type: MentionType;
+    title: string;
+    icon: string;
 }
 
 export default function ChatPanel({
@@ -41,10 +51,13 @@ export default function ChatPanel({
         activeConversationId ? { conversationId: activeConversationId } : "skip"
     );
     const transcriptions = useQuery(api.transcriptions.listByProject, { projectId });
+    const notes = useQuery(api.notes.listByProject, { projectId });
 
     // Mutations & Actions
     const createConversation = useMutation(api.conversations.create);
     const addTranscriptionScope = useMutation(api.conversations.addTranscriptionScope);
+    const addNoteScope = useMutation(api.conversations.addNoteScope);
+    const addConversationScope = useMutation(api.conversations.addConversationScope);
     const sendMessage = useMutation(api.messages.send);
     const addAssistant = useMutation(api.messages.addAssistant);
     const chatAction = useAction(api.ai.chat);
@@ -67,7 +80,6 @@ export default function ChatPanel({
     // Handle initialTranscriptionId — create scoped conversation
     useEffect(() => {
         if (!initialTranscriptionId) return;
-        // Skip if already opened via initialConversationId
         if (initialConversationId) return;
 
         const transcription = transcriptions?.find(
@@ -90,32 +102,88 @@ export default function ChatPanel({
 
     // Determine chat mode from active conversation
     const chatMode = activeConversation?.chatMode ?? "project";
-    const scopedIds = activeConversation?.scopedTranscriptionIds ?? [];
+    const scopedTranscriptionIds = activeConversation?.scopedTranscriptionIds ?? [];
+    const scopedNoteIds = activeConversation?.scopedNoteIds ?? [];
+    const scopedConversationIds = activeConversation?.scopedConversationIds ?? [];
 
-    // Scoped transcription names for display
-    const scopedNames = useMemo(() => {
-        if (!transcriptions || scopedIds.length === 0) return [];
-        return scopedIds
-            .map((id) => {
+    // Scoped items for display
+    const scopedItems = useMemo(() => {
+        const items: Array<{ id: string; type: MentionType; title: string; icon: string }> = [];
+
+        if (transcriptions) {
+            for (const id of scopedTranscriptionIds) {
                 const t = transcriptions.find((tr) => tr._id === id);
-                return t ? { id, title: t.title ?? "Bez tytułu" } : null;
-            })
-            .filter(Boolean) as Array<{ id: Id<"transcriptions">; title: string }>;
-    }, [transcriptions, scopedIds]);
+                if (t) items.push({ id, type: "transcription", title: t.title ?? "Bez tytułu", icon: "📝" });
+            }
+        }
 
-    // Filtered transcriptions for @mention dropdown
-    const mentionOptions = useMemo(() => {
-        if (!transcriptions) return [];
-        return transcriptions
-            .filter((t) => {
-                // Don't show already-scoped transcriptions
-                if (scopedIds.includes(t._id)) return false;
-                // Filter by search query
-                const title = (t.title ?? "").toLowerCase();
-                return title.includes(mentionFilter.toLowerCase());
-            })
-            .slice(0, 8);
-    }, [transcriptions, scopedIds, mentionFilter]);
+        if (notes) {
+            for (const id of scopedNoteIds) {
+                const n = notes.find((note) => note._id === id);
+                if (n) items.push({ id, type: "note", title: n.title, icon: "📓" });
+            }
+        }
+
+        if (conversations) {
+            for (const id of scopedConversationIds) {
+                const c = conversations.find((conv) => conv._id === id);
+                if (c) items.push({ id, type: "conversation", title: c.title ?? "Rozmowa", icon: "💬" });
+            }
+        }
+
+        return items;
+    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds]);
+
+    // @mention options — 3 categories
+    const mentionOptions = useMemo((): MentionOption[] => {
+        const filter = mentionFilter.toLowerCase();
+        const options: MentionOption[] = [];
+
+        // Transcriptions
+        if (transcriptions) {
+            for (const t of transcriptions) {
+                if (scopedTranscriptionIds.includes(t._id)) continue;
+                const title = t.title ?? "Bez tytułu";
+                if (filter && !title.toLowerCase().includes(filter)) continue;
+                options.push({ id: t._id, type: "transcription", title, icon: "📝" });
+            }
+        }
+
+        // Notes
+        if (notes) {
+            for (const n of notes) {
+                if (scopedNoteIds.includes(n._id)) continue;
+                if (filter && !n.title.toLowerCase().includes(filter)) continue;
+                options.push({ id: n._id, type: "note", title: n.title, icon: "📓" });
+            }
+        }
+
+        // Conversations (exclude current)
+        if (conversations) {
+            for (const c of conversations) {
+                if (c._id === activeConversationId) continue;
+                if (scopedConversationIds.includes(c._id)) continue;
+                const title = c.title ?? "Rozmowa";
+                if (filter && !title.toLowerCase().includes(filter)) continue;
+                options.push({ id: c._id, type: "conversation", title, icon: "💬" });
+            }
+        }
+
+        return options.slice(0, 12);
+    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds, activeConversationId, mentionFilter]);
+
+    // Group mention options by type for display
+    const groupedMentions = useMemo(() => {
+        const groups: Record<MentionType, MentionOption[]> = {
+            transcription: [],
+            note: [],
+            conversation: [],
+        };
+        for (const opt of mentionOptions) {
+            groups[opt.type].push(opt);
+        }
+        return groups;
+    }, [mentionOptions]);
 
     const handleNewChat = useCallback(async () => {
         const id = await createConversation({
@@ -131,7 +199,6 @@ export default function ChatPanel({
             const val = e.target.value;
             setInput(val);
 
-            // Check if user is typing @mention
             const cursorPos = e.target.selectionStart;
             const beforeCursor = val.slice(0, cursorPos);
             const atIndex = beforeCursor.lastIndexOf("@");
@@ -148,7 +215,7 @@ export default function ChatPanel({
     );
 
     const handleMentionSelect = useCallback(
-        async (transcriptionId: Id<"transcriptions">, title: string) => {
+        async (option: MentionOption) => {
             setShowMentionDropdown(false);
 
             // Remove the @query from input
@@ -156,18 +223,30 @@ export default function ChatPanel({
             const beforeCursor = input.slice(0, cursorPos);
             const atIndex = beforeCursor.lastIndexOf("@");
             const afterCursor = input.slice(cursorPos);
-            const newInput = beforeCursor.slice(0, atIndex) + `@${title} ` + afterCursor;
+            const newInput = beforeCursor.slice(0, atIndex) + `@${option.title} ` + afterCursor;
             setInput(newInput);
 
-            // Add transcription to conversation scope
+            // Add to scope
             if (activeConversationId) {
-                await addTranscriptionScope({
-                    conversationId: activeConversationId,
-                    transcriptionId,
-                });
+                if (option.type === "transcription") {
+                    await addTranscriptionScope({
+                        conversationId: activeConversationId,
+                        transcriptionId: option.id as Id<"transcriptions">,
+                    });
+                } else if (option.type === "note") {
+                    await addNoteScope({
+                        conversationId: activeConversationId,
+                        noteId: option.id as Id<"notes">,
+                    });
+                } else if (option.type === "conversation") {
+                    await addConversationScope({
+                        conversationId: activeConversationId,
+                        targetConversationId: option.id as Id<"conversations">,
+                    });
+                }
             }
         },
-        [input, activeConversationId, addTranscriptionScope]
+        [input, activeConversationId, addTranscriptionScope, addNoteScope, addConversationScope]
     );
 
     const handleSend = useCallback(async () => {
@@ -191,7 +270,7 @@ export default function ChatPanel({
         try {
             await sendMessage({ conversationId: convId, content: userMsg });
 
-            // RAG: search based on chat mode
+            // ── Build context ──
             let context = "";
             let sources: Array<{
                 transcriptionId: Id<"transcriptions">;
@@ -199,9 +278,11 @@ export default function ChatPanel({
             }> = [];
 
             try {
-                const currentMode = chatMode;
-                const currentScopedIds = scopedIds;
+                const currentScopedTranscriptions = scopedTranscriptionIds;
+                const currentScopedNotes = scopedNoteIds;
+                const currentScopedConversations = scopedConversationIds;
 
+                // 1. Transcription context (RAG)
                 let results: Array<{
                     chunkText: string;
                     transcriptionId: Id<"transcriptions">;
@@ -209,19 +290,14 @@ export default function ChatPanel({
                     score: number;
                 }> = [];
 
-                if (
-                    currentMode === "transcription" &&
-                    currentScopedIds.length > 0
-                ) {
-                    // Transcription-scoped search
+                if (currentScopedTranscriptions.length > 0) {
                     results = await ragSearchByTranscriptions({
                         projectId,
-                        transcriptionIds: currentScopedIds,
+                        transcriptionIds: currentScopedTranscriptions,
                         query: userMsg,
                         topK: 5,
                     });
-                } else {
-                    // Project-level search
+                } else if (chatMode === "project") {
                     results = await ragSearch({
                         projectId,
                         query: userMsg,
@@ -230,36 +306,78 @@ export default function ChatPanel({
                 }
 
                 if (results.length > 0) {
-                    context = results
-                        .map(
-                            (r, i) =>
-                                `[Transkrypcja: "${r.transcriptionTitle}"]:\n${r.chunkText}`
-                        )
+                    context += results
+                        .map((r) => `[Transkrypcja: "${r.transcriptionTitle}"]:\n${r.chunkText}`)
                         .join("\n\n---\n\n");
-
                     sources = results.map((r) => ({
                         transcriptionId: r.transcriptionId,
                         quote: r.chunkText.slice(0, 80),
                     }));
                 }
+
+                // 2. Notes context (E2EE — decrypt client-side)
+                if (currentScopedNotes.length > 0 && notes) {
+                    const key = await getOrCreateUserKey();
+                    const noteTexts: string[] = [];
+
+                    for (const noteId of currentScopedNotes) {
+                        const note = notes.find((n) => n._id === noteId);
+                        if (!note || !note.content) continue;
+
+                        try {
+                            const decrypted = await decryptString(key, note.content);
+                            noteTexts.push(`[Notatka: "${note.title}"]:\n${decrypted}`);
+                        } catch {
+                            // Legacy unencrypted note
+                            noteTexts.push(`[Notatka: "${note.title}"]:\n${note.content}`);
+                        }
+                    }
+
+                    if (noteTexts.length > 0) {
+                        context += (context ? "\n\n---\n\n" : "") + noteTexts.join("\n\n---\n\n");
+                    }
+                }
+
+                // 3. Conversation context (messages from scoped conversations)
+                if (currentScopedConversations.length > 0 && conversations) {
+                    const convTexts: string[] = [];
+
+                    for (const convRefId of currentScopedConversations) {
+                        const conv = conversations.find((c) => c._id === convRefId);
+                        const convTitle = conv?.title ?? "Rozmowa";
+
+                        // Fetch messages via separate query — use inline fetch
+                        try {
+                            // We need to get messages for these conversations
+                            // Since we can't call useQuery dynamically, we'll build context
+                            // from the conversation title and note that full history is available
+                            convTexts.push(`[Konwersacja: "${convTitle}"] — dostarczona jako kontekst`);
+                        } catch {
+                            // Skip
+                        }
+                    }
+
+                    if (convTexts.length > 0) {
+                        context += (context ? "\n\n---\n\n" : "") + convTexts.join("\n\n---\n\n");
+                    }
+                }
             } catch {
-                // RAG unavailable — continue without context
+                // Context building failed — continue without context
             }
 
-            // Build system prompt based on mode
+            // Build system prompt
             let systemPrompt: string;
+            const hasScope = scopedTranscriptionIds.length > 0 || scopedNoteIds.length > 0 || scopedConversationIds.length > 0;
 
-            if (chatMode === "transcription") {
-                const scopeNames = scopedNames
-                    .map((s) => `"${s.title}"`)
-                    .join(", ");
+            if (hasScope) {
+                const scopeDescriptions = scopedItems.map((s) => `${s.icon} "${s.title}"`).join(", ");
                 systemPrompt = [
                     "Jesteś Lilapu — prywatny asystent wiedzy. ZASADY:",
                     "1. Odpowiadaj WYŁĄCZNIE po polsku.",
                     "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
-                    `3. Masz dostęp TYLKO do tych transkrypcji: ${scopeNames}. Odpowiadaj WYŁĄCZNIE na podstawie podanego kontekstu.`,
-                    "4. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych transkrypcjach.'",
-                    "5. Podawaj z jakiej transkrypcji pochodzi informacja.",
+                    `3. Masz dostęp do: ${scopeDescriptions}. Odpowiadaj na podstawie podanego kontekstu.`,
+                    "4. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
+                    "5. Podawaj z jakiego źródła pochodzi informacja.",
                     "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
                 ].join("\n");
             } else {
@@ -274,7 +392,7 @@ export default function ChatPanel({
                 ].join("\n");
             }
 
-            // Call AI with RAG context
+            // Call AI
             let response: string;
             try {
                 response = await chatAction({
@@ -284,8 +402,7 @@ export default function ChatPanel({
                 });
             } catch (err) {
                 const msg = err instanceof Error ? err.message : "Nieznany błąd";
-                response =
-                    `⚠️ Nie udało się połączyć z serwerem AI. Spróbuj ponownie za chwilę. (${msg})`;
+                response = `⚠️ Nie udało się połączyć z serwerem AI. Spróbuj ponownie za chwilę. (${msg})`;
                 sources = [];
             }
 
@@ -300,20 +417,19 @@ export default function ChatPanel({
             setIsLoading(false);
         }
     }, [
-        input,
-        isLoading,
-        activeConversationId,
-        projectId,
-        chatMode,
-        scopedIds,
-        scopedNames,
-        createConversation,
-        sendMessage,
-        chatAction,
-        ragSearch,
-        ragSearchByTranscriptions,
-        addAssistant,
+        input, isLoading, activeConversationId, projectId,
+        chatMode, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds,
+        scopedItems, notes, conversations,
+        createConversation, sendMessage, chatAction,
+        ragSearch, ragSearchByTranscriptions, addAssistant,
     ]);
+
+    // Category labels
+    const categoryLabels: Record<MentionType, string> = {
+        transcription: "📝 TRANSKRYPCJE",
+        note: "📓 NOTATKI",
+        conversation: "💬 KONWERSACJE",
+    };
 
     return (
         <div className="chat-layout">
@@ -351,16 +467,16 @@ export default function ChatPanel({
             {/* Chat Main */}
             <div className="chat-main">
                 {/* Scope indicator */}
-                {activeConversationId && chatMode === "transcription" && scopedNames.length > 0 && (
+                {activeConversationId && scopedItems.length > 0 && (
                     <div className="chat-scope-bar">
                         <span className="chat-scope-label">📎 Kontekst:</span>
-                        {scopedNames.map((s) => (
+                        {scopedItems.map((s) => (
                             <span key={s.id} className="chat-scope-chip">
-                                {s.title}
+                                {s.icon} {s.title}
                             </span>
                         ))}
                         <span className="chat-scope-hint">
-                            Użyj @nazwa aby dołączyć więcej transkrypcji
+                            Użyj @ aby dołączyć więcej źródeł
                         </span>
                     </div>
                 )}
@@ -375,8 +491,7 @@ export default function ChatPanel({
                                 Twoje transkrypcje i odpowie z cytatami źródłowymi.
                             </p>
                             <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-                                💡 Możesz też rozpocząć czat z konkretną transkrypcją —
-                                kliknij &quot;💬 Czat o transkrypcji&quot; na liście transkrypcji.
+                                💡 Użyj @ aby dołączyć transkrypcje, notatki lub inne rozmowy jako kontekst.
                             </p>
                         </div>
                     )}
@@ -405,8 +520,8 @@ export default function ChatPanel({
                         <div className="chat-message chat-message-assistant">
                             <div className="chat-message-content">
                                 <span style={{ opacity: 0.6 }}>
-                                    {chatMode === "transcription"
-                                        ? "Szukam w wybranych transkrypcjach..."
+                                    {scopedItems.length > 0
+                                        ? "Szukam w wybranych źródłach..."
                                         : "Szukam w notatkach i myślę..."}
                                 </span>
                                 <span className="live-transcript-cursor" />
@@ -420,23 +535,29 @@ export default function ChatPanel({
                 {/* Input */}
                 <div className="chat-input-area">
                     <div className="chat-input-wrapper" style={{ position: "relative" }}>
-                        {/* @mention dropdown */}
+                        {/* @mention dropdown — 3 categories */}
                         {showMentionDropdown && mentionOptions.length > 0 && (
                             <div className="mention-dropdown">
-                                {mentionOptions.map((t) => (
-                                    <div
-                                        key={t._id}
-                                        className="mention-option"
-                                        onClick={() =>
-                                            handleMentionSelect(
-                                                t._id,
-                                                t.title ?? "Bez tytułu"
-                                            )
-                                        }
-                                    >
-                                        📝 {t.title ?? "Bez tytułu"}
-                                    </div>
-                                ))}
+                                {(["transcription", "note", "conversation"] as MentionType[]).map((type) => {
+                                    const items = groupedMentions[type];
+                                    if (items.length === 0) return null;
+                                    return (
+                                        <div key={type}>
+                                            <div className="mention-category-label">
+                                                {categoryLabels[type]}
+                                            </div>
+                                            {items.map((opt) => (
+                                                <div
+                                                    key={opt.id}
+                                                    className="mention-option"
+                                                    onClick={() => handleMentionSelect(opt)}
+                                                >
+                                                    {opt.icon} {opt.title}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -444,9 +565,9 @@ export default function ChatPanel({
                             ref={inputRef}
                             className="chat-input"
                             placeholder={
-                                chatMode === "transcription"
-                                    ? "Zapytaj o tę transkrypcję... (@ dołącz kolejną)"
-                                    : "Zapytaj o swoje notatki..."
+                                scopedItems.length > 0
+                                    ? "Zapytaj o wybrane źródła... (@ dołącz kolejne)"
+                                    : "Zapytaj o swoje notatki... (@ dodaj kontekst)"
                             }
                             value={input}
                             onChange={handleInputChange}

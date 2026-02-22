@@ -41,6 +41,21 @@ export declare const api: {
     >;
   };
   conversations: {
+    addConversationScope: FunctionReference<
+      "mutation",
+      "public",
+      {
+        conversationId: Id<"conversations">;
+        targetConversationId: Id<"conversations">;
+      },
+      null
+    >;
+    addNoteScope: FunctionReference<
+      "mutation",
+      "public",
+      { conversationId: Id<"conversations">; noteId: Id<"notes"> },
+      null
+    >;
     addTranscriptionScope: FunctionReference<
       "mutation",
       "public",
@@ -70,6 +85,8 @@ export declare const api: {
         _id: Id<"conversations">;
         chatMode?: "transcription" | "project";
         projectId: Id<"projects">;
+        scopedConversationIds?: Array<Id<"conversations">>;
+        scopedNoteIds?: Array<Id<"notes">>;
         scopedTranscriptionIds?: Array<Id<"transcriptions">>;
         title?: string;
       } | null
@@ -83,6 +100,8 @@ export declare const api: {
         _id: Id<"conversations">;
         chatMode?: "transcription" | "project";
         projectId: Id<"projects">;
+        scopedConversationIds?: Array<Id<"conversations">>;
+        scopedNoteIds?: Array<Id<"notes">>;
         scopedTranscriptionIds?: Array<Id<"transcriptions">>;
         title?: string;
       }>
@@ -96,6 +115,8 @@ export declare const api: {
         _id: Id<"conversations">;
         chatMode?: "transcription" | "project";
         projectId: Id<"projects">;
+        scopedConversationIds?: Array<Id<"conversations">>;
+        scopedNoteIds?: Array<Id<"notes">>;
         scopedTranscriptionIds?: Array<Id<"transcriptions">>;
         title?: string;
       }>
@@ -165,11 +186,79 @@ export declare const api: {
         }>;
       }>
     >;
+    listByConversations: FunctionReference<
+      "query",
+      "public",
+      { conversationIds: Array<Id<"conversations">> },
+      Array<{
+        _creationTime: number;
+        _id: Id<"messages">;
+        content: string;
+        conversationId: Id<"conversations">;
+        role: "user" | "assistant";
+        sources?: Array<{
+          quote: string;
+          timestamp?: string;
+          transcriptionId: Id<"transcriptions">;
+        }>;
+      }>
+    >;
     send: FunctionReference<
       "mutation",
       "public",
       { content: string; conversationId: Id<"conversations"> },
       Id<"messages">
+    >;
+  };
+  notes: {
+    create: FunctionReference<
+      "mutation",
+      "public",
+      {
+        content: string;
+        format?: "md" | "txt";
+        projectId: Id<"projects">;
+        title: string;
+      },
+      Id<"notes">
+    >;
+    get: FunctionReference<
+      "query",
+      "public",
+      { noteId: Id<"notes"> },
+      {
+        _creationTime: number;
+        _id: Id<"notes">;
+        content: string;
+        format?: "md" | "txt";
+        projectId: Id<"projects">;
+        title: string;
+      } | null
+    >;
+    listByProject: FunctionReference<
+      "query",
+      "public",
+      { projectId: Id<"projects"> },
+      Array<{
+        _creationTime: number;
+        _id: Id<"notes">;
+        content: string;
+        format?: "md" | "txt";
+        projectId: Id<"projects">;
+        title: string;
+      }>
+    >;
+    remove: FunctionReference<
+      "mutation",
+      "public",
+      { noteId: Id<"notes"> },
+      null
+    >;
+    update: FunctionReference<
+      "mutation",
+      "public",
+      { content?: string; noteId: Id<"notes">; title?: string },
+      null
     >;
   };
   projects: {
@@ -270,6 +359,7 @@ export declare const api: {
       "mutation",
       "public",
       {
+        audioStorageId?: Id<"_storage">;
         content: string;
         durationSeconds?: number;
         projectId: Id<"projects">;
@@ -277,6 +367,7 @@ export declare const api: {
       },
       Id<"transcriptions">
     >;
+    generateUploadUrl: FunctionReference<"mutation", "public", any, any>;
     get: FunctionReference<
       "query",
       "public",
@@ -284,6 +375,7 @@ export declare const api: {
       {
         _creationTime: number;
         _id: Id<"transcriptions">;
+        audioStorageId?: Id<"_storage">;
         blockchainTxHash?: string;
         blockchainVerified: boolean;
         content: string;
@@ -292,6 +384,12 @@ export declare const api: {
         title?: string;
       } | null
     >;
+    getAudioUrl: FunctionReference<
+      "query",
+      "public",
+      { storageId: Id<"_storage"> },
+      string | null
+    >;
     listByProject: FunctionReference<
       "query",
       "public",
@@ -299,6 +397,7 @@ export declare const api: {
       Array<{
         _creationTime: number;
         _id: Id<"transcriptions">;
+        audioStorageId?: Id<"_storage">;
         blockchainTxHash?: string;
         blockchainVerified: boolean;
         content: string;
