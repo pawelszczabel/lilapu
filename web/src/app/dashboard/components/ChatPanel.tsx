@@ -226,27 +226,35 @@ export default function ChatPanel({
             const newInput = beforeCursor.slice(0, atIndex) + `@${option.title} ` + afterCursor;
             setInput(newInput);
 
+            // Ensure we have a conversation to add scope to
+            let convId = activeConversationId;
+            if (!convId) {
+                convId = await createConversation({
+                    projectId,
+                    chatMode: "project",
+                });
+                setActiveConversationId(convId);
+            }
+
             // Add to scope
-            if (activeConversationId) {
-                if (option.type === "transcription") {
-                    await addTranscriptionScope({
-                        conversationId: activeConversationId,
-                        transcriptionId: option.id as Id<"transcriptions">,
-                    });
-                } else if (option.type === "note") {
-                    await addNoteScope({
-                        conversationId: activeConversationId,
-                        noteId: option.id as Id<"notes">,
-                    });
-                } else if (option.type === "conversation") {
-                    await addConversationScope({
-                        conversationId: activeConversationId,
-                        targetConversationId: option.id as Id<"conversations">,
-                    });
-                }
+            if (option.type === "transcription") {
+                await addTranscriptionScope({
+                    conversationId: convId,
+                    transcriptionId: option.id as Id<"transcriptions">,
+                });
+            } else if (option.type === "note") {
+                await addNoteScope({
+                    conversationId: convId,
+                    noteId: option.id as Id<"notes">,
+                });
+            } else if (option.type === "conversation") {
+                await addConversationScope({
+                    conversationId: convId,
+                    targetConversationId: option.id as Id<"conversations">,
+                });
             }
         },
-        [input, activeConversationId, addTranscriptionScope, addNoteScope, addConversationScope]
+        [input, activeConversationId, projectId, createConversation, addTranscriptionScope, addNoteScope, addConversationScope]
     );
 
     const handleSend = useCallback(async () => {
