@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.37.0",
+    "@clerk/nextjs": "^6.38.1",
     "convex": "^1.32.0",
     "docx": "^9.5.3",
     "file-saver": "^2.0.5",

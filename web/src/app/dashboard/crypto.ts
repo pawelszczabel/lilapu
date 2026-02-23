@@ -1,28 +1,70 @@
 "use client";
 
 /**
- * E2EE Crypto module for Lilapu audio recordings.
+ * E2EE Crypto module for Lilapu.
  *
- * Uses Web Crypto API (AES-256-GCM) to encrypt/decrypt audio blobs
- * entirely in the browser. The encryption key never leaves the client.
+ * Uses Web Crypto API (AES-256-GCM) to encrypt/decrypt audio blobs and strings.
+ * Key is derived from user's email + encryption password via PBKDF2.
+ * Same email + password on any device = same key = access to all data.
  *
- * Key storage: localStorage ("lilapu_encryption_key")
+ * Key storage: sessionStorage ("lilapu_derived_key") — cleared when tab closes.
  */
 
-const STORAGE_KEY = "lilapu_encryption_key";
+const SESSION_KEY = "lilapu_derived_key";
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits — recommended for GCM
+const PBKDF2_ITERATIONS = 100_000;
 
-// ── Key Management ──────────────────────────────────────────────────
+// ── Key Derivation ─────────────────────────────────────────────────
 
-async function generateKey(): Promise<CryptoKey> {
-    return crypto.subtle.generateKey(
+/**
+ * Derive a deterministic AES-256 key from email + password using PBKDF2.
+ * Same inputs = same key on every device.
+ */
+export async function deriveKeyFromPassword(
+    email: string,
+    password: string
+): Promise<CryptoKey> {
+    const encoder = new TextEncoder();
+
+    // Import password as PBKDF2 key material
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+
+    // Use SHA-256(email) as deterministic salt
+    const saltData = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(email.toLowerCase().trim())
+    );
+
+    // Derive AES-256-GCM key
+    const key = await crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: new Uint8Array(saltData),
+            iterations: PBKDF2_ITERATIONS,
+            hash: "SHA-256",
+        },
+        keyMaterial,
         { name: ALGORITHM, length: KEY_LENGTH },
-        true, // extractable — needed for export/import
+        true, // extractable for session storage
         ["encrypt", "decrypt"]
     );
+
+    // Store in sessionStorage for this tab session
+    const exported = await exportKeyToBase64(key);
+    sessionStorage.setItem(SESSION_KEY, exported);
+
+    return key;
 }
+
+// ── Key Management ──────────────────────────────────────────────────
 
 async function exportKeyToBase64(key: CryptoKey): Promise<string> {
     const raw = await crypto.subtle.exportKey("raw", key);
@@ -38,21 +80,47 @@ async function importKeyFromBase64(base64: string): Promise<CryptoKey> {
 }
 
 /**
- * Get the user's encryption key from localStorage, or generate a new one.
+ * Get the current session key. Returns null if not yet derived.
  */
-export async function getOrCreateUserKey(): Promise<CryptoKey> {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-        return importKeyFromBase64(stored);
+export async function getSessionKey(): Promise<CryptoKey | null> {
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    if (!stored) return null;
+    try {
+        return await importKeyFromBase64(stored);
+    } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+        return null;
     }
-    const key = await generateKey();
-    const b64 = await exportKeyToBase64(key);
-    localStorage.setItem(STORAGE_KEY, b64);
-    return key;
 }
 
 /**
- * Export the user's key as a base64 string (for backup).
+ * Check if the user has an active encryption key in this session.
+ */
+export function hasSessionKey(): boolean {
+    return !!sessionStorage.getItem(SESSION_KEY);
+}
+
+/**
+ * Clear the session key (logout).
+ */
+export function clearSessionKey(): void {
+    sessionStorage.removeItem(SESSION_KEY);
+}
+
+// ── Legacy compatibility: getOrCreateUserKey now returns session key ─
+
+/**
+ * @deprecated — Use getSessionKey() or deriveKeyFromPassword() instead.
+ * Kept for backward compatibility during migration.
+ */
+export async function getOrCreateUserKey(): Promise<CryptoKey> {
+    const key = await getSessionKey();
+    if (key) return key;
+    throw new Error("NO_ENCRYPTION_KEY");
+}
+
+/**
+ * @deprecated — No longer needed with password-derived keys.
  */
 export async function exportUserKey(): Promise<string> {
     const key = await getOrCreateUserKey();
@@ -60,20 +128,18 @@ export async function exportUserKey(): Promise<string> {
 }
 
 /**
- * Import a key from a base64 string (restore from backup).
- * Overwrites the current key in localStorage.
+ * @deprecated — No longer needed with password-derived keys.
  */
 export async function importUserKey(base64: string): Promise<void> {
-    // Validate the key by trying to import it
     await importKeyFromBase64(base64.trim());
-    localStorage.setItem(STORAGE_KEY, base64.trim());
+    sessionStorage.setItem(SESSION_KEY, base64.trim());
 }
 
 /**
- * Check if a key exists in localStorage.
+ * @deprecated — Use hasSessionKey() instead.
  */
 export function hasUserKey(): boolean {
-    return !!localStorage.getItem(STORAGE_KEY);
+    return hasSessionKey();
 }
 
 // ── Encrypt / Decrypt ───────────────────────────────────────────────

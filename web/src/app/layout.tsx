@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "./ConvexClientProvider";
+import { ClerkProvider } from "@clerk/nextjs";
+import { plPL } from "@clerk/localizations";
 import Script from "next/script";
 
 const outfit = Outfit({
@@ -41,7 +43,9 @@ export default function RootLayout({
   return (
     <html lang="pl" className="dark">
       <body className={outfit.variable}>
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ClerkProvider localization={plPL}>
+          <ConvexClientProvider>{children}</ConvexClientProvider>
+        </ClerkProvider>
         <Script
           id="sw-register"
           strategy="afterInteractive"

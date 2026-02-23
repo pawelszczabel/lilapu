@@ -2,18 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import ProjectSidebar from "./components/ProjectSidebar";
 import TranscriptionList from "./components/TranscriptionList";
 import RecordPanel from "./components/RecordPanel";
 import NotesPanel from "./components/NotesPanel";
 import ChatPanel from "./components/ChatPanel";
+import EncryptionPasswordDialog from "./components/EncryptionPasswordDialog";
+import { hasSessionKey } from "./crypto";
 
 type Tab = "transcriptions" | "notes" | "record" | "chat";
 
 export default function DashboardPage() {
-    const [userId, setUserId] = useState<string | null>(null);
+    const { user, isLoaded: isClerkLoaded } = useUser();
+    const userId = user?.primaryEmailAddress?.emailAddress ?? null;
+    const [encryptionReady, setEncryptionReady] = useState(false);
     const [activeProjectId, setActiveProjectId] =
         useState<Id<"projects"> | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>("transcriptions");
@@ -25,15 +31,11 @@ export default function DashboardPage() {
     const [chatInitConversationId, setChatInitConversationId] =
         useState<Id<"conversations"> | null>(null);
 
-    // Auth check
+    // Check if encryption key exists in session
     useEffect(() => {
-        const user = localStorage.getItem("lilapu_user");
-        if (!user) {
-            window.location.href = "/";
-            return;
+        if (hasSessionKey()) {
+            setEncryptionReady(true);
         }
-        const parsed = JSON.parse(user);
-        setUserId(parsed.email);
     }, []);
 
     // Fetch projects
@@ -80,7 +82,41 @@ export default function DashboardPage() {
     // Get active project
     const activeProject = projects?.find((p) => p._id === activeProjectId);
 
-    if (!userId) return null;
+    // Loading state
+    if (!isClerkLoaded) {
+        return (
+            <div className="empty-state">
+                <div className="empty-state-icon">⏳</div>
+                <p>Ładowanie...</p>
+            </div>
+        );
+    }
+
+    // Not logged in — show login
+    if (!user || !userId) {
+        return (
+            <div className="empty-state">
+                <div className="empty-state-icon">🔒</div>
+                <h2>Zaloguj się do Lilapu</h2>
+                <p>Zaloguj się, aby uzyskać dostęp do swoich nagrań i notatek.</p>
+                <SignInButton mode="modal">
+                    <button className="encryption-submit" style={{ marginTop: '16px' }}>
+                        🔑 Zaloguj się
+                    </button>
+                </SignInButton>
+            </div>
+        );
+    }
+
+    // Logged in but no encryption key — show password dialog
+    if (!encryptionReady) {
+        return (
+            <EncryptionPasswordDialog
+                email={userId}
+                onKeyReady={() => setEncryptionReady(true)}
+            />
+        );
+    }
 
     return (
         <div className={`dashboard ${isSidebarOpen ? "" : "sidebar-collapsed"}`}>

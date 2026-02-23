@@ -16,6 +16,7 @@ import json
 import io
 import logging
 import os
+import re
 import struct
 import numpy as np
 import torch
@@ -34,8 +35,10 @@ WHISPER_COMPUTE = os.environ.get("WHISPER_COMPUTE", "float16")
 SAMPLE_RATE = 16000
 # Minimum audio duration to attempt transcription (seconds)
 MIN_AUDIO_SEC = 1.0
-# Buffer duration before processing (longer = more accurate)
-BUFFER_DURATION_SEC = 8.0
+# Buffer duration before processing (longer = more accurate, Whisper works best with 10-30s)
+BUFFER_DURATION_SEC = 12.0
+# Overlap duration to avoid cutting sentences at chunk boundaries
+OVERLAP_DURATION_SEC = 2.0
 # VAD settings
 VAD_THRESHOLD = 0.5
 
@@ -77,10 +80,10 @@ def has_speech(audio_float32: np.ndarray) -> bool:
 
 def transcribe(audio_float32: np.ndarray, previous_text: str = "") -> str:
     """Transcribe audio using Faster-Whisper. Zero-retention: audio stays in RAM only."""
-    # Use last ~200 chars of previous transcript as context
-    prompt = "Transkrypcja rozmowy po polsku."
+    # Better initial_prompt: hints Whisper to produce proper punctuation and capitalization
+    prompt = "Transkrypcja profesjonalnej rozmowy po polsku. Mówca używa poprawnej polszczyzny, terminologii branżowej. Interpunkcja i wielkie litery."
     if previous_text:
-        tail = previous_text[-200:].strip()
+        tail = previous_text[-300:].strip()
         prompt = f"{prompt} {tail}"
 
     segments, _ = whisper_model.transcribe(
@@ -89,12 +92,13 @@ def transcribe(audio_float32: np.ndarray, previous_text: str = "") -> str:
         initial_prompt=prompt,
         temperature=0.0,
         beam_size=5,
+        condition_on_previous_text=True,
         vad_filter=True,
         vad_parameters=dict(
             threshold=VAD_THRESHOLD,
             min_speech_duration_ms=250,
-            min_silence_duration_ms=500,
-            speech_pad_ms=300,
+            min_silence_duration_ms=800,   # Less aggressive silence cut — preserves pauses mid-sentence
+            speech_pad_ms=400,             # Captures word beginnings/endings better
         ),
     )
     text = " ".join(seg.text.strip() for seg in segments)
@@ -124,6 +128,39 @@ def is_hallucination(text: str) -> bool:
     return lower in HALLUCINATION_PATTERNS
 
 
+# ── Regex post-processing (no LLM needed) ────────────────────────────
+FILLER_PATTERNS = [
+    r'\b(no|noo|nooo)\b(?![\w-])',
+    r'\b(znaczy)\b',
+    r'\b(wiesz)\b',
+    r'\b(tak jakby)\b',
+    r'\b(ee+|yyy+|hmm+|aaa+|eee+)\b',
+]
+
+
+def clean_transcript(text: str) -> str:
+    """Basic regex cleanup: remove filler words, repeated words, fix capitalization."""
+    if not text:
+        return text
+    # Remove filler words
+    for pattern in FILLER_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    # Remove repeated words: "to to to" → "to"
+    text = re.sub(r'\b(\w+)(\s+\1){1,}\b', r'\1', text, flags=re.IGNORECASE)
+    # Clean up multiple spaces / commas
+    text = re.sub(r'\s*,\s*,', ',', text)
+    text = re.sub(r'\s{2,}', ' ', text).strip()
+    # Capitalize first letter after period
+    text = re.sub(r'\.\s+([a-ząćęłńóśźż])', lambda m: '. ' + m.group(1).upper(), text)
+    # Ensure first letter is capitalized
+    if text:
+        text = text[0].upper() + text[1:]
+    # Ensure ends with period
+    if text and text[-1] not in '.!?':
+        text += '.'
+    return text
+
+
 # ── WebSocket handler ────────────────────────────────────────────────
 
 async def handle_client(websocket):
@@ -145,6 +182,7 @@ async def handle_client(websocket):
                         audio_float = int16_to_float32(bytes(audio_buffer))
                         if len(audio_float) / SAMPLE_RATE >= MIN_AUDIO_SEC:
                             text = transcribe(audio_float, previous_text=full_transcript)
+                            text = clean_transcript(text)
                             if text and not is_hallucination(text):
                                 full_transcript += (" " + text) if full_transcript else text
                         # ZERO-RETENTION: clear audio
@@ -163,7 +201,7 @@ async def handle_client(websocket):
             audio_buffer.extend(message)
             chunk_count += 1
 
-            # Process when we have enough audio (~5 seconds for accuracy)
+            # Process when we have enough audio
             buffer_duration = len(audio_buffer) / 2 / SAMPLE_RATE  # Int16 = 2 bytes per sample
             if buffer_duration >= BUFFER_DURATION_SEC:
                 audio_float = int16_to_float32(bytes(audio_buffer))
@@ -171,6 +209,7 @@ async def handle_client(websocket):
                 # Transcribe (faster-whisper's built-in VAD handles silence)
                 if len(audio_float) / SAMPLE_RATE >= MIN_AUDIO_SEC:
                     text = transcribe(audio_float, previous_text=full_transcript)
+                    text = clean_transcript(text)
                     if text and not is_hallucination(text):
                         full_transcript += (" " + text) if full_transcript else text
                         await websocket.send(json.dumps({
@@ -179,8 +218,12 @@ async def handle_client(websocket):
                         }))
                         logger.info(f"[{client_id}] Chunk {chunk_count}: \"{text[:60]}...\"")
 
-                # ZERO-RETENTION: clear audio from RAM
-                audio_buffer.clear()
+                # ZERO-RETENTION: keep overlap, clear rest from RAM
+                overlap_bytes = int(OVERLAP_DURATION_SEC * SAMPLE_RATE * 2)  # 2 bytes per Int16 sample
+                if len(audio_buffer) > overlap_bytes:
+                    audio_buffer = bytearray(audio_buffer[-overlap_bytes:])
+                else:
+                    audio_buffer.clear()
                 del audio_float
 
     except websockets.exceptions.ConnectionClosed:

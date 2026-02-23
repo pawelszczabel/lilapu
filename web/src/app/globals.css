@@ -2324,3 +2324,110 @@ textarea:focus {
     }
   }
 }
+
+/* ============ Encryption Password Dialog ============ */
+.encryption-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 11, 0.92);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4);
+}
+
+.encryption-dialog {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: var(--space-6);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.encryption-dialog-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-3);
+}
+
+.encryption-dialog h2 {
+  color: var(--text);
+  margin-bottom: var(--space-2);
+  font-size: 1.4rem;
+}
+
+.encryption-dialog-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-2);
+}
+
+.encryption-dialog-hint {
+  color: var(--accent);
+  font-size: 0.8rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.8;
+}
+
+.encryption-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  margin-bottom: var(--space-2);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.encryption-input:focus {
+  border-color: var(--accent);
+}
+
+.encryption-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.encryption-submit {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-2);
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.encryption-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.encryption-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.encryption-error {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  margin: var(--space-2) 0;
+}
+
+.encryption-dialog-footer {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: var(--space-4);
+  opacity: 0.6;
+}
