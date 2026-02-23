@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
-import { getOrCreateUserKey, encryptBlob, decryptBlob, exportUserKey, importUserKey, hasUserKey } from "../crypto";
+import { getSessionKeyOrThrow, encryptBlob, decryptBlob, encryptString } from "../crypto";
 
 interface RecordPanelProps {
     projectId: Id<"projects">;
@@ -101,7 +101,7 @@ function AudioPlayer({ audioStorageId }: { audioStorageId: Id<"_storage"> }) {
             const response = await fetch(audioUrl);
             const encryptedBlob = await response.blob();
 
-            const key = await getOrCreateUserKey();
+            const key = await getSessionKeyOrThrow();
             const decryptedBlob = await decryptBlob(key, encryptedBlob);
 
             const url = URL.createObjectURL(decryptedBlob);
@@ -210,11 +210,7 @@ export default function RecordPanel({
     const [isSaving, setIsSaving] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
 
-    // Key management UI
-    const [showKeyDialog, setShowKeyDialog] = useState(false);
-    const [keyExport, setKeyExport] = useState("");
-    const [keyImportValue, setKeyImportValue] = useState("");
-    const [keyMessage, setKeyMessage] = useState("");
+
 
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -510,9 +506,12 @@ export default function RecordPanel({
         }
 
         const durationSeconds = seconds;
-        const content = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
+        const plaintextContent = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
+        const plaintextTitle = title || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`;
 
         try {
+            const key = await getSessionKeyOrThrow();
+
             // ── E2EE: Encrypt and upload audio ──
             let audioStorageId: Id<"_storage"> | undefined;
             if (allSamplesRef.current.length > 0) {
@@ -521,7 +520,6 @@ export default function RecordPanel({
                     const wavBlob = encodeWavFromFloat32(allSamples, SAMPLE_RATE);
 
                     // Encrypt in browser
-                    const key = await getOrCreateUserKey();
                     const encryptedBlob = await encryptBlob(key, wavBlob);
 
                     // Upload encrypted blob to Convex Storage
@@ -545,17 +543,23 @@ export default function RecordPanel({
                 ? new Set(diarizedText.match(/\[Mówca \d+\]/g) || []).size
                 : undefined;
 
+            // ── E2EE: Encrypt text fields ──
+            const encryptedContent = await encryptString(key, plaintextContent);
+            const encryptedTitle = await encryptString(key, plaintextTitle);
+            const encryptedDiarized = diarizedText ? await encryptString(key, diarizedText) : undefined;
+
             const transcriptionId = await createTranscription({
                 projectId,
-                title: title || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`,
-                content,
-                contentWithSpeakers: diarizedText,
+                title: encryptedTitle,
+                content: encryptedContent,
+                contentWithSpeakers: encryptedDiarized,
                 speakerCount: speakerCountFromText,
                 audioStorageId,
                 durationSeconds,
             });
 
-            indexTranscription({ transcriptionId }).catch((err: unknown) =>
+            // Pass plaintext to RAG indexer (server only uses it transiently)
+            indexTranscription({ transcriptionId, plaintextContent }).catch((err: unknown) =>
                 console.warn("RAG indexing skipped:", err)
             );
 
@@ -570,22 +574,7 @@ export default function RecordPanel({
         }
     }, [seconds, title, projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio, onRecordingComplete, processQueue]);
 
-    // ── Key management handlers ──
-    const handleExportKey = useCallback(async () => {
-        const b64 = await exportUserKey();
-        setKeyExport(b64);
-        setKeyMessage("");
-    }, []);
 
-    const handleImportKey = useCallback(async () => {
-        try {
-            await importUserKey(keyImportValue);
-            setKeyMessage("✅ Klucz zaimportowany pomyślnie");
-            setKeyImportValue("");
-        } catch {
-            setKeyMessage("❌ Nieprawidłowy klucz");
-        }
-    }, [keyImportValue]);
 
     return (
         <div className="record-panel">
@@ -739,73 +728,7 @@ export default function RecordPanel({
                 </div>
             )}
 
-            {/* ── Key Management ─── */}
-            {!isRecording && !isSaving && (
-                <div className="key-management">
-                    <button
-                        className="key-management-btn"
-                        onClick={() => setShowKeyDialog(!showKeyDialog)}
-                    >
-                        🔑 {showKeyDialog ? "Zamknij" : "Klucz szyfrowania"}
-                    </button>
 
-                    {showKeyDialog && (
-                        <div className="key-dialog">
-                            <p className="key-dialog-info">
-                                Twoje nagrania są szyfrowane kluczem E2EE. Wyeksportuj klucz aby zabezpieczyć się przed utratą danych.
-                            </p>
-
-                            <div className="key-dialog-section">
-                                <button className="key-dialog-action" onClick={handleExportKey}>
-                                    📤 Eksportuj klucz
-                                </button>
-                                {keyExport && (
-                                    <div className="key-export-value">
-                                        <code>{keyExport}</code>
-                                        <button
-                                            className="key-copy-btn"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(keyExport);
-                                                setKeyMessage("📋 Skopiowano do schowka");
-                                            }}
-                                        >
-                                            📋
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="key-dialog-section">
-                                <label className="key-dialog-label">📥 Importuj klucz</label>
-                                <div className="key-import-row">
-                                    <input
-                                        type="text"
-                                        className="key-import-input"
-                                        placeholder="Wklej klucz base64..."
-                                        value={keyImportValue}
-                                        onChange={(e) => setKeyImportValue(e.target.value)}
-                                    />
-                                    <button
-                                        className="key-dialog-action"
-                                        onClick={handleImportKey}
-                                        disabled={!keyImportValue.trim()}
-                                    >
-                                        Importuj
-                                    </button>
-                                </div>
-                            </div>
-
-                            {keyMessage && <p className="key-message">{keyMessage}</p>}
-
-                            {!hasUserKey() && (
-                                <p className="key-warning">
-                                    ⚠️ Brak klucza — zaimportuj klucz lub rozpocznij nagrywanie aby wygenerować nowy.
-                                </p>
-                            )}
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }

@@ -323,7 +323,7 @@ export declare const api: {
     indexTranscription: FunctionReference<
       "action",
       "public",
-      { transcriptionId: Id<"transcriptions"> },
+      { plaintextContent?: string; transcriptionId: Id<"transcriptions"> },
       number
     >;
     search: FunctionReference<
@@ -411,6 +411,20 @@ export declare const api: {
         speakerCount?: number;
         title?: string;
       }>
+    >;
+  };
+  userKeys: {
+    getVerificationToken: FunctionReference<
+      "query",
+      "public",
+      { userId: string },
+      string | null
+    >;
+    setVerificationToken: FunctionReference<
+      "mutation",
+      "public",
+      { userId: string; verificationToken: string },
+      null
     >;
   };
   waitlist: {

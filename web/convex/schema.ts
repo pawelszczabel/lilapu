@@ -83,6 +83,12 @@ export default defineSchema({
     format: v.optional(v.union(v.literal("md"), v.literal("txt"))),
   }).index("by_projectId", ["projectId"]),
 
+  // E2EE password verification tokens
+  userKeys: defineTable({
+    userId: v.string(),
+    verificationToken: v.string(),
+  }).index("by_userId", ["userId"]),
+
   // Waitlist (landing page signups)
   waitlist: defineTable({
     email: v.string(),

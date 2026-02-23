@@ -39,14 +39,14 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "chatMode"
-    | "projectId"
-    | "scopedConversationIds"
-    | "scopedNoteIds"
-    | "scopedTranscriptionIds"
-    | "title";
+      | "_creationTime"
+      | "_id"
+      | "chatMode"
+      | "projectId"
+      | "scopedConversationIds"
+      | "scopedNoteIds"
+      | "scopedTranscriptionIds"
+      | "title";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -66,13 +66,13 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "chunkIndex"
-    | "chunkText"
-    | "embedding"
-    | "projectId"
-    | "transcriptionId";
+      | "_creationTime"
+      | "_id"
+      | "chunkIndex"
+      | "chunkText"
+      | "embedding"
+      | "projectId"
+      | "transcriptionId";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -119,12 +119,12 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "content"
-    | "conversationId"
-    | "role"
-    | "sources";
+      | "_creationTime"
+      | "_id"
+      | "content"
+      | "conversationId"
+      | "role"
+      | "sources";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -143,12 +143,12 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "content"
-    | "format"
-    | "projectId"
-    | "title";
+      | "_creationTime"
+      | "_id"
+      | "content"
+      | "format"
+      | "projectId"
+      | "title";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -168,13 +168,13 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "archived"
-    | "description"
-    | "folderId"
-    | "name"
-    | "userId";
+      | "_creationTime"
+      | "_id"
+      | "archived"
+      | "description"
+      | "folderId"
+      | "name"
+      | "userId";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
@@ -198,21 +198,37 @@ export type DataModel = {
       _creationTime: number;
     };
     fieldPaths:
-    | "_creationTime"
-    | "_id"
-    | "audioStorageId"
-    | "blockchainTxHash"
-    | "blockchainVerified"
-    | "content"
-    | "contentWithSpeakers"
-    | "durationSeconds"
-    | "projectId"
-    | "speakerCount"
-    | "title";
+      | "_creationTime"
+      | "_id"
+      | "audioStorageId"
+      | "blockchainTxHash"
+      | "blockchainVerified"
+      | "content"
+      | "contentWithSpeakers"
+      | "durationSeconds"
+      | "projectId"
+      | "speakerCount"
+      | "title";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];
       by_projectId: ["projectId", "_creationTime"];
+    };
+    searchIndexes: {};
+    vectorIndexes: {};
+  };
+  userKeys: {
+    document: {
+      userId: string;
+      verificationToken: string;
+      _id: Id<"userKeys">;
+      _creationTime: number;
+    };
+    fieldPaths: "_creationTime" | "_id" | "userId" | "verificationToken";
+    indexes: {
+      by_id: ["_id"];
+      by_creation_time: ["_creationTime"];
+      by_userId: ["userId", "_creationTime"];
     };
     searchIndexes: {};
     vectorIndexes: {};

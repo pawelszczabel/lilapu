@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
-import { getOrCreateUserKey, decryptString } from "../crypto";
+import { getSessionKeyOrThrow, decryptString, encryptString } from "../crypto";
 
 interface ChatPanelProps {
     projectId: Id<"projects">;
@@ -69,6 +69,71 @@ export default function ChatPanel({
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // ── E2EE: Decrypt messages for display ──
+    const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!messages || messages.length === 0) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const key = await getSessionKeyOrThrow();
+                const newMap: Record<string, string> = {};
+
+                for (const msg of messages) {
+                    try {
+                        newMap[msg._id] = await decryptString(key, msg.content);
+                    } catch {
+                        // Legacy plaintext
+                        newMap[msg._id] = msg.content;
+                    }
+                }
+
+                if (!cancelled) setDecryptedMessages(newMap);
+            } catch {
+                // No key — show as-is
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [messages]);
+
+    // ── E2EE: Decrypt scoped item titles ──
+    const [decryptedTitles, setDecryptedTitles] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        const items = [
+            ...(transcriptions || []).map(t => ({ id: t._id, title: t.title })),
+            ...(notes || []).map(n => ({ id: n._id, title: n.title })),
+            ...(conversations || []).map(c => ({ id: c._id, title: c.title })),
+        ];
+        if (items.length === 0) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const key = await getSessionKeyOrThrow();
+                const newMap: Record<string, string> = {};
+
+                for (const item of items) {
+                    if (!item.title) continue;
+                    try {
+                        newMap[item.id] = await decryptString(key, item.title);
+                    } catch {
+                        newMap[item.id] = item.title;
+                    }
+                }
+
+                if (!cancelled) setDecryptedTitles(newMap);
+            } catch {
+                // No key
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [transcriptions, notes, conversations]);
+
     // Handle initialConversationId — open existing conversation
     useEffect(() => {
         if (!initialConversationId) return;
@@ -113,26 +178,26 @@ export default function ChatPanel({
         if (transcriptions) {
             for (const id of scopedTranscriptionIds) {
                 const t = transcriptions.find((tr) => tr._id === id);
-                if (t) items.push({ id, type: "transcription", title: t.title ?? "Bez tytułu", icon: "📝" });
+                if (t) items.push({ id, type: "transcription", title: decryptedTitles[id] || t.title || "Bez tytułu", icon: "📝" });
             }
         }
 
         if (notes) {
             for (const id of scopedNoteIds) {
                 const n = notes.find((note) => note._id === id);
-                if (n) items.push({ id, type: "note", title: n.title, icon: "📓" });
+                if (n) items.push({ id, type: "note", title: decryptedTitles[id] || n.title, icon: "📓" });
             }
         }
 
         if (conversations) {
             for (const id of scopedConversationIds) {
                 const c = conversations.find((conv) => conv._id === id);
-                if (c) items.push({ id, type: "conversation", title: c.title ?? "Rozmowa", icon: "💬" });
+                if (c) items.push({ id, type: "conversation", title: decryptedTitles[id] || c.title || "Rozmowa", icon: "💬" });
             }
         }
 
         return items;
-    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds]);
+    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds, decryptedTitles]);
 
     // @mention options — 3 categories
     const mentionOptions = useMemo((): MentionOption[] => {
@@ -143,7 +208,7 @@ export default function ChatPanel({
         if (transcriptions) {
             for (const t of transcriptions) {
                 if (scopedTranscriptionIds.includes(t._id)) continue;
-                const title = t.title ?? "Bez tytułu";
+                const title = decryptedTitles[t._id] || t.title || "Bez tytułu";
                 if (filter && !title.toLowerCase().includes(filter)) continue;
                 options.push({ id: t._id, type: "transcription", title, icon: "📝" });
             }
@@ -153,8 +218,9 @@ export default function ChatPanel({
         if (notes) {
             for (const n of notes) {
                 if (scopedNoteIds.includes(n._id)) continue;
-                if (filter && !n.title.toLowerCase().includes(filter)) continue;
-                options.push({ id: n._id, type: "note", title: n.title, icon: "📓" });
+                const title = decryptedTitles[n._id] || n.title;
+                if (filter && !title.toLowerCase().includes(filter)) continue;
+                options.push({ id: n._id, type: "note", title, icon: "📓" });
             }
         }
 
@@ -163,14 +229,14 @@ export default function ChatPanel({
             for (const c of conversations) {
                 if (c._id === activeConversationId) continue;
                 if (scopedConversationIds.includes(c._id)) continue;
-                const title = c.title ?? "Rozmowa";
+                const title = decryptedTitles[c._id] || c.title || "Rozmowa";
                 if (filter && !title.toLowerCase().includes(filter)) continue;
                 options.push({ id: c._id, type: "conversation", title, icon: "💬" });
             }
         }
 
         return options.slice(0, 12);
-    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds, activeConversationId, mentionFilter]);
+    }, [transcriptions, notes, conversations, scopedTranscriptionIds, scopedNoteIds, scopedConversationIds, activeConversationId, mentionFilter, decryptedTitles]);
 
     // Group mention options by type for display
     const groupedMentions = useMemo(() => {
@@ -276,7 +342,11 @@ export default function ChatPanel({
         setIsLoading(true);
 
         try {
-            await sendMessage({ conversationId: convId, content: userMsg });
+            const key = await getSessionKeyOrThrow();
+
+            // E2EE: encrypt user message before saving
+            const encryptedUserMsg = await encryptString(key, userMsg);
+            await sendMessage({ conversationId: convId, content: encryptedUserMsg });
 
             // ── Build context ──
             let context = "";
@@ -325,7 +395,6 @@ export default function ChatPanel({
 
                 // 2. Notes context (E2EE — decrypt client-side)
                 if (currentScopedNotes.length > 0 && notes) {
-                    const key = await getOrCreateUserKey();
                     const noteTexts: string[] = [];
 
                     for (const noteId of currentScopedNotes) {
@@ -334,7 +403,8 @@ export default function ChatPanel({
 
                         try {
                             const decrypted = await decryptString(key, note.content);
-                            noteTexts.push(`[Notatka: "${note.title}"]:\n${decrypted}`);
+                            const noteTitle = decryptedTitles[noteId] || note.title;
+                            noteTexts.push(`[Notatka: "${noteTitle}"]:\n${decrypted}`);
                         } catch {
                             // Legacy unencrypted note
                             noteTexts.push(`[Notatka: "${note.title}"]:\n${note.content}`);
@@ -420,7 +490,7 @@ export default function ChatPanel({
 
             await addAssistant({
                 conversationId: convId,
-                content: response,
+                content: await encryptString(key, response),
                 sources: sources.length > 0 ? sources : undefined,
             });
         } catch (err) {
@@ -519,7 +589,7 @@ export default function ChatPanel({
                             onClick={() => setActiveConversationId(conv._id)}
                         >
                             {conv.chatMode === "transcription" ? "📎" : "💬"}{" "}
-                            {conv.title || "Nowa rozmowa"}
+                            {decryptedTitles[conv._id] || conv.title || "Nowa rozmowa"}
                         </div>
                     ))}
                 </div>
@@ -564,7 +634,7 @@ export default function ChatPanel({
                                 }`}
                         >
                             <div className="chat-message-content">
-                                {msg.role === "assistant" ? renderChatMarkdown(msg.content) : msg.content}
+                                {msg.role === "assistant" ? renderChatMarkdown(decryptedMessages[msg._id] || msg.content) : (decryptedMessages[msg._id] || msg.content)}
                             </div>
                             {msg.sources && msg.sources.length > 0 && (
                                 <div className="chat-message-sources">

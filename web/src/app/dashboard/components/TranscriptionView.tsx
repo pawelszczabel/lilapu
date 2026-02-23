@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Id } from "@convex/_generated/dataModel";
+import { getSessionKeyOrThrow, decryptString } from "../crypto";
 
 interface TranscriptionData {
     _id: Id<"transcriptions">;
@@ -25,6 +26,50 @@ export default function TranscriptionView({
     const [searchQuery, setSearchQuery] = useState("");
     const [copied, setCopied] = useState(false);
 
+    // E2EE: Decrypted content
+    const [decryptedTitle, setDecryptedTitle] = useState(transcription.title || "Nagranie bez tytułu");
+    const [decryptedContent, setDecryptedContent] = useState("");
+    const [isDecrypting, setIsDecrypting] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        setIsDecrypting(true);
+
+        (async () => {
+            try {
+                const key = await getSessionKeyOrThrow();
+
+                let title = transcription.title || "Nagranie bez tytułu";
+                let content = transcription.content;
+
+                try {
+                    title = await decryptString(key, transcription.title || "");
+                } catch {
+                    // Legacy plaintext
+                }
+                try {
+                    content = await decryptString(key, transcription.content);
+                } catch {
+                    // Legacy plaintext
+                }
+
+                if (!cancelled) {
+                    setDecryptedTitle(title);
+                    setDecryptedContent(content);
+                }
+            } catch {
+                // No encryption key — show as-is
+                if (!cancelled) {
+                    setDecryptedContent(transcription.content);
+                }
+            } finally {
+                if (!cancelled) setIsDecrypting(false);
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [transcription]);
+
     const date = new Date(transcription._creationTime);
     const dateStr = date.toLocaleDateString("pl-PL", {
         day: "numeric",
@@ -44,8 +89,8 @@ export default function TranscriptionView({
 
     // Split content into paragraphs
     const paragraphs = useMemo(() => {
-        return transcription.content.split(/\n\n+/).filter((p) => p.trim());
-    }, [transcription.content]);
+        return decryptedContent.split(/\n\n+/).filter((p) => p.trim());
+    }, [decryptedContent]);
 
     // Highlight search matches
     const highlightText = (text: string) => {
@@ -66,26 +111,37 @@ export default function TranscriptionView({
     const matchCount = useMemo(() => {
         if (!searchQuery.trim()) return 0;
         const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-        return (transcription.content.match(regex) || []).length;
-    }, [searchQuery, transcription.content]);
+        return (decryptedContent.match(regex) || []).length;
+    }, [searchQuery, decryptedContent]);
 
     const handleCopy = async () => {
-        await navigator.clipboard.writeText(transcription.content);
+        await navigator.clipboard.writeText(decryptedContent);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     const handleExport = () => {
-        const blob = new Blob([transcription.content], { type: "text/plain;charset=utf-8" });
+        const blob = new Blob([decryptedContent], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${transcription.title || "transkrypcja"}_${dateStr}.txt`;
+        a.download = `${decryptedTitle || "transkrypcja"}_${dateStr}.txt`;
         a.click();
         URL.revokeObjectURL(url);
     };
 
-    const wordCount = transcription.content.split(/\s+/).length;
+    const wordCount = decryptedContent.split(/\s+/).filter(Boolean).length;
+
+    if (isDecrypting) {
+        return (
+            <div className="transcription-view">
+                <div className="empty-state">
+                    <div className="empty-state-icon">🔓</div>
+                    <p>Odszyfrowywanie transkrypcji...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="transcription-view">
@@ -120,7 +176,7 @@ export default function TranscriptionView({
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
                     </button>
                     <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-                        {transcription.title || "Nagranie bez tytułu"}
+                        {decryptedTitle}
                     </h2>
                     {transcription.blockchainVerified && (
                         <span className="transcription-card-badge" style={{ marginLeft: 'auto' }}>✅ Zabezpieczone</span>

@@ -67,11 +67,15 @@ async function generateEmbedding(text: string): Promise<number[]> {
 // ── Public Actions ──────────────────────────────────────────────────
 
 export const indexTranscription = action({
-    args: { transcriptionId: v.id("transcriptions") },
+    args: {
+        transcriptionId: v.id("transcriptions"),
+        plaintextContent: v.optional(v.string()),
+    },
     returns: v.number(),
     handler: async (ctx, args) => {
-        // Get content and projectId
-        const content = await ctx.runQuery(
+        // Use plaintext from client if provided (E2EE: content in DB is encrypted)
+        // Fall back to reading from DB for legacy unencrypted transcriptions
+        const content = args.plaintextContent || await ctx.runQuery(
             internal.ragHelpers.getTranscriptionContent,
             { transcriptionId: args.transcriptionId }
         );

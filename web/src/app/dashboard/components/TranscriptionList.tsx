@@ -5,7 +5,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import TranscriptionView from "./TranscriptionView";
-import { getOrCreateUserKey, encryptBlob } from "../crypto";
+import { getSessionKeyOrThrow, encryptBlob, encryptString, decryptString } from "../crypto";
 
 interface TranscriptionListProps {
     projectId: Id<"projects">;
@@ -152,12 +152,13 @@ export default function TranscriptionList({
             const wavBlob = encodeWavFromFloat32(samples, SAMPLE_RATE);
             const base64 = await blobToBase64(wavBlob);
             const transcriptText = await transcribeAudio({ audioBase64: base64 });
-            const content = transcriptText?.trim() || "[Transkrypcja niedostępna]";
+            const plaintextContent = transcriptText?.trim() || "[Transkrypcja niedostępna]";
 
             setUploadProgress("Szyfrowanie i zapis...");
+            const key = await getSessionKeyOrThrow();
+
             let audioStorageId: Id<"_storage"> | undefined;
             try {
-                const key = await getOrCreateUserKey();
                 const encryptedBlob = await encryptBlob(key, wavBlob);
                 const uploadUrl = await generateUploadUrl();
                 const uploadResponse = await fetch(uploadUrl, {
@@ -173,16 +174,22 @@ export default function TranscriptionList({
                 console.warn("Audio upload failed:", err);
             }
 
-            const fileName = file.name.replace(/\.[^.]+$/, "");
+            const plaintextTitle = file.name.replace(/\.[^.]+$/, "") || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`;
+
+            // E2EE: encrypt text fields
+            const encryptedContent = await encryptString(key, plaintextContent);
+            const encryptedTitle = await encryptString(key, plaintextTitle);
+
             const transcriptionId = await createTranscription({
                 projectId,
-                title: fileName || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`,
-                content,
+                title: encryptedTitle,
+                content: encryptedContent,
                 audioStorageId,
                 durationSeconds,
             });
 
-            indexTranscription({ transcriptionId }).catch((err: unknown) =>
+            // Pass plaintext to RAG indexer
+            indexTranscription({ transcriptionId, plaintextContent }).catch((err: unknown) =>
                 console.warn("RAG indexing skipped:", err)
             );
         } catch (err) {
@@ -193,6 +200,46 @@ export default function TranscriptionList({
             setUploadProgress("");
         }
     }, [projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio]);
+
+    // ── Decrypt transcription titles and content for display ──
+    const [decryptedMap, setDecryptedMap] = useState<Record<string, { title: string; content: string }>>({});
+
+    useEffect(() => {
+        if (!transcriptions || transcriptions.length === 0) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const key = await getSessionKeyOrThrow();
+                const newMap: Record<string, { title: string; content: string }> = {};
+
+                for (const t of transcriptions) {
+                    let title = t.title || "Nagranie bez tytułu";
+                    let content = t.content;
+
+                    // Try to decrypt (legacy data will fail and fall through)
+                    try {
+                        title = await decryptString(key, t.title || "");
+                    } catch {
+                        // Legacy plaintext — use as-is
+                    }
+                    try {
+                        content = await decryptString(key, t.content);
+                    } catch {
+                        // Legacy plaintext
+                    }
+
+                    newMap[t._id] = { title, content };
+                }
+
+                if (!cancelled) setDecryptedMap(newMap);
+            } catch {
+                // No encryption key — show encrypted text as-is
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [transcriptions]);
 
     if (!transcriptions) {
         return (
@@ -298,7 +345,7 @@ export default function TranscriptionList({
                         >
                             <div className="transcription-card-header">
                                 <span className="transcription-card-title" style={{ fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                    {t.title || "Nagranie bez tytułu"}
+                                    {decryptedMap[t._id]?.title || t.title || "Nagranie bez tytułu"}
                                 </span>
                                 {t.blockchainVerified && (
                                     <span className="transcription-card-badge">✅ Zabezpieczone</span>
@@ -329,7 +376,7 @@ export default function TranscriptionList({
                                 color: 'var(--text-secondary)',
                                 lineHeight: 1.6
                             }}>
-                                {t.content}
+                                {decryptedMap[t._id]?.content || t.content}
                             </div>
                         </div>
                         {(onStartChat || onOpenExistingChat) && (

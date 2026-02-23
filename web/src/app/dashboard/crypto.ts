@@ -107,39 +107,41 @@ export function clearSessionKey(): void {
     sessionStorage.removeItem(SESSION_KEY);
 }
 
-// ── Legacy compatibility: getOrCreateUserKey now returns session key ─
+// ── Session key helper (throws if not available) ────────────────────
 
 /**
- * @deprecated — Use getSessionKey() or deriveKeyFromPassword() instead.
- * Kept for backward compatibility during migration.
+ * Get the current session key, throwing if not available.
+ * Use this in components that require encryption.
  */
-export async function getOrCreateUserKey(): Promise<CryptoKey> {
+export async function getSessionKeyOrThrow(): Promise<CryptoKey> {
     const key = await getSessionKey();
     if (key) return key;
     throw new Error("NO_ENCRYPTION_KEY");
 }
 
+// ── Password Verification ───────────────────────────────────────────
+
+const VERIFICATION_PLAINTEXT = "LILAPU_E2EE_OK";
+
 /**
- * @deprecated — No longer needed with password-derived keys.
+ * Generate a verification token from a key.
+ * Store this token in the DB to later verify the password is correct.
  */
-export async function exportUserKey(): Promise<string> {
-    const key = await getOrCreateUserKey();
-    return exportKeyToBase64(key);
+export async function generateVerificationToken(key: CryptoKey): Promise<string> {
+    return encryptString(key, VERIFICATION_PLAINTEXT);
 }
 
 /**
- * @deprecated — No longer needed with password-derived keys.
+ * Verify that a key matches a previously generated verification token.
+ * Returns true if the key decrypts the token to the expected plaintext.
  */
-export async function importUserKey(base64: string): Promise<void> {
-    await importKeyFromBase64(base64.trim());
-    sessionStorage.setItem(SESSION_KEY, base64.trim());
-}
-
-/**
- * @deprecated — Use hasSessionKey() instead.
- */
-export function hasUserKey(): boolean {
-    return hasSessionKey();
+export async function verifyKey(key: CryptoKey, token: string): Promise<boolean> {
+    try {
+        const decrypted = await decryptString(key, token);
+        return decrypted === VERIFICATION_PLAINTEXT;
+    } catch {
+        return false;
+    }
 }
 
 // ── Encrypt / Decrypt ───────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
-import { getOrCreateUserKey, encryptString, decryptString } from "../crypto";
+import { getSessionKeyOrThrow, encryptString, decryptString } from "../crypto";
 
 interface NotesPanelProps {
     projectId: Id<"projects">;
@@ -49,6 +49,35 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const removeNote = useMutation(api.notes.remove);
     const transcribeAudio = useAction(api.ai.transcribe);
 
+    // E2EE: Decrypt note titles for sidebar display
+    const [decryptedTitles, setDecryptedTitles] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!notes || notes.length === 0) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const key = await getSessionKeyOrThrow();
+                const newMap: Record<string, string> = {};
+
+                for (const note of notes) {
+                    try {
+                        newMap[note._id] = await decryptString(key, note.title);
+                    } catch {
+                        newMap[note._id] = note.title;
+                    }
+                }
+
+                if (!cancelled) setDecryptedTitles(newMap);
+            } catch {
+                // No key
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [notes]);
+
     // ── Decrypt active note content ──
     useEffect(() => {
         if (!activeNote) {
@@ -68,14 +97,24 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
 
         (async () => {
             try {
-                const key = await getOrCreateUserKey();
+                const key = await getSessionKeyOrThrow();
                 const plaintext = await decryptString(key, activeNote.content);
-                if (!cancelled) setDecryptedContent(plaintext);
+                if (!cancelled) {
+                    setDecryptedContent(plaintext);
+                    // Also decrypt title for editing
+                    try {
+                        const decTitle = await decryptString(key, activeNote.title);
+                        setEditTitle(decTitle);
+                    } catch {
+                        setEditTitle(activeNote.title);
+                    }
+                }
             } catch {
                 // Content might be unencrypted (legacy) — show as-is
                 if (!cancelled) {
                     setDecryptedContent(activeNote.content);
-                    setDecryptError(null); // Don't show error for legacy notes
+                    setEditTitle(activeNote.title);
+                    setDecryptError(null);
                 }
             } finally {
                 if (!cancelled) setIsDecrypting(false);
@@ -89,12 +128,13 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const handleCreate = useCallback(async () => {
         if (!newTitle.trim()) return;
 
-        const key = await getOrCreateUserKey();
+        const key = await getSessionKeyOrThrow();
         const encryptedContent = await encryptString(key, "");
+        const encryptedTitle = await encryptString(key, newTitle.trim());
 
         const id = await createNote({
             projectId,
-            title: newTitle.trim(),
+            title: encryptedTitle,
             content: encryptedContent,
             format: "md",
         });
@@ -117,13 +157,14 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const handleSave = useCallback(async () => {
         if (!activeNoteId) return;
 
-        // Encrypt content before saving
-        const key = await getOrCreateUserKey();
+        // Encrypt content and title before saving
+        const key = await getSessionKeyOrThrow();
         const encryptedContent = await encryptString(key, editContent);
+        const encryptedTitle = await encryptString(key, editTitle.trim() || "Bez tytułu");
 
         await updateNote({
             noteId: activeNoteId,
-            title: editTitle.trim() || "Bez tytułu",
+            title: encryptedTitle,
             content: encryptedContent,
         });
         setIsEditing(false);
@@ -168,13 +209,14 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             if (ext === "md") format = "md";
         }
 
-        // Encrypt content before saving
-        const key = await getOrCreateUserKey();
+        // Encrypt content and title before saving
+        const key = await getSessionKeyOrThrow();
         const encryptedContent = await encryptString(key, content);
+        const encryptedTitle = await encryptString(key, title);
 
         const id = await createNote({
             projectId,
-            title,
+            title: encryptedTitle,
             content: encryptedContent,
             format,
         });
@@ -470,7 +512,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                 setIsEditing(false);
                             }}
                         >
-                            📝 {note.title}
+                            📝 {decryptedTitles[note._id] || note.title}
                         </div>
                     ))}
                 </div>
