@@ -2037,6 +2037,51 @@ textarea:focus {
   border-top: 1px solid var(--border);
 }
 
+/* Waitlist Modal */
+.waitlist-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 11, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--space-4);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.waitlist-modal {
+  position: relative;
+  max-width: 460px;
+  width: 100%;
+  animation: slideUp 0.25s ease-out;
+}
+
+.waitlist-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.waitlist-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
 /* ============ Responsive ============ */
 /* ============ Tablet (768px — 1024px) ============ */
 @media (max-width: 1024px) {

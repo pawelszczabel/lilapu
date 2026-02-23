@@ -53,6 +53,10 @@ export default function LandingPage() {
             ✨ Utwórz konto
           </button>
         </SignUpButton>
+
+        <a href="/waitlist" className="btn btn-secondary btn-full" style={{ marginTop: '12px' }}>
+          📩 Dołącz do waitlisty
+        </a>
       </div>
     </div>
   );

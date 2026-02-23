@@ -1,38 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@convex/_generated/api";
+import { Waitlist } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function LandingPage() {
-    const [email, setEmail] = useState("");
-    const [status, setStatus] = useState<"idle" | "success" | "exists" | "error">(
-        "idle"
-    );
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const joinWaitlist = useMutation(api.waitlist.join);
-    const waitlistCount = useQuery(api.waitlist.count);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!email.trim() || isSubmitting) return;
-
-        setIsSubmitting(true);
-        try {
-            const result = await joinWaitlist({ email: email.trim(), source: "landing" });
-            setStatus(result === "ok" ? "success" : "exists");
-            if (result === "ok") setEmail("");
-        } catch {
-            setStatus("error");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const [showWaitlist, setShowWaitlist] = useState(false);
 
     return (
         <div className="landing">
+            {/* Waitlist Modal Overlay */}
+            {showWaitlist && (
+                <div
+                    className="waitlist-modal-overlay"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setShowWaitlist(false);
+                    }}
+                >
+                    <div className="waitlist-modal">
+                        <button
+                            className="waitlist-modal-close"
+                            onClick={() => setShowWaitlist(false)}
+                            aria-label="Zamknij"
+                        >
+                            ✕
+                        </button>
+                        <Waitlist
+                            afterJoinWaitlistUrl="/landing"
+                            signInUrl="/"
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* Hero */}
             <section className="landing-hero">
                 <div className="landing-hero-badge">🔒 100% Prywatność — Zero Chmury</div>
@@ -49,26 +49,12 @@ export default function LandingPage() {
                     <Link href="/dashboard" className="btn btn-primary">
                         ✨ Wypróbuj za darmo
                     </Link>
-                    <a href="#waitlist" className="btn btn-secondary">
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setShowWaitlist(true)}
+                    >
                         📩 Dołącz do waitlisty
-                    </a>
-                </div>
-
-                <div className="landing-stats">
-                    <div className="landing-stat">
-                        <div className="landing-stat-value">$0</div>
-                        <div className="landing-stat-label">koszt infrastruktury</div>
-                    </div>
-                    <div className="landing-stat">
-                        <div className="landing-stat-value">100%</div>
-                        <div className="landing-stat-label">lokalne AI</div>
-                    </div>
-                    <div className="landing-stat">
-                        <div className="landing-stat-value">
-                            {waitlistCount !== undefined ? waitlistCount + "+" : "..."}
-                        </div>
-                        <div className="landing-stat-label">osób na waitliście</div>
-                    </div>
+                    </button>
                 </div>
             </section>
 
@@ -138,40 +124,19 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Waitlist */}
+            {/* Waitlist CTA section */}
             <section id="waitlist" className="landing-waitlist">
                 <h2>Zapisz się na waitlistę</h2>
                 <p>
                     Bądź pierwszym który wypróbuje Lilapu. Otrzymasz wczesny dostęp
                     i ekskluzywne aktualizacje.
                 </p>
-
-                {status === "success" ? (
-                    <div className="waitlist-success">
-                        ✅ Dziękuję! Jesteś na liście. Odezwiemy się wkrótce.
-                    </div>
-                ) : status === "exists" ? (
-                    <div className="waitlist-success" style={{ color: "var(--accent)" }}>
-                        💜 Już jesteś na liście! Dziękuję za cierpliwość.
-                    </div>
-                ) : (
-                    <form className="waitlist-form" onSubmit={handleSubmit}>
-                        <input
-                            type="email"
-                            placeholder="twój@email.pl"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "⏳" : "Dołącz"}
-                        </button>
-                    </form>
-                )}
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setShowWaitlist(true)}
+                >
+                    📩 Dołącz do waitlisty
+                </button>
             </section>
 
             {/* Footer */}
