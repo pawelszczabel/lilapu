@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import struct
+import tempfile
 import numpy as np
 import torch
 import websockets
@@ -41,6 +42,8 @@ BUFFER_DURATION_SEC = 12.0
 OVERLAP_DURATION_SEC = 2.0
 # VAD settings
 VAD_THRESHOLD = 0.5
+# HuggingFace token for pyannote (optional)
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
 # ── Load models ──────────────────────────────────────────────────────
 
@@ -60,6 +63,24 @@ vad_model, vad_utils = torch.hub.load(
 )
 (get_speech_timestamps, _, _, _, _) = vad_utils
 logger.info("Silero-VAD loaded!")
+
+# Load pyannote diarization pipeline (optional — requires HF_TOKEN)
+diarize_pipeline = None
+if HF_TOKEN:
+    try:
+        from pyannote.audio import Pipeline
+        logger.info("Loading pyannote diarization pipeline...")
+        diarize_pipeline = Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            use_auth_token=HF_TOKEN,
+        )
+        if torch.cuda.is_available():
+            diarize_pipeline.to(torch.device("cuda"))
+        logger.info("pyannote diarization pipeline loaded!")
+    except Exception as e:
+        logger.warning(f"Failed to load pyannote pipeline: {e}. Diarization disabled.")
+else:
+    logger.info("HF_TOKEN not set — diarization disabled.")
 
 
 def int16_to_float32(audio_bytes: bytes) -> np.ndarray:
@@ -161,6 +182,115 @@ def clean_transcript(text: str) -> str:
     return text
 
 
+# ── Speaker Diarization ──────────────────────────────────────────────
+
+def diarize(audio_float32: np.ndarray) -> list:
+    """Run pyannote diarization. Returns list of (start, end, speaker_label)."""
+    if diarize_pipeline is None:
+        return []
+    
+    import soundfile as sf
+    # pyannote needs a file-like object or path
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
+        sf.write(tmp.name, audio_float32, SAMPLE_RATE)
+        diarization = diarize_pipeline(tmp.name)
+    
+    segments = []
+    for turn, _, speaker in diarization.itertracks(yield_label=True):
+        segments.append((turn.start, turn.end, speaker))
+    return segments
+
+
+def transcribe_with_speakers(audio_float32: np.ndarray, previous_text: str = "") -> str:
+    """Transcribe with word timestamps + align with diarization segments."""
+    # 1. Get diarization segments
+    speaker_segments = diarize(audio_float32)
+    if not speaker_segments:
+        # Fallback: no diarization available
+        text = transcribe(audio_float32, previous_text)
+        return clean_transcript(text)
+    
+    # 2. Transcribe with word timestamps
+    prompt = "Transkrypcja profesjonalnej rozmowy po polsku. Mówca używa poprawnej polszczyzny, terminologii branżowej. Interpunkcja i wielkie litery."
+    if previous_text:
+        tail = previous_text[-300:].strip()
+        prompt = f"{prompt} {tail}"
+    
+    segments, _ = whisper_model.transcribe(
+        audio_float32,
+        language="pl",
+        initial_prompt=prompt,
+        temperature=0.0,
+        beam_size=5,
+        condition_on_previous_text=True,
+        word_timestamps=True,
+        vad_filter=True,
+        vad_parameters=dict(
+            threshold=VAD_THRESHOLD,
+            min_speech_duration_ms=250,
+            min_silence_duration_ms=800,
+            speech_pad_ms=400,
+        ),
+    )
+    
+    # 3. Collect words with timestamps
+    words_with_time = []
+    for seg in segments:
+        if seg.words:
+            for w in seg.words:
+                words_with_time.append((w.start, w.end, w.word.strip()))
+    
+    if not words_with_time:
+        return ""
+    
+    # 4. Assign each word to a speaker based on overlap
+    def find_speaker(word_start, word_end):
+        best_speaker = "SPEAKER_00"
+        best_overlap = 0
+        for seg_start, seg_end, speaker in speaker_segments:
+            overlap = min(word_end, seg_end) - max(word_start, seg_start)
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_speaker = speaker
+        return best_speaker
+    
+    # 5. Build speaker-labeled output
+    # Map pyannote labels (SPEAKER_00, SPEAKER_01) to friendly names
+    speaker_map = {}
+    speaker_counter = 1
+    
+    result_parts = []
+    current_speaker = None
+    current_text = []
+    
+    for w_start, w_end, word in words_with_time:
+        speaker = find_speaker(w_start, w_end)
+        if speaker not in speaker_map:
+            speaker_map[speaker] = f"Mówca {speaker_counter}"
+            speaker_counter += 1
+        
+        if speaker != current_speaker:
+            # Flush previous speaker's text
+            if current_text and current_speaker is not None:
+                text_block = clean_transcript(" ".join(current_text))
+                if text_block:
+                    label = speaker_map[current_speaker]
+                    result_parts.append(f"[{label}]: {text_block}")
+            current_speaker = speaker
+            current_text = [word]
+        else:
+            current_text.append(word)
+    
+    # Flush last speaker
+    if current_text and current_speaker is not None:
+        text_block = clean_transcript(" ".join(current_text))
+        if text_block:
+            label = speaker_map[current_speaker]
+            result_parts.append(f"[{label}]: {text_block}")
+    
+    return "\n".join(result_parts)
+
+
 # ── WebSocket handler ────────────────────────────────────────────────
 
 async def handle_client(websocket):
@@ -171,11 +301,24 @@ async def handle_client(websocket):
     audio_buffer = bytearray()
     full_transcript = ""
     chunk_count = 0
+    diarize_mode = False  # Client can request diarization via {"mode": "diarize"}
+    all_audio_for_diarize = bytearray()  # Keep full audio for post-hoc diarization
 
     try:
         async for message in websocket:
             # Text message = control command
             if isinstance(message, str):
+                # Check for mode command
+                try:
+                    cmd = json.loads(message)
+                    if cmd.get("mode") == "diarize":
+                        diarize_mode = True
+                        logger.info(f"[{client_id}] Diarization mode enabled")
+                        await websocket.send(json.dumps({"status": "diarize_enabled"}))
+                        continue
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+                
                 if message.strip().upper() == "STOP":
                     # Final transcription of any remaining audio
                     if len(audio_buffer) > 0:
@@ -189,8 +332,20 @@ async def handle_client(websocket):
                         audio_buffer.clear()
                         del audio_float
 
+                    # If diarize mode: run diarization on full audio
+                    diarized_transcript = ""
+                    if diarize_mode and len(all_audio_for_diarize) > 0:
+                        logger.info(f"[{client_id}] Running post-hoc diarization...")
+                        full_audio = int16_to_float32(bytes(all_audio_for_diarize))
+                        diarized_transcript = transcribe_with_speakers(full_audio)
+                        # ZERO-RETENTION
+                        all_audio_for_diarize.clear()
+                        del full_audio
+                        logger.info(f"[{client_id}] Diarization complete")
+
                     await websocket.send(json.dumps({
                         "text": full_transcript.strip(),
+                        "diarized_text": diarized_transcript if diarize_mode else None,
                         "is_final": True,
                     }))
                     logger.info(f"[{client_id}] Final transcript sent ({len(full_transcript)} chars)")
@@ -199,6 +354,8 @@ async def handle_client(websocket):
 
             # Binary message = audio chunk (Int16 PCM, 16kHz mono)
             audio_buffer.extend(message)
+            if diarize_mode:
+                all_audio_for_diarize.extend(message)
             chunk_count += 1
 
             # Process when we have enough audio
@@ -237,6 +394,7 @@ async def handle_client(websocket):
     finally:
         # ZERO-RETENTION: ensure cleanup
         audio_buffer.clear()
+        all_audio_for_diarize.clear()
         logger.info(f"[{client_id}] Session ended, audio cleared from RAM")
 
 

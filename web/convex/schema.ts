@@ -23,6 +23,8 @@ export default defineSchema({
     projectId: v.id("projects"),
     title: v.optional(v.string()),
     content: v.string(),
+    contentWithSpeakers: v.optional(v.string()),
+    speakerCount: v.optional(v.number()),
     audioStorageId: v.optional(v.id("_storage")),
     durationSeconds: v.optional(v.number()),
     blockchainTxHash: v.optional(v.string()),

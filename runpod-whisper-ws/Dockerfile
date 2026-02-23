@@ -14,7 +14,10 @@ RUN pip3 install --no-cache-dir \
     websockets==12.0 \
     torch==2.1.2 \
     numpy \
-    onnxruntime
+    onnxruntime \
+    pyannote.audio==3.3.2 \
+    speechbrain \
+    soundfile
 
 # Copy server
 COPY server.py /app/server.py

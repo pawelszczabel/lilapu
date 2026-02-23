@@ -3,7 +3,7 @@
 import React from "react";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import { getOrCreateUserKey, encryptString, decryptString } from "../crypto";
@@ -26,6 +26,14 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const [isDecrypting, setIsDecrypting] = useState(false);
     const [decryptError, setDecryptError] = useState<string | null>(null);
 
+    // Voice note recording
+    const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+    const [isVoiceTranscribing, setIsVoiceTranscribing] = useState(false);
+    const voiceStreamRef = useRef<MediaStream | null>(null);
+    const voiceContextRef = useRef<AudioContext | null>(null);
+    const voiceProcessorRef = useRef<ScriptProcessorNode | null>(null);
+    const voiceSamplesRef = useRef<Float32Array[]>([]);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Queries
@@ -39,6 +47,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const createNote = useMutation(api.notes.create);
     const updateNote = useMutation(api.notes.update);
     const removeNote = useMutation(api.notes.remove);
+    const transcribeAudio = useAction(api.ai.transcribe);
 
     // ── Decrypt active note content ──
     useEffect(() => {
@@ -215,6 +224,106 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             }
         }
     }, [activeNote, decryptedContent]);
+
+    // ── Voice note helpers ──
+    const VOICE_SAMPLE_RATE = 16000;
+
+    const encodeWavFromFloat32 = (samples: Float32Array, sampleRate: number): Blob => {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        const writeString = (offset: number, str: string) => {
+            for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+        };
+        writeString(0, "RIFF");
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(8, "WAVE");
+        writeString(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, "data");
+        view.setUint32(40, samples.length * 2, true);
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            offset += 2;
+        }
+        return new Blob([buffer], { type: "audio/wav" });
+    };
+
+    const blobToBase64 = (blob: Blob): Promise<string> =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+
+    const startVoiceRecording = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { channelCount: 1, sampleRate: VOICE_SAMPLE_RATE, echoCancellation: true, noiseSuppression: true },
+            });
+            voiceStreamRef.current = stream;
+            const ctx = new AudioContext({ sampleRate: VOICE_SAMPLE_RATE });
+            voiceContextRef.current = ctx;
+            const source = ctx.createMediaStreamSource(stream);
+            const processor = ctx.createScriptProcessor(4096, 1, 1);
+            voiceProcessorRef.current = processor;
+            voiceSamplesRef.current = [];
+
+            processor.onaudioprocess = (e) => {
+                const data = e.inputBuffer.getChannelData(0);
+                const copy = new Float32Array(data.length);
+                copy.set(data);
+                voiceSamplesRef.current.push(copy);
+            };
+            source.connect(processor);
+            processor.connect(ctx.destination);
+            setIsVoiceRecording(true);
+        } catch (err) {
+            console.error("Mic access denied:", err);
+            alert("Nie udało się uzyskać dostępu do mikrofonu.");
+        }
+    }, []);
+
+    const stopVoiceRecording = useCallback(async () => {
+        setIsVoiceRecording(false);
+        setIsVoiceTranscribing(true);
+
+        // Stop audio
+        voiceProcessorRef.current?.disconnect();
+        voiceStreamRef.current?.getTracks().forEach((t) => t.stop());
+        voiceContextRef.current?.close();
+
+        try {
+            const chunks = voiceSamplesRef.current;
+            if (chunks.length === 0) { setIsVoiceTranscribing(false); return; }
+            const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+            const merged = new Float32Array(totalLen);
+            let off = 0;
+            for (const c of chunks) { merged.set(c, off); off += c.length; }
+
+            const wavBlob = encodeWavFromFloat32(merged, VOICE_SAMPLE_RATE);
+            const base64 = await blobToBase64(wavBlob);
+            const text = await transcribeAudio({ audioBase64: base64 });
+            const trimmed = text?.trim();
+
+            if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
+                setEditContent((prev) => prev ? prev + "\n\n" + trimmed : trimmed);
+            }
+        } catch (err) {
+            console.warn("Voice transcription error:", err);
+        } finally {
+            voiceSamplesRef.current = [];
+            setIsVoiceTranscribing(false);
+        }
+    }, [transcribeAudio]);
 
     // ── Simple markdown renderer ──
     const renderMarkdown = (text: string): React.ReactNode[] => {
@@ -397,12 +506,26 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                         value={editTitle}
                                         onChange={(e) => setEditTitle(e.target.value)}
                                         placeholder="Tytuł..."
+                                        style={{ fontSize: "var(--text-md)", padding: "var(--space-2) var(--space-3)" }}
                                     />
                                     <div className="notes-toolbar-actions">
-                                        <button className="key-dialog-action" onClick={handleSave}>
+                                        <button
+                                            className={isVoiceRecording ? "key-management-btn" : "key-dialog-action"}
+                                            onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
+                                            disabled={isVoiceTranscribing}
+                                            title={isVoiceRecording ? "Zatrzymaj nagrywanie" : "Nagraj notatkę głosową"}
+                                            style={isVoiceRecording ? {
+                                                color: "#ef4444",
+                                                borderColor: "rgba(239, 68, 68, 0.4)",
+                                                animation: "pulse 1.5s infinite",
+                                            } : {}}
+                                        >
+                                            {isVoiceTranscribing ? "⏳" : isVoiceRecording ? "⏹️" : "🎤"}
+                                        </button>
+                                        <button className="key-dialog-action" onClick={handleSave} disabled={isVoiceRecording || isVoiceTranscribing}>
                                             💾 Zapisz
                                         </button>
-                                        <button className="key-management-btn" onClick={handleCancelEdit}>
+                                        <button className="key-management-btn" onClick={handleCancelEdit} disabled={isVoiceRecording}>
                                             Anuluj
                                         </button>
                                     </div>
