@@ -121,6 +121,18 @@ export declare const api: {
         title?: string;
       }>
     >;
+    remove: FunctionReference<
+      "mutation",
+      "public",
+      { conversationId: Id<"conversations"> },
+      null
+    >;
+    updateTitle: FunctionReference<
+      "mutation",
+      "public",
+      { conversationId: Id<"conversations">; title: string },
+      null
+    >;
   };
   folders: {
     archive: FunctionReference<
