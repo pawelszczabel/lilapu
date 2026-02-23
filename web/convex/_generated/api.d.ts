@@ -361,8 +361,10 @@ export declare const api: {
       {
         audioStorageId?: Id<"_storage">;
         content: string;
+        contentWithSpeakers?: string;
         durationSeconds?: number;
         projectId: Id<"projects">;
+        speakerCount?: number;
         title?: string;
       },
       Id<"transcriptions">
@@ -379,8 +381,10 @@ export declare const api: {
         blockchainTxHash?: string;
         blockchainVerified: boolean;
         content: string;
+        contentWithSpeakers?: string;
         durationSeconds?: number;
         projectId: Id<"projects">;
+        speakerCount?: number;
         title?: string;
       } | null
     >;
@@ -401,8 +405,10 @@ export declare const api: {
         blockchainTxHash?: string;
         blockchainVerified: boolean;
         content: string;
+        contentWithSpeakers?: string;
         durationSeconds?: number;
         projectId: Id<"projects">;
+        speakerCount?: number;
         title?: string;
       }>
     >;

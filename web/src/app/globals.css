@@ -1901,6 +1901,27 @@ textarea:focus {
   border-radius: var(--radius-lg);
 }
 
+.btn-waitlist-hero {
+  padding: var(--space-5) var(--space-10) !important;
+  font-size: var(--text-lg) !important;
+  font-weight: 700;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: 0 0 30px rgba(124, 92, 252, 0.4), 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 30px rgba(124, 92, 252, 0.4), 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 50px rgba(124, 92, 252, 0.6), 0 4px 30px rgba(0, 0, 0, 0.4);
+  }
+}
+
 .landing-stats {
   display: flex;
   gap: var(--space-10);

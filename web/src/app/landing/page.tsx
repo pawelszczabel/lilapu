@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Waitlist } from "@clerk/nextjs";
-import Link from "next/link";
 
 export default function LandingPage() {
     const [showWaitlist, setShowWaitlist] = useState(false);
@@ -46,11 +45,8 @@ export default function LandingPage() {
                 </p>
 
                 <div className="landing-hero-cta">
-                    <Link href="/dashboard" className="btn btn-primary">
-                        ✨ Wypróbuj za darmo
-                    </Link>
                     <button
-                        className="btn btn-secondary"
+                        className="btn btn-primary btn-waitlist-hero"
                         onClick={() => setShowWaitlist(true)}
                     >
                         📩 Dołącz do waitlisty
