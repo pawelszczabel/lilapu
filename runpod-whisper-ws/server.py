@@ -33,7 +33,9 @@ WHISPER_DEVICE = os.environ.get("WHISPER_DEVICE", "cuda")
 WHISPER_COMPUTE = os.environ.get("WHISPER_COMPUTE", "float16")
 SAMPLE_RATE = 16000
 # Minimum audio duration to attempt transcription (seconds)
-MIN_AUDIO_SEC = 0.5
+MIN_AUDIO_SEC = 1.0
+# Buffer duration before processing (longer = more accurate)
+BUFFER_DURATION_SEC = 5.0
 # VAD settings
 VAD_THRESHOLD = 0.5
 
@@ -155,13 +157,13 @@ async def handle_client(websocket):
             audio_buffer.extend(message)
             chunk_count += 1
 
-            # Process when we have enough audio (~2 seconds)
+            # Process when we have enough audio (~5 seconds for accuracy)
             buffer_duration = len(audio_buffer) / 2 / SAMPLE_RATE  # Int16 = 2 bytes per sample
-            if buffer_duration >= 2.0:
+            if buffer_duration >= BUFFER_DURATION_SEC:
                 audio_float = int16_to_float32(bytes(audio_buffer))
 
-                # VAD check first
-                if has_speech(audio_float):
+                # Transcribe (faster-whisper's built-in VAD handles silence)
+                if len(audio_float) / SAMPLE_RATE >= MIN_AUDIO_SEC:
                     text = transcribe(audio_float)
                     if text and not is_hallucination(text):
                         full_transcript += (" " + text) if full_transcript else text
