@@ -1044,6 +1044,15 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, border 0.3s;
+  overflow: hidden;
+}
+
+.notes-sidebar-collapsed {
+  width: 0;
+  border: none;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .notes-sidebar-footer {
@@ -1302,8 +1311,11 @@ textarea:focus {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-collapsed .chat-sidebar {
-  width: var(--sidebar-width);
+.chat-sidebar-collapsed {
+  width: 0;
+  border: none;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .chat-sidebar-header {
@@ -2270,6 +2282,10 @@ textarea:focus {
   }
 
   .chat-sidebar {
+    display: none;
+  }
+
+  .notes-sidebar {
     display: none;
   }
 

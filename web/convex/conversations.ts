@@ -108,6 +108,42 @@ export const addConversationScope = mutation({
     },
 });
 
+export const updateTitle = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        title: v.string(),
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        const conv = await ctx.db.get(args.conversationId);
+        if (!conv) throw new Error("Conversation not found");
+        await ctx.db.patch(args.conversationId, { title: args.title });
+        return null;
+    },
+});
+
+export const remove = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        // Delete all messages belonging to this conversation
+        const messages = await ctx.db
+            .query("messages")
+            .withIndex("by_conversationId", (q) =>
+                q.eq("conversationId", args.conversationId)
+            )
+            .collect();
+        for (const msg of messages) {
+            await ctx.db.delete(msg._id);
+        }
+        // Delete the conversation itself
+        await ctx.db.delete(args.conversationId);
+        return null;
+    },
+});
+
 export const get = query({
     args: { conversationId: v.id("conversations") },
     returns: v.union(conversationShape, v.null()),
