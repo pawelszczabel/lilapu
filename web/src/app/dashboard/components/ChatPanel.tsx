@@ -36,6 +36,8 @@ export default function ChatPanel({
     const [openDropdownId, setOpenDropdownId] = useState<Id<"conversations"> | null>(null);
     const [convToRename, setConvToRename] = useState<{ _id: Id<"conversations">; title: string } | null>(null);
     const [renameValue, setRenameValue] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
+    const [newChatTitle, setNewChatTitle] = useState("");
 
     // @mention state
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -257,12 +259,24 @@ export default function ChatPanel({
         return groups;
     }, [mentionOptions]);
 
-    const handleNewChat = useCallback(async () => {
+    const handleNewChat = useCallback(async (title?: string) => {
+        let encryptedTitle: string | undefined;
+        if (title?.trim()) {
+            try {
+                const key = await getSessionKeyOrThrow();
+                encryptedTitle = await encryptString(key, title.trim());
+            } catch {
+                encryptedTitle = title.trim();
+            }
+        }
         const id = await createConversation({
             projectId,
             chatMode: "project",
+            title: encryptedTitle,
         });
         setActiveConversationId(id);
+        setIsCreating(false);
+        setNewChatTitle("");
     }, [projectId, createConversation]);
 
     // Handle @mention in input
@@ -585,7 +599,7 @@ export default function ChatPanel({
 
                 <div style={{ padding: 'var(--space-2)' }}>
                     <button
-                        onClick={handleNewChat}
+                        onClick={() => setIsCreating(true)}
                         title="Nowa rozmowa"
                         style={{
                             width: '100%',
@@ -616,6 +630,34 @@ export default function ChatPanel({
                         <span style={{ fontWeight: 500 }}>Nowa rozmowa</span>
                     </button>
                 </div>
+
+                {isCreating && (
+                    <div className="notes-create-form">
+                        <input
+                            type="text"
+                            className="notes-create-input"
+                            placeholder="Tytuł rozmowy..."
+                            value={newChatTitle}
+                            onChange={(e) => setNewChatTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") handleNewChat(newChatTitle);
+                                if (e.key === "Escape") { setIsCreating(false); setNewChatTitle(""); }
+                            }}
+                            autoFocus
+                        />
+                        <div className="notes-create-actions">
+                            <button className="key-dialog-action" onClick={() => handleNewChat(newChatTitle)} disabled={!newChatTitle.trim()}>
+                                Utwórz
+                            </button>
+                            <button
+                                className="key-management-btn"
+                                onClick={() => { setIsCreating(false); setNewChatTitle(""); }}
+                            >
+                                Anuluj
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="chat-sidebar-list">
                     {conversations?.length === 0 && (

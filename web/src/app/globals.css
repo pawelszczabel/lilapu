@@ -1045,7 +1045,8 @@ textarea:focus {
   flex-direction: column;
   background: var(--bg-secondary);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, border 0.3s;
-  overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .notes-sidebar-collapsed {
@@ -1309,6 +1310,8 @@ textarea:focus {
   flex-direction: column;
   background: var(--bg-secondary);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 2;
 }
 
 .chat-sidebar-collapsed {
