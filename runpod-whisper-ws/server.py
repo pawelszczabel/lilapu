@@ -35,7 +35,7 @@ SAMPLE_RATE = 16000
 # Minimum audio duration to attempt transcription (seconds)
 MIN_AUDIO_SEC = 1.0
 # Buffer duration before processing (longer = more accurate)
-BUFFER_DURATION_SEC = 5.0
+BUFFER_DURATION_SEC = 8.0
 # VAD settings
 VAD_THRESHOLD = 0.5
 
@@ -75,12 +75,18 @@ def has_speech(audio_float32: np.ndarray) -> bool:
     return len(timestamps) > 0
 
 
-def transcribe(audio_float32: np.ndarray) -> str:
+def transcribe(audio_float32: np.ndarray, previous_text: str = "") -> str:
     """Transcribe audio using Faster-Whisper. Zero-retention: audio stays in RAM only."""
+    # Use last ~200 chars of previous transcript as context
+    prompt = "Transkrypcja rozmowy po polsku."
+    if previous_text:
+        tail = previous_text[-200:].strip()
+        prompt = f"{prompt} {tail}"
+
     segments, _ = whisper_model.transcribe(
         audio_float32,
         language="pl",
-        initial_prompt="Transkrypcja rozmowy po polsku.",
+        initial_prompt=prompt,
         temperature=0.0,
         beam_size=5,
         vad_filter=True,
@@ -88,7 +94,7 @@ def transcribe(audio_float32: np.ndarray) -> str:
             threshold=VAD_THRESHOLD,
             min_speech_duration_ms=250,
             min_silence_duration_ms=500,
-            speech_pad_ms=200,
+            speech_pad_ms=300,
         ),
     )
     text = " ".join(seg.text.strip() for seg in segments)
@@ -138,7 +144,7 @@ async def handle_client(websocket):
                     if len(audio_buffer) > 0:
                         audio_float = int16_to_float32(bytes(audio_buffer))
                         if len(audio_float) / SAMPLE_RATE >= MIN_AUDIO_SEC:
-                            text = transcribe(audio_float)
+                            text = transcribe(audio_float, previous_text=full_transcript)
                             if text and not is_hallucination(text):
                                 full_transcript += (" " + text) if full_transcript else text
                         # ZERO-RETENTION: clear audio
@@ -164,7 +170,7 @@ async def handle_client(websocket):
 
                 # Transcribe (faster-whisper's built-in VAD handles silence)
                 if len(audio_float) / SAMPLE_RATE >= MIN_AUDIO_SEC:
-                    text = transcribe(audio_float)
+                    text = transcribe(audio_float, previous_text=full_transcript)
                     if text and not is_hallucination(text):
                         full_transcript += (" " + text) if full_transcript else text
                         await websocket.send(json.dumps({
