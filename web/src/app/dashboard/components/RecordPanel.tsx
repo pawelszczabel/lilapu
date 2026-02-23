@@ -225,12 +225,16 @@ export default function RecordPanel({
     const pendingChunksRef = useRef<Float32Array[]>([]);
     const allSamplesRef = useRef<Float32Array[]>([]);
 
+    // WebSocket live transcription
+    const wsRef = useRef<WebSocket | null>(null);
+    const useWebSocket = !!process.env.NEXT_PUBLIC_WHISPER_WS_URL;
+
     // Accumulate samples for chunked sending
     const chunkBufferRef = useRef<Float32Array[]>([]);
     const chunkSampleCountRef = useRef(0);
 
     const SAMPLE_RATE = 16000;
-    const CHUNK_DURATION_SEC = 15;
+    const CHUNK_DURATION_SEC = 5;
     const CHUNK_SAMPLE_THRESHOLD = SAMPLE_RATE * CHUNK_DURATION_SEC;
 
     const createTranscription = useMutation(api.transcriptions.create);
@@ -338,21 +342,64 @@ export default function RecordPanel({
             allSamplesRef.current = [];
             transcriptRef.current = "";
 
+            // Connect WebSocket for live transcription
+            if (useWebSocket) {
+                const wsUrl = process.env.NEXT_PUBLIC_WHISPER_WS_URL!;
+                const ws = new WebSocket(wsUrl);
+                wsRef.current = ws;
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.text && !data.is_final) {
+                            transcriptRef.current += (transcriptRef.current ? " " : "") + data.text;
+                            setTranscript(transcriptRef.current);
+                        }
+                    } catch {
+                        // ignore
+                    }
+                };
+
+                ws.onerror = (err) => {
+                    console.warn("WebSocket error:", err);
+                };
+
+                // Wait for connection
+                await new Promise<void>((resolve, reject) => {
+                    ws.onopen = () => resolve();
+                    ws.onerror = () => reject(new Error("WebSocket connection failed"));
+                    setTimeout(() => reject(new Error("WebSocket timeout")), 5000);
+                });
+            }
+
             processor.onaudioprocess = (event) => {
                 const inputData = event.inputBuffer.getChannelData(0);
                 const copy = new Float32Array(inputData.length);
                 copy.set(inputData);
 
                 allSamplesRef.current.push(copy);
-                chunkBufferRef.current.push(copy);
-                chunkSampleCountRef.current += copy.length;
 
-                if (chunkSampleCountRef.current >= CHUNK_SAMPLE_THRESHOLD) {
-                    const merged = mergeFloat32Arrays(chunkBufferRef.current);
-                    pendingChunksRef.current.push(merged);
-                    chunkBufferRef.current = [];
-                    chunkSampleCountRef.current = 0;
-                    processQueue();
+                // WebSocket mode: stream PCM directly
+                if (useWebSocket && wsRef.current?.readyState === WebSocket.OPEN) {
+                    // Convert float32 to int16 PCM for WebSocket
+                    const int16 = new Int16Array(copy.length);
+                    for (let i = 0; i < copy.length; i++) {
+                        const s = Math.max(-1, Math.min(1, copy[i]));
+                        int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                    }
+                    wsRef.current.send(int16.buffer);
+                } else {
+                    // REST fallback: buffer for chunked sending
+                    chunkBufferRef.current.push(copy);
+                    chunkSampleCountRef.current += copy.length;
+
+                    if (chunkSampleCountRef.current >= CHUNK_SAMPLE_THRESHOLD) {
+                        const merged = mergeFloat32Arrays(chunkBufferRef.current);
+                        pendingChunksRef.current.push(merged);
+                        chunkBufferRef.current = [];
+                        chunkSampleCountRef.current = 0;
+                        processQueue();
+                    }
                 }
             };
 
@@ -371,7 +418,7 @@ export default function RecordPanel({
             console.error("Microphone access denied:", err);
             alert("Nie udało się uzyskać dostępu do mikrofonu. Sprawdź uprawnienia.");
         }
-    }, [processQueue]);
+    }, [processQueue, useWebSocket]);
 
     const stopRecording = useCallback(async () => {
         setIsSaving(true);
@@ -392,18 +439,54 @@ export default function RecordPanel({
 
         setIsRecording(false);
 
-        // Queue any remaining samples
-        if (chunkBufferRef.current.length > 0) {
-            const merged = mergeFloat32Arrays(chunkBufferRef.current);
-            pendingChunksRef.current.push(merged);
-            chunkBufferRef.current = [];
-            chunkSampleCountRef.current = 0;
-            processQueue();
-        }
+        // WebSocket mode: send STOP and get final transcript
+        if (useWebSocket && wsRef.current) {
+            try {
+                if (wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send("STOP");
 
-        // Wait for pending chunks
-        while (pendingChunksRef.current.length > 0 || processingRef.current) {
-            await new Promise((r) => setTimeout(r, 500));
+                    // Wait for final response
+                    const finalText = await new Promise<string>((resolve) => {
+                        const ws = wsRef.current!;
+                        const handler = (event: MessageEvent) => {
+                            try {
+                                const data = JSON.parse(event.data);
+                                if (data.is_final) {
+                                    ws.removeEventListener("message", handler);
+                                    resolve(data.text || "");
+                                }
+                            } catch {
+                                // ignore
+                            }
+                        };
+                        ws.addEventListener("message", handler);
+                        setTimeout(() => resolve(transcriptRef.current), 5000);
+                    });
+
+                    if (finalText) {
+                        transcriptRef.current = finalText;
+                        setTranscript(finalText);
+                    }
+                }
+                wsRef.current.close();
+                wsRef.current = null;
+            } catch {
+                console.warn("WebSocket STOP failed");
+            }
+        } else {
+            // REST fallback: queue remaining samples
+            if (chunkBufferRef.current.length > 0) {
+                const merged = mergeFloat32Arrays(chunkBufferRef.current);
+                pendingChunksRef.current.push(merged);
+                chunkBufferRef.current = [];
+                chunkSampleCountRef.current = 0;
+                processQueue();
+            }
+
+            // Wait for pending chunks
+            while (pendingChunksRef.current.length > 0 || processingRef.current) {
+                await new Promise((r) => setTimeout(r, 500));
+            }
         }
 
         // Full-file transcription fallback
