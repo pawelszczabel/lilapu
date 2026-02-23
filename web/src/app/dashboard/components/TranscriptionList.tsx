@@ -1,16 +1,44 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
 import TranscriptionView from "./TranscriptionView";
+import { getOrCreateUserKey, encryptBlob } from "../crypto";
 
 interface TranscriptionListProps {
     projectId: Id<"projects">;
     onStartChat?: (transcriptionId: Id<"transcriptions">) => void;
     onOpenExistingChat?: (conversationId: Id<"conversations">) => void;
 }
+
+// ── WAV encoder ──
+function encodeWavFromFloat32(samples: Float32Array, sampleRate: number): Blob {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+    const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); w(8, "WAVE"); w(12, "fmt ");
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true); view.setUint16(34, 16, true); w(36, "data");
+    view.setUint32(40, samples.length * 2, true);
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        offset += 2;
+    }
+    return new Blob([buffer], { type: "audio/wav" });
+}
+
+const blobToBase64 = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
 
 /* ─── Dropdown sub-component ─── */
 function TranscriptionChatDropdown({
@@ -42,7 +70,6 @@ function TranscriptionChatDropdown({
 
     return (
         <div ref={ref} className="transcription-chat-dropdown">
-            {/* New chat option — always first */}
             <div
                 className="transcription-chat-dropdown-item new-chat"
                 onClick={(e) => {
@@ -52,8 +79,6 @@ function TranscriptionChatDropdown({
             >
                 ➕ Rozpocznij nowy czat
             </div>
-
-            {/* Existing chats */}
             {conversations && conversations.length > 0 && (
                 <>
                     <div style={{ borderTop: "1px solid var(--border)" }} />
@@ -83,8 +108,18 @@ export default function TranscriptionList({
 }: TranscriptionListProps) {
     const [viewingId, setViewingId] = useState<Id<"transcriptions"> | null>(null);
     const [dropdownId, setDropdownId] = useState<Id<"transcriptions"> | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const transcriptions = useQuery(api.transcriptions.listByProject, { projectId });
+
+    const createTranscription = useMutation(api.transcriptions.create);
+    const generateUploadUrl = useMutation(api.transcriptions.generateUploadUrl);
+    const indexTranscription = useAction(api.rag.indexTranscription);
+    const transcribeAudio = useAction(api.ai.transcribe);
+
+    const SAMPLE_RATE = 16000;
 
     const toggleDropdown = useCallback(
         (id: Id<"transcriptions">) => {
@@ -92,6 +127,72 @@ export default function TranscriptionList({
         },
         []
     );
+
+    // ── File upload handler ──
+    const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = "";
+
+        setIsUploading(true);
+        setUploadProgress("Dekodowanie audio...");
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE });
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            await audioCtx.close();
+
+            const rawSamples = audioBuffer.getChannelData(0);
+            const samples = new Float32Array(rawSamples.length);
+            samples.set(rawSamples);
+            const durationSeconds = Math.round(audioBuffer.duration);
+
+            setUploadProgress("Transkrypcja...");
+            const wavBlob = encodeWavFromFloat32(samples, SAMPLE_RATE);
+            const base64 = await blobToBase64(wavBlob);
+            const transcriptText = await transcribeAudio({ audioBase64: base64 });
+            const content = transcriptText?.trim() || "[Transkrypcja niedostępna]";
+
+            setUploadProgress("Szyfrowanie i zapis...");
+            let audioStorageId: Id<"_storage"> | undefined;
+            try {
+                const key = await getOrCreateUserKey();
+                const encryptedBlob = await encryptBlob(key, wavBlob);
+                const uploadUrl = await generateUploadUrl();
+                const uploadResponse = await fetch(uploadUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/octet-stream" },
+                    body: encryptedBlob,
+                });
+                if (uploadResponse.ok) {
+                    const { storageId } = await uploadResponse.json();
+                    audioStorageId = storageId;
+                }
+            } catch (err) {
+                console.warn("Audio upload failed:", err);
+            }
+
+            const fileName = file.name.replace(/\.[^.]+$/, "");
+            const transcriptionId = await createTranscription({
+                projectId,
+                title: fileName || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`,
+                content,
+                audioStorageId,
+                durationSeconds,
+            });
+
+            indexTranscription({ transcriptionId }).catch((err: unknown) =>
+                console.warn("RAG indexing skipped:", err)
+            );
+        } catch (err) {
+            console.error("File upload error:", err);
+            alert("Błąd przetwarzania pliku audio. Sprawdź format (WAV, MP3, M4A).");
+        } finally {
+            setIsUploading(false);
+            setUploadProgress("");
+        }
+    }, [projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio]);
 
     if (!transcriptions) {
         return (
@@ -101,7 +202,6 @@ export default function TranscriptionList({
         );
     }
 
-    // Full transcription viewer
     if (viewingId) {
         const viewing = transcriptions.find((t) => t._id === viewingId);
         if (viewing) {
@@ -115,12 +215,62 @@ export default function TranscriptionList({
                 <div className="empty-state-icon">🎙️</div>
                 <h2>Brak nagrań</h2>
                 <p>Przejdź do zakładki „Nagrywaj" aby nagrać pierwszą rozmowę.</p>
+                <div style={{ marginTop: "var(--space-4)" }}>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="audio/*"
+                        style={{ display: "none" }}
+                        onChange={handleFileUpload}
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="btn btn-outline"
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-2)",
+                            color: "var(--accent)",
+                            borderColor: "rgba(124, 92, 252, 0.3)",
+                        }}
+                    >
+                        {isUploading ? `⏳ ${uploadProgress}` : "📎 Wgraj nagranie"}
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="transcription-list">
+            {/* Upload button at top */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "var(--space-3)" }}>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    style={{ display: "none" }}
+                    onChange={handleFileUpload}
+                />
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="btn btn-outline"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "var(--space-2)",
+                        color: "var(--accent)",
+                        borderColor: "rgba(124, 92, 252, 0.3)",
+                        background: "transparent",
+                        fontSize: "var(--text-sm)",
+                    }}
+                >
+                    {isUploading ? `⏳ ${uploadProgress}` : "📎 Wgraj nagranie"}
+                </button>
+            </div>
+
             {transcriptions.map((t) => {
                 const date = new Date(t._creationTime);
                 const dateStr = date.toLocaleDateString("pl-PL", {
@@ -236,5 +386,3 @@ export default function TranscriptionList({
         </div>
     );
 }
-
-

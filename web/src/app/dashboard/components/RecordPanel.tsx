@@ -209,9 +209,6 @@ export default function RecordPanel({
     const [seconds, setSeconds] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
-    const [speakerMode, setSpeakerMode] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState("");
 
     // Key management UI
     const [showKeyDialog, setShowKeyDialog] = useState(false);
@@ -235,7 +232,6 @@ export default function RecordPanel({
     // Accumulate samples for chunked sending
     const chunkBufferRef = useRef<Float32Array[]>([]);
     const chunkSampleCountRef = useRef(0);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const SAMPLE_RATE = 16000;
     const CHUNK_DURATION_SEC = 5;
@@ -327,8 +323,8 @@ export default function RecordPanel({
                 audio: {
                     channelCount: 1,
                     sampleRate: SAMPLE_RATE,
-                    echoCancellation: !speakerMode,
-                    noiseSuppression: !speakerMode,
+                    echoCancellation: false,
+                    noiseSuppression: false,
                 },
             });
             streamRef.current = stream;
@@ -371,10 +367,8 @@ export default function RecordPanel({
                 // Wait for connection
                 await new Promise<void>((resolve, reject) => {
                     ws.onopen = () => {
-                        // If speakerMode, request diarization
-                        if (speakerMode) {
-                            ws.send(JSON.stringify({ mode: "diarize" }));
-                        }
+                        // Always request diarization for conversations
+                        ws.send(JSON.stringify({ mode: "diarize" }));
                         resolve();
                     };
                     ws.onerror = () => reject(new Error("WebSocket connection failed"));
@@ -428,7 +422,7 @@ export default function RecordPanel({
             console.error("Microphone access denied:", err);
             alert("Nie udało się uzyskać dostępu do mikrofonu. Sprawdź uprawnienia.");
         }
-    }, [processQueue, useWebSocket, speakerMode]);
+    }, [processQueue, useWebSocket]);
 
     const stopRecording = useCallback(async () => {
         setIsSaving(true);
@@ -593,86 +587,6 @@ export default function RecordPanel({
         }
     }, [keyImportValue]);
 
-    // ── File upload handler ──
-    const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        // Reset input so same file can be re-uploaded
-        e.target.value = "";
-
-        setIsUploading(true);
-        setUploadProgress("Dekodowanie audio...");
-
-        try {
-            // 1. Decode audio file to PCM (works with WAV, MP3, M4A, OGG, etc.)
-            const arrayBuffer = await file.arrayBuffer();
-            const audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE });
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            await audioCtx.close();
-
-            // 2. Extract mono channel as Float32Array
-            const rawSamples = audioBuffer.getChannelData(0);
-
-            // 3. Resample to 16kHz if needed (decodeAudioData uses AudioContext sampleRate)
-            const samples = new Float32Array(rawSamples.length);
-            samples.set(rawSamples);
-
-            const durationSeconds = Math.round(audioBuffer.duration);
-
-            // 4. Encode as WAV
-            setUploadProgress("Transkrypcja...");
-            const wavBlob = encodeWavFromFloat32(samples, SAMPLE_RATE);
-            const base64 = await blobToBase64(wavBlob);
-
-            // 5. Transcribe via Whisper
-            const transcriptText = await transcribeAudio({ audioBase64: base64 });
-            const content = transcriptText?.trim() || "[Transkrypcja niedostępna]";
-
-            // 6. Encrypt & upload audio
-            setUploadProgress("Szyfrowanie i zapis...");
-            let audioStorageId: Id<"_storage"> | undefined;
-            try {
-                const key = await getOrCreateUserKey();
-                const encryptedBlob = await encryptBlob(key, wavBlob);
-                const uploadUrl = await generateUploadUrl();
-                const uploadResponse = await fetch(uploadUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/octet-stream" },
-                    body: encryptedBlob,
-                });
-                if (uploadResponse.ok) {
-                    const { storageId } = await uploadResponse.json();
-                    audioStorageId = storageId;
-                }
-            } catch (err) {
-                console.warn("Audio upload failed:", err);
-            }
-
-            // 7. Save transcription
-            const fileName = file.name.replace(/\.[^.]+$/, "");
-            const transcriptionId = await createTranscription({
-                projectId,
-                title: title || fileName || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`,
-                content,
-                audioStorageId,
-                durationSeconds,
-            });
-
-            indexTranscription({ transcriptionId }).catch((err: unknown) =>
-                console.warn("RAG indexing skipped:", err)
-            );
-
-            setTitle("");
-            onRecordingComplete();
-        } catch (err) {
-            console.error("File upload error:", err);
-            alert("Błąd przetwarzania pliku audio. Sprawdź format (WAV, MP3, M4A).");
-        } finally {
-            setIsUploading(false);
-            setUploadProgress("");
-        }
-    }, [title, projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio, onRecordingComplete]);
-
     return (
         <div className="record-panel">
             {isRecording ? (
@@ -709,81 +623,14 @@ export default function RecordPanel({
                 </div>
             )}
 
-            {!isRecording && !isSaving && (
-                <div style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: "var(--space-2)",
-                    marginBottom: "var(--space-2)",
-                }}>
-                    <button
-                        onClick={() => setSpeakerMode(!speakerMode)}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "var(--space-2)",
-                            padding: "var(--space-2) var(--space-4)",
-                            borderRadius: "var(--radius-md)",
-                            border: speakerMode
-                                ? "1px solid rgba(124, 92, 252, 0.6)"
-                                : "1px solid rgba(255,255,255,0.1)",
-                            background: speakerMode
-                                ? "rgba(124, 92, 252, 0.15)"
-                                : "transparent",
-                            color: speakerMode
-                                ? "var(--primary)"
-                                : "var(--text-muted)",
-                            cursor: "pointer",
-                            fontSize: "var(--text-sm)",
-                            transition: "all 0.2s ease",
-                        }}
-                    >
-                        {speakerMode ? "🔊" : "🔇"} Rozmowa z głośnika
-                    </button>
-                </div>
-            )}
-
             <button
                 className={`record-btn ${isRecording ? "record-btn-stop" : "record-btn-start"}`}
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={isSaving || isUploading}
-                style={{ marginTop: isRecording ? 0 : "var(--space-2)" }}
+                disabled={isSaving}
+                style={{ marginTop: isRecording ? 0 : "var(--space-4)" }}
             >
                 {isSaving ? "⏳" : isRecording ? "■" : "●"}
             </button>
-
-            {!isRecording && !isSaving && (
-                <>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="audio/*"
-                        style={{ display: "none" }}
-                        onChange={handleFileUpload}
-                    />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "var(--space-2)",
-                            marginTop: "var(--space-3)",
-                            padding: "var(--space-2) var(--space-4)",
-                            borderRadius: "var(--radius-md)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            background: "transparent",
-                            color: "var(--text-muted)",
-                            cursor: isUploading ? "wait" : "pointer",
-                            fontSize: "var(--text-sm)",
-                            transition: "all 0.2s ease",
-                        }}
-                    >
-                        {isUploading ? `⏳ ${uploadProgress}` : "📎 Wgraj nagranie"}
-                    </button>
-                </>
-            )}
 
             {(isRecording || transcript) && (
                 <div className="live-transcript">
