@@ -5,6 +5,7 @@ import { Waitlist } from "@clerk/nextjs";
 
 export default function LandingPage() {
     const [showWaitlist, setShowWaitlist] = useState(false);
+    const [gdprConsent, setGdprConsent] = useState(false);
 
     return (
         <div className="landing">
@@ -13,21 +14,96 @@ export default function LandingPage() {
                 <div
                     className="waitlist-modal-overlay"
                     onClick={(e) => {
-                        if (e.target === e.currentTarget) setShowWaitlist(false);
+                        if (e.target === e.currentTarget) {
+                            setShowWaitlist(false);
+                            setGdprConsent(false);
+                        }
                     }}
                 >
                     <div className="waitlist-modal">
                         <button
                             className="waitlist-modal-close"
-                            onClick={() => setShowWaitlist(false)}
+                            onClick={() => {
+                                setShowWaitlist(false);
+                                setGdprConsent(false);
+                            }}
                             aria-label="Zamknij"
                         >
                             ✕
                         </button>
-                        <Waitlist
-                            afterJoinWaitlistUrl="/landing"
-                            signInUrl="/"
-                        />
+
+                        {/* GDPR Consent */}
+                        <div className="waitlist-gdpr">
+                            <label className="waitlist-gdpr-label">
+                                <input
+                                    type="checkbox"
+                                    checked={gdprConsent}
+                                    onChange={(e) => setGdprConsent(e.target.checked)}
+                                    className="waitlist-gdpr-checkbox"
+                                />
+                                <span>
+                                    Wyrażam zgodę na przetwarzanie mojego adresu e‑mail
+                                    w celu informowania o dostępności Lilapu, zgodnie
+                                    z{" "}
+                                    <a
+                                        href="/polityka-prywatnosci"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Polityką Prywatności
+                                    </a>
+                                    . Mogę wycofać zgodę w dowolnym momencie.
+                                </span>
+                            </label>
+                        </div>
+
+                        {/* Clerk Waitlist — only if GDPR accepted */}
+                        <div style={{ opacity: gdprConsent ? 1 : 0.3, pointerEvents: gdprConsent ? "auto" : "none", transition: "opacity 0.3s" }}>
+                            <Waitlist
+                                afterJoinWaitlistUrl="/"
+                                appearance={{
+                                    elements: {
+                                        rootBox: {
+                                            width: "100%",
+                                        },
+                                        card: {
+                                            background: "#13131d",
+                                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                                            borderRadius: "20px",
+                                            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+                                        },
+                                        headerTitle: {
+                                            color: "#e8e8f0",
+                                            fontFamily: "var(--font-roboto), sans-serif",
+                                        },
+                                        headerSubtitle: {
+                                            color: "#9898b0",
+                                        },
+                                        formFieldLabel: {
+                                            color: "#9898b0",
+                                        },
+                                        formFieldInput: {
+                                            background: "#1e1e2e",
+                                            color: "#e8e8f0",
+                                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                                            borderRadius: "10px",
+                                        },
+                                        formButtonPrimary: {
+                                            background: "#7c5cfc",
+                                            borderRadius: "10px",
+                                            fontWeight: "600",
+                                            fontSize: "0.9375rem",
+                                        },
+                                        footerAction: {
+                                            display: "none",
+                                        },
+                                        footer: {
+                                            display: "none",
+                                        },
+                                    },
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
