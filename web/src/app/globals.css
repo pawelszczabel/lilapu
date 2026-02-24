@@ -2287,6 +2287,7 @@ textarea:focus {
 .landing-trust-badges-hero .trust-badge-icon {
   width: 28px;
   height: 34px;
+  filter: drop-shadow(0 0 8px rgba(124, 92, 252, 0.4));
 }
 
 .landing-trust-badges-hero .trust-badge-name {
@@ -2357,7 +2358,7 @@ textarea:focus {
 }
 
 .landing-trust-disclaimer {
-  margin-top: var(--space-8);
+  margin-top: 48px;
   font-size: var(--text-xs);
   color: var(--text-muted);
   font-style: italic;

@@ -216,7 +216,7 @@ export default function LandingPage() {
 
             {/* Problem */}
             <section className="landing-section landing-problem">
-                <h2>Dokumentacja zabiera czas, który powinien należeć do Ciebie, Twojej rodziny, klientów</h2>
+                <h2>Dokumentacja zabiera czas, który powinien należeć do Ciebie, Twojej rodziny, klientów.</h2>
                 <div className="landing-problem-stats">
                     <div className="landing-problem-stat">
                         <span className="landing-problem-stat-value">52%</span>
