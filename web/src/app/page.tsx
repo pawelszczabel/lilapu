@@ -67,10 +67,11 @@ export default function LandingPage() {
                                             width: "100%",
                                         },
                                         card: {
-                                            background: "#13131d",
-                                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                                            background: "#2a2a48",
+                                            border: "1px solid rgba(124, 92, 252, 0.3)",
                                             borderRadius: "20px",
-                                            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+                                            boxShadow: "none",
+                                            padding: "24px",
                                         },
                                         headerTitle: {
                                             color: "#e8e8f0",
@@ -83,9 +84,9 @@ export default function LandingPage() {
                                             color: "#9898b0",
                                         },
                                         formFieldInput: {
-                                            background: "#1e1e2e",
+                                            background: "#35355a",
                                             color: "#e8e8f0",
-                                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                                            border: "1px solid rgba(255, 255, 255, 0.15)",
                                             borderRadius: "10px",
                                         },
                                         formButtonPrimary: {
@@ -107,6 +108,11 @@ export default function LandingPage() {
                     </div>
                 </div>
             )}
+
+            {/* Logo */}
+            <div className="landing-logo">
+                <img src="/logo.svg" alt="Lilapu" width={40} height={40} />
+            </div>
 
             {/* Hero */}
             <section className="landing-hero">

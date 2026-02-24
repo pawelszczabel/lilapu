@@ -1867,6 +1867,22 @@ textarea:focus {
     var(--bg-primary);
 }
 
+.landing-logo {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-5);
+  z-index: 100;
+}
+
+.landing-logo img {
+  filter: drop-shadow(0 2px 8px rgba(124, 92, 252, 0.3));
+  transition: transform 0.2s;
+}
+
+.landing-logo img:hover {
+  transform: scale(1.1);
+}
+
 .landing-hero-badge {
   display: inline-flex;
   align-items: center;
@@ -2393,6 +2409,14 @@ textarea:focus {
   position: relative;
   max-width: 460px;
   width: 100%;
+  background: #1a1a2e;
+  border: 1px solid rgba(124, 92, 252, 0.25);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 0 80px rgba(124, 92, 252, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   animation: slideUp 0.25s ease-out;
 }
 
@@ -2422,8 +2446,8 @@ textarea:focus {
 
 /* GDPR Consent */
 .waitlist-gdpr {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: #22223a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   margin-bottom: var(--space-4);
