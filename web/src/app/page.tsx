@@ -115,10 +115,10 @@ export default function LandingPage() {
                 <h1>Bądź w 100% obecny z klientem. Lilapu zrobi transkrypcję rozmowy.</h1>
 
                 <p>
-                    Nagrywaj sesje z klientami — Lilapu automatycznie transkrybuje
-                    i organizuje notatki per klient. Twój prywatny czat z AI pozwala
-                    przeszukiwać historię sesji — model nie jest trenowany na Twoich danych,
-                    a każda rozmowa z AI jest szyfrowana end‑to‑end.
+                    Koniec z pisaniem w trakcie, lub po spotkaniu z klientem.
+                    Lilapu automatycznie robi transkrypcję rozmowy, a prywatny czat
+                    AI pomoże Ci szybko znaleźć potrzebne informacje. Wszystkie Twoje
+                    notatki i nagrania są szyfrowane i niedostępne dla nikogo oprócz Ciebie.
                 </p>
 
                 <div className="landing-hero-cta">
@@ -418,7 +418,7 @@ export default function LandingPage() {
 
             {/* Waitlist CTA */}
             <section id="waitlist" className="landing-waitlist">
-                <h2>Chcę skupić się w 100% na klientach, a nie myśleć o robieniu notatek.</h2>
+                <h2>Chcesz skupić się w 100% na klientach, a nie myśleć o robieniu notatek?</h2>
                 <p>
                     Zapisz się na listę oczekujących i bądź wśród pierwszych, którzy
                     przetestują Lilapu.
