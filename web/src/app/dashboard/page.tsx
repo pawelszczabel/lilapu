@@ -151,6 +151,12 @@ export default function DashboardPage() {
                             </div>
                             <div className="main-tabs">
                                 <button
+                                    className={`main-tab ${activeTab === "record" ? "active" : ""}`}
+                                    onClick={() => setActiveTab("record")}
+                                >
+                                    🎙️ Nagrywaj
+                                </button>
+                                <button
                                     className={`main-tab ${activeTab === "transcriptions" ? "active" : ""}`}
                                     onClick={() => {
                                         setActiveTab("transcriptions");
@@ -164,12 +170,6 @@ export default function DashboardPage() {
                                     onClick={() => setActiveTab("notes")}
                                 >
                                     📓 Notatki
-                                </button>
-                                <button
-                                    className={`main-tab ${activeTab === "record" ? "active" : ""}`}
-                                    onClick={() => setActiveTab("record")}
-                                >
-                                    🎙️ Nagrywaj
                                 </button>
                                 <button
                                     className={`main-tab ${activeTab === "chat" ? "active" : ""}`}
