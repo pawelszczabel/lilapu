@@ -293,7 +293,7 @@ export default function ProjectSidebar({
                         <button
                             className="sidebar-new-project-btn"
                             onClick={() => setShowNewProjectModal(true)}
-                            title="Nowy pacjent"
+                            title="Nowy klient"
                             style={{
                                 width: '100%',
                                 display: 'flex',
@@ -320,7 +320,7 @@ export default function ProjectSidebar({
                             <div className="sidebar-add-btn" style={{ width: 28, height: 28 }}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             </div>
-                            <span style={{ fontWeight: 500 }}>Nowy pacjent</span>
+                            <span style={{ fontWeight: 500 }}>Nowy klient</span>
                         </button>
 
                         <button
@@ -508,10 +508,10 @@ export default function ProjectSidebar({
             {showNewProjectModal && (
                 <div className="modal-overlay" onClick={() => setShowNewProjectModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>Nowy Pacjent</h2>
+                        <h2>Nowy Klient</h2>
                         <input
                             type="text"
-                            placeholder="Imię i nazwisko / ID pacjenta"
+                            placeholder="Imię i nazwisko / ID klienta"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleCreateProject()}
@@ -564,10 +564,10 @@ export default function ProjectSidebar({
             {projectToRename && (
                 <div className="modal-overlay" onClick={() => setProjectToRename(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>Zmień nazwę pacjenta</h2>
+                        <h2>Zmień nazwę klienta</h2>
                         <input
                             type="text"
-                            placeholder="Nowa nazwa pacjenta"
+                            placeholder="Nowa nazwa klienta"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
                             onKeyDown={async (e) => {
@@ -597,7 +597,7 @@ export default function ProjectSidebar({
             {projectToDelete && (
                 <div className="modal-overlay" onClick={() => setProjectToDelete(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>Usuń pacjenta</h2>
+                        <h2>Usuń klienta</h2>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>
                             Czy na pewno chcesz usunąć profil <strong>{projectToDelete.name}</strong>? Ta operacja jest nieodwracalna.
                         </p>

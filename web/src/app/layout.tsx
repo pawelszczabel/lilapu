@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
+import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { plPL } from "@clerk/localizations";
 import Script from "next/script";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin", "latin-ext"],
+});
+
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "700", "900"],
 });
 
 export const viewport: Viewport = {
@@ -42,7 +48,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl" className="dark">
-      <body className={outfit.variable}>
+      <body className={`${inter.variable} ${roboto.variable}`}>
         <ClerkProvider localization={plPL} waitlistUrl="/waitlist">
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>

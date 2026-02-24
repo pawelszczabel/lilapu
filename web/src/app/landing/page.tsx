@@ -34,14 +34,15 @@ export default function LandingPage() {
 
             {/* Hero */}
             <section className="landing-hero">
-                <div className="landing-hero-badge">🔒 100% Prywatność — Zero Chmury</div>
+                <div className="landing-hero-badge">🔒 5‑poziomowe bezpieczeństwo danych</div>
 
-                <h1>Twój prywatny asystent wiedzy z notatek głosowych</h1>
+                <h1>Bądź w 100% obecny z klientem. AI zrobi transkrypcję rozmowy.</h1>
 
                 <p>
-                    Nagrywaj spotkania, rozmowy z klientami i notatki. Lilapu transkrybuje
-                    je lokalnie na Twoim komputerze i pozwala pytać AI o ich treść. Żadne
-                    dane nie opuszczają Twojego urządzenia.
+                    Nagrywaj sesje z klientami — Lilapu automatycznie transkrybuje
+                    i organizuje notatki per klient. Twój prywatny czat z AI pozwala
+                    przeszukiwać historię sesji — model nie jest trenowany na Twoich danych,
+                    a każda rozmowa z AI jest szyfrowana end‑to‑end.
                 </p>
 
                 <div className="landing-hero-cta">
@@ -49,89 +50,239 @@ export default function LandingPage() {
                         className="btn btn-primary btn-waitlist-hero"
                         onClick={() => setShowWaitlist(true)}
                     >
-                        📩 Dołącz do waitlisty
+                        Chcę skupić się na klientach →
                     </button>
                 </div>
             </section>
 
-            {/* Features */}
+            {/* Problem */}
+            <section className="landing-section landing-problem">
+                <h2>Dokumentacja zabiera czas, który powinien należeć do klienta</h2>
+                <div className="landing-problem-stats">
+                    <div className="landing-problem-stat">
+                        <span className="landing-problem-stat-value">52%</span>
+                        <span className="landing-problem-stat-label">
+                            terapeutów doświadcza wypalenia zawodowego
+                        </span>
+                    </div>
+                    <div className="landing-problem-stat">
+                        <span className="landing-problem-stat-value">30%</span>
+                        <span className="landing-problem-stat-label">
+                            czasu pracy idzie na dokumentację zamiast na klientów
+                        </span>
+                    </div>
+                    <div className="landing-problem-stat">
+                        <span className="landing-problem-stat-value">55%</span>
+                        <span className="landing-problem-stat-label">
+                            wskazuje zadania administracyjne jako przyczynę burnoutu
+                        </span>
+                    </div>
+                </div>
+                <p className="landing-problem-quote">
+                    „Spędzam 30–60 minut na każdej notatce po sesji. Wieczory na dokumentacji
+                    zamiast z rodziną. Szukam narzędzia, które to zmieni."
+                </p>
+            </section>
+
+            {/* Dlaczego Lilapu */}
             <section className="landing-section">
                 <h2>Dlaczego Lilapu?</h2>
                 <p className="landing-section-subtitle">
-                    Wszystko czego potrzebujesz od AI asystenta — bez subskrypcji, bez chmury, bez śledzenia.
+                    Skup się na kliencie. Resztą zajmie się AI — bezpiecznie i prywatnie.
                 </p>
 
                 <div className="landing-features">
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">🎙️</div>
-                        <h3>Transkrypcja na żywo</h3>
+                        <h3>Automatyczna transkrypcja sesji</h3>
                         <p>
-                            Nagrywaj w przeglądarce, a whisper.cpp zamieni Twój głos w tekst
-                            w czasie rzeczywistym. Po polsku, po angielsku, po niemiecku.
+                            Nagrywaj spotkanie, a AI zamieni rozmowę w tekst w czasie
+                            rzeczywistym. Po polsku, angielsku i niemiecku. Oszczędź
+                            30–60 minut po każdej sesji.
                         </p>
                     </div>
 
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">🧠</div>
-                        <h3>Czat z AI o notatkach</h3>
+                        <h3>Prywatny czat z AI o Twoich klientach</h3>
                         <p>
-                            Zadaj pytanie, a Bielik-7B przeszuka Twoje notatki i odpowie
-                            z precyzyjnymi cytatami źródłowymi. Jak ChatGPT, ale po polsku
-                            i na Twoim sprzęcie.
+                            „Co ustaliliśmy z Anną o celach?" — pytaj AI, a otrzymasz
+                            odpowiedź z dokładnymi cytatami z notatek. Model AI nie
+                            jest trenowany na Twoich danych. Nigdy.
                         </p>
                     </div>
 
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">🔐</div>
-                        <h3>Zero danych w chmurze</h3>
+                        <h3>Szyfrowanie end‑to‑end</h3>
                         <p>
-                            Cała obróbka AI dzieje się lokalnie na Twoim Macu. Twoje nagrania,
-                            transkrypcje i rozmowy z AI nigdy nie opuszczają Twojego komputera.
-                        </p>
-                    </div>
-
-                    <div className="landing-feature-card">
-                        <div className="landing-feature-icon">⚡</div>
-                        <h3>$0 miesięcznie</h3>
-                        <p>
-                            Żadnych subskrypcji, żadnych ukrytych kosztów. Lilapu działa na
-                            open-source modelach AI, które uruchamiasz bezpłatnie na swoim sprzęcie.
+                            Twoje notatki są zaszyfrowane Twoim hasłem. Nawet zespół
+                            Lilapu nie ma do nich dostępu. Treść rozmów z AI też
+                            jest szyfrowana — nikt poza Tobą jej nie przeczyta.
                         </p>
                     </div>
 
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">📁</div>
-                        <h3>Projekty i organizacja</h3>
+                        <h3>Folder per klient</h3>
                         <p>
-                            Organizuj notatki w projekty: klienci, sprawy, sesje terapeutyczne.
-                            Każdy projekt ma własną bazę wiedzy do przeszukiwania.
+                            Każdy klient ma swój folder z pełną historią sesji,
+                            transkrypcjami i notatkami. Pytaj AI tylko o konkretnego
+                            klienta. Żadne inne narzędzie na rynku tego nie oferuje.
                         </p>
                     </div>
 
                     <div className="landing-feature-card">
-                        <div className="landing-feature-icon">🇵🇱</div>
-                        <h3>Stworzony po polsku</h3>
+                        <div className="landing-feature-icon">🇪🇺</div>
+                        <h3>Europejskie bezpieczeństwo, polski AI</h3>
                         <p>
-                            Interfejs, transkrypcja i AI są zoptymalizowane pod język polski.
-                            Pierwszy tego typu narzędzie w Polsce — stworzone przez Polaka,
-                            dla Polaków.
+                            Transkrypcja zoptymalizowana pod język polski. Dane
+                            przechowywane w UE, zgodne z RODO. Serwery
+                            w europejskim centrum danych.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* Waitlist CTA section */}
+            {/* 5 Poziomów Bezpieczeństwa */}
+            <section className="landing-section landing-security">
+                <h2>5 poziomów bezpieczeństwa Twoich danych</h2>
+                <p className="landing-section-subtitle">
+                    Żadne inne narzędzie na rynku nie łączy tylu warstw ochrony w jednym
+                    produkcie. Twoje dane są chronione na każdym etapie.
+                </p>
+
+                <div className="landing-security-levels">
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">1</div>
+                        <div className="landing-security-level-content">
+                            <h3>Weryfikacja tożsamości</h3>
+                            <p>
+                                Logowanie zabezpieczone weryfikacją SMS i e‑mail.
+                                Tylko Ty masz dostęp do swojego konta — żadne hasło
+                                samo w sobie nie wystarczy.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">📱</div>
+                    </div>
+
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">2</div>
+                        <div className="landing-security-level-content">
+                            <h3>Szyfrowanie End‑to‑End</h3>
+                            <p>
+                                Wszystkie notatki, transkrypcje i rozmowy z AI
+                                są zaszyfrowane Twoim prywatnym hasłem. Nawet zespół
+                                Lilapu nie jest w stanie ich odczytać.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">🔐</div>
+                    </div>
+
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">3</div>
+                        <div className="landing-security-level-content">
+                            <h3>Dane w Unii Europejskiej</h3>
+                            <p>
+                                Twoje dane nie opuszczają UE. Serwery w europejskim
+                                centrum danych, pełna zgodność z RODO. Twoja
+                                dokumentacja podlega europejskiemu prawu.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">🇪🇺</div>
+                    </div>
+
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">4</div>
+                        <div className="landing-security-level-content">
+                            <h3>Confidential Computing</h3>
+                            <p>
+                                Dane są zaszyfrowane nawet w pamięci RAM serwera
+                                podczas przetwarzania przez AI. Technologia AMD SEV
+                                sprawia, że administrator serwera nie widzi Twoich danych.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">🛡️</div>
+                    </div>
+
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">5</div>
+                        <div className="landing-security-level-content">
+                            <h3>Blockchain Notaryzacja</h3>
+                            <p>
+                                Każda notatka otrzymuje kryptograficzny „odcisk palca"
+                                zapisany na blockchainie. Niezależny, niemożliwy do
+                                sfałszowania dowód autentyczności — na wypadek audytu
+                                lub sporu.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">⛓️</div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Dla kogo */}
+            <section className="landing-section landing-personas">
+                <h2>Dla kogo jest Lilapu?</h2>
+                <p className="landing-section-subtitle">
+                    Stworzone dla profesjonalistów, którzy prowadzą poufne rozmowy
+                    i potrzebują bezpiecznej dokumentacji.
+                </p>
+
+                <div className="landing-persona-cards">
+                    <div className="landing-persona-card">
+                        <div className="landing-persona-icon">🧠</div>
+                        <h3>Psychoterapeuci i psychologowie</h3>
+                        <p className="landing-persona-pain">
+                            „Wieczory spędzam na notatkach zamiast z rodziną.
+                            Podczas sesji notuję zamiast słuchać."
+                        </p>
+                        <p className="landing-persona-solution">
+                            Lilapu nagrywa sesję, tworzy transkrypcję i organizuje notatki
+                            per klient. Ty skupiasz się na relacji terapeutycznej.
+                        </p>
+                    </div>
+
+                    <div className="landing-persona-card">
+                        <div className="landing-persona-icon">🎯</div>
+                        <h3>Coachowie i mentorzy</h3>
+                        <p className="landing-persona-pain">
+                            „Mam 20 klientów. Nie pamiętam co ustaliliśmy 3 tygodnie temu.
+                            Klient oczekuje spersonalizowanego follow‑upu."
+                        </p>
+                        <p className="landing-persona-solution">
+                            Każdy klient ma folder z historią sesji. Pytasz AI „co Anna
+                            powiedziała o swoich celach?" — i dostajesz odpowiedź.
+                        </p>
+                    </div>
+
+                    <div className="landing-persona-card">
+                        <div className="landing-persona-icon">⚖️</div>
+                        <h3>Prawnicy i kancelarie</h3>
+                        <p className="landing-persona-pain">
+                            „Nie mogę używać zwykłych narzędzi AI — tajemnica adwokacka.
+                            Manualna transkrypcja jest droga i wolna."
+                        </p>
+                        <p className="landing-persona-solution">
+                            Szyfrowanie E2E + blockchain notaryzacja = niepodważalny dowód
+                            autentyczności zapisu. Zgodne z wymogami poufności.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Waitlist CTA */}
             <section id="waitlist" className="landing-waitlist">
-                <h2>Zapisz się na waitlistę</h2>
+                <h2>Chcę skupić się w 100% na klientach, a nie myśleć o robieniu notatek.</h2>
                 <p>
-                    Bądź pierwszym który wypróbuje Lilapu. Otrzymasz wczesny dostęp
-                    i ekskluzywne aktualizacje.
+                    Zapisz się na listę oczekujących i bądź wśród pierwszych, którzy
+                    przetestują Lilapu.
                 </p>
                 <button
-                    className="btn btn-primary"
+                    className="btn btn-primary btn-waitlist-hero"
                     onClick={() => setShowWaitlist(true)}
                 >
-                    📩 Dołącz do waitlisty
+                    Zapisuję się na waitlistę →
                 </button>
             </section>
 
@@ -139,7 +290,7 @@ export default function LandingPage() {
             <footer className="landing-footer">
                 <p>
                     © 2026 Lilapu · <a href="https://lilapu.com" style={{ color: "var(--accent)" }}>lilapu.com</a> ·
-                    Prywatność-first, zawsze.
+                    Prywatność i bezpieczeństwo — zawsze.
                 </p>
             </footer>
         </div>
