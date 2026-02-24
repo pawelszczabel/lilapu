@@ -39,6 +39,18 @@ export declare const api: {
       { audioBase64: string },
       string
     >;
+    transcribeFast: FunctionReference<
+      "action",
+      "public",
+      { audioBase64: string },
+      string
+    >;
+    transcribeWithDiarization: FunctionReference<
+      "action",
+      "public",
+      { audioBase64: string },
+      { contentWithSpeakers?: string; speakerCount?: number; text: string }
+    >;
   };
   conversations: {
     addConversationScope: FunctionReference<

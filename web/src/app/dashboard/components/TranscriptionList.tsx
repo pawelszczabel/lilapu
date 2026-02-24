@@ -117,7 +117,7 @@ export default function TranscriptionList({
     const createTranscription = useMutation(api.transcriptions.create);
     const generateUploadUrl = useMutation(api.transcriptions.generateUploadUrl);
     const indexTranscription = useAction(api.rag.indexTranscription);
-    const transcribeAudio = useAction(api.ai.transcribe);
+    const transcribeWithDiarization = useAction(api.ai.transcribeWithDiarization);
 
     const SAMPLE_RATE = 16000;
 
@@ -148,11 +148,11 @@ export default function TranscriptionList({
             samples.set(rawSamples);
             const durationSeconds = Math.round(audioBuffer.duration);
 
-            setUploadProgress("Transkrypcja...");
+            setUploadProgress("Transkrypcja z rozpoznawaniem mówców...");
             const wavBlob = encodeWavFromFloat32(samples, SAMPLE_RATE);
             const base64 = await blobToBase64(wavBlob);
-            const transcriptText = await transcribeAudio({ audioBase64: base64 });
-            const plaintextContent = transcriptText?.trim() || "[Transkrypcja niedostępna]";
+            const diarResult = await transcribeWithDiarization({ audioBase64: base64 });
+            const plaintextContent = diarResult.text?.trim() || "[Transkrypcja niedostępna]";
 
             setUploadProgress("Szyfrowanie i zapis...");
             const key = await getSessionKeyOrThrow();
@@ -179,11 +179,16 @@ export default function TranscriptionList({
             // E2EE: encrypt text fields
             const encryptedContent = await encryptString(key, plaintextContent);
             const encryptedTitle = await encryptString(key, plaintextTitle);
+            const encryptedDiarized = diarResult.contentWithSpeakers
+                ? await encryptString(key, diarResult.contentWithSpeakers)
+                : undefined;
 
             const transcriptionId = await createTranscription({
                 projectId,
                 title: encryptedTitle,
                 content: encryptedContent,
+                contentWithSpeakers: encryptedDiarized,
+                speakerCount: diarResult.speakerCount,
                 audioStorageId,
                 durationSeconds,
             });
@@ -199,7 +204,7 @@ export default function TranscriptionList({
             setIsUploading(false);
             setUploadProgress("");
         }
-    }, [projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio]);
+    }, [projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeWithDiarization]);
 
     // ── Decrypt transcription titles and content for display ──
     const [decryptedMap, setDecryptedMap] = useState<Record<string, { title: string; content: string }>>({});

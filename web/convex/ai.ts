@@ -7,7 +7,11 @@ import { v } from "convex/values";
 // RunPod Serverless (production) — set env vars in Convex dashboard
 const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY ?? "";
 const WHISPER_ENDPOINT_ID = process.env.WHISPER_ENDPOINT_ID ?? "";
+const PARAKEET_ENDPOINT_ID = process.env.PARAKEET_ENDPOINT_ID ?? "";
 const BIELIK_ENDPOINT_ID = process.env.BIELIK_ENDPOINT_ID ?? "";
+
+// Whisper WebSocket server HTTP endpoint (for diarized transcription of uploads)
+const WHISPER_WS_HTTP_URL = process.env.WHISPER_WS_HTTP_URL ?? "";
 
 // Local fallback (dev) — used when RunPod env vars are not set
 const LOCAL_AI_URL = process.env.AI_SERVER_URL ?? "http://localhost:8080";
@@ -15,6 +19,7 @@ const LOCAL_WHISPER_URL =
     process.env.WHISPER_SERVER_URL ?? "http://localhost:8081";
 
 const USE_RUNPOD = !!(RUNPOD_API_KEY && WHISPER_ENDPOINT_ID);
+const USE_PARAKEET = !!(RUNPOD_API_KEY && PARAKEET_ENDPOINT_ID);
 
 // ── RunPod helpers ───────────────────────────────────────────────────
 
@@ -137,6 +142,158 @@ export const transcribe = action({
 
         const result = await response.json();
         return result.text ?? "";
+    },
+});
+
+// ── Transcribe Fast (Parakeet — for notes) ──────────────────────────
+
+export const transcribeFast = action({
+    args: {
+        audioBase64: v.string(),
+    },
+    returns: v.string(),
+    handler: async (_ctx, args) => {
+        if (USE_PARAKEET) {
+            const result = await runpodRequest(PARAKEET_ENDPOINT_ID, {
+                audio_base64: args.audioBase64,
+                language: "pl",
+            });
+
+            console.log("Parakeet raw result:", JSON.stringify(result).slice(0, 1000));
+
+            const resAny = result as Record<string, unknown>;
+            const text = typeof resAny.text === "string" ? resAny.text : "";
+
+            return text;
+        }
+
+        // Fallback: use regular Whisper transcription
+        console.log("Parakeet not configured, falling back to Whisper");
+        // Delegate to Whisper inline
+        if (USE_RUNPOD) {
+            const result = await runpodRequest(WHISPER_ENDPOINT_ID, {
+                audio_base64: args.audioBase64,
+                language: "pl",
+                model: "large-v3",
+                word_timestamps: false,
+                initial_prompt: "Transkrypcja rozmowy po polsku.",
+                temperature: 0,
+            });
+            const resAny = result as Record<string, unknown>;
+            if (typeof resAny.text === "string") return resAny.text;
+            if (typeof resAny.transcription === "string") return resAny.transcription;
+            return "";
+        }
+
+        // Local whisper.cpp fallback
+        const audioBuffer = Buffer.from(args.audioBase64, "base64");
+        const formData = new FormData();
+        formData.append(
+            "file",
+            new Blob([audioBuffer], { type: "audio/wav" }),
+            "audio.wav"
+        );
+        formData.append("language", "pl");
+        formData.append("response_format", "json");
+
+        const response = await fetch(`${LOCAL_WHISPER_URL}/inference`, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Whisper error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.text ?? "";
+    },
+});
+
+// ── Transcribe with Diarization (for uploaded audio files) ──────────
+
+export const transcribeWithDiarization = action({
+    args: {
+        audioBase64: v.string(),
+    },
+    returns: v.object({
+        text: v.string(),
+        contentWithSpeakers: v.optional(v.string()),
+        speakerCount: v.optional(v.number()),
+    }),
+    handler: async (_ctx, args) => {
+        if (WHISPER_WS_HTTP_URL) {
+            // Use the HTTP diarization endpoint on the Whisper WS server
+            const response = await fetch(`${WHISPER_WS_HTTP_URL}/transcribe-diarize`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    audio_base64: args.audioBase64,
+                    language: "pl",
+                }),
+                signal: AbortSignal.timeout(300_000), // 5 min for long files
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Diarization error ${response.status}: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log("Diarization result:", JSON.stringify(result).slice(0, 1000));
+
+            const text = result.text ?? "";
+            const diarizedText = result.diarized_text ?? undefined;
+            const speakerCount = result.speaker_count ?? undefined;
+
+            return {
+                text,
+                contentWithSpeakers: diarizedText,
+                speakerCount,
+            };
+        }
+
+        // Fallback: regular transcription without diarization
+        if (USE_RUNPOD) {
+            const result = await runpodRequest(WHISPER_ENDPOINT_ID, {
+                audio_base64: args.audioBase64,
+                language: "pl",
+                model: "large-v3",
+                word_timestamps: false,
+                initial_prompt: "Transkrypcja rozmowy po polsku.",
+                temperature: 0,
+            });
+
+            const resAny = result as Record<string, unknown>;
+            let text = "";
+            if (typeof resAny.text === "string") text = resAny.text;
+            else if (typeof resAny.transcription === "string") text = resAny.transcription;
+
+            return { text, contentWithSpeakers: undefined, speakerCount: undefined };
+        }
+
+        // Local whisper.cpp fallback
+        const audioBuffer = Buffer.from(args.audioBase64, "base64");
+        const formData = new FormData();
+        formData.append(
+            "file",
+            new Blob([audioBuffer], { type: "audio/wav" }),
+            "audio.wav"
+        );
+        formData.append("language", "pl");
+        formData.append("response_format", "json");
+
+        const response = await fetch(`${LOCAL_WHISPER_URL}/inference`, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Whisper error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return { text: result.text ?? "", contentWithSpeakers: undefined, speakerCount: undefined };
     },
 });
 

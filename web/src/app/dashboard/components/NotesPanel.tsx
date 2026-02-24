@@ -39,6 +39,9 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const voiceSamplesRef = useRef<Float32Array[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const audioFileInputRef = useRef<HTMLInputElement>(null);
+    const [isAudioImporting, setIsAudioImporting] = useState(false);
+    const [audioImportProgress, setAudioImportProgress] = useState("");
 
     // Queries
     const notes = useQuery(api.notes.listByProject, { projectId });
@@ -51,7 +54,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const createNote = useMutation(api.notes.create);
     const updateNote = useMutation(api.notes.update);
     const removeNote = useMutation(api.notes.remove);
-    const transcribeAudio = useAction(api.ai.transcribe);
+    const transcribeFast = useAction(api.ai.transcribeFast);
 
     // E2EE: Decrypt note titles for sidebar display
     const [decryptedTitles, setDecryptedTitles] = useState<Record<string, string>>({});
@@ -357,7 +360,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
 
             const wavBlob = encodeWavFromFloat32(merged, VOICE_SAMPLE_RATE);
             const base64 = await blobToBase64(wavBlob);
-            const text = await transcribeAudio({ audioBase64: base64 });
+            const text = await transcribeFast({ audioBase64: base64 });
             const trimmed = text?.trim();
 
             if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
@@ -369,7 +372,47 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             voiceSamplesRef.current = [];
             setIsVoiceTranscribing(false);
         }
-    }, [transcribeAudio]);
+    }, [transcribeFast]);
+
+    // ── Audio file import (for notes) ──
+    const AUDIO_EXTENSIONS = ["mp3", "wav", "m4a", "mp4", "ogg", "webm", "flac", "aac"];
+    const VOICE_IMPORT_SAMPLE_RATE = 16000;
+
+    const handleAudioImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = "";
+
+        setIsAudioImporting(true);
+        setAudioImportProgress("Dekodowanie audio...");
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const audioCtx = new AudioContext({ sampleRate: VOICE_IMPORT_SAMPLE_RATE });
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            await audioCtx.close();
+
+            const rawSamples = audioBuffer.getChannelData(0);
+            const samples = new Float32Array(rawSamples.length);
+            samples.set(rawSamples);
+
+            setAudioImportProgress("Transkrypcja...");
+            const wavBlob = encodeWavFromFloat32(samples, VOICE_IMPORT_SAMPLE_RATE);
+            const base64 = await blobToBase64(wavBlob);
+            const text = await transcribeFast({ audioBase64: base64 });
+            const trimmed = text?.trim();
+
+            if (trimmed && trimmed !== "[BLANK_AUDIO]" && trimmed.length > 1) {
+                setEditContent((prev) => prev ? prev + "\n\n" + trimmed : trimmed);
+            }
+        } catch (err) {
+            console.error("Audio import error:", err);
+            alert("Błąd importu pliku audio. Sprawdź format (WAV, MP3, M4A).");
+        } finally {
+            setIsAudioImporting(false);
+            setAudioImportProgress("");
+        }
+    }, [transcribeFast]);
 
     // ── Simple markdown renderer ──
     const renderMarkdown = (text: string): React.ReactNode[] => {
@@ -646,12 +689,19 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
 
             {/* Main area */}
             <div className="notes-main">
-                {/* Hidden file input for import */}
+                {/* Hidden file inputs for import */}
                 <input
                     ref={fileInputRef}
                     type="file"
                     accept=".txt,.md,.docx"
                     onChange={handleImport}
+                    style={{ display: "none" }}
+                />
+                <input
+                    ref={audioFileInputRef}
+                    type="file"
+                    accept="audio/*,.mp3,.wav,.m4a,.mp4,.ogg,.webm,.flac,.aac"
+                    onChange={handleAudioImport}
                     style={{ display: "none" }}
                 />
                 {activeNote ? (
@@ -681,7 +731,15 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                         >
                                             {isVoiceTranscribing ? "⏳" : isVoiceRecording ? "⏹️" : "🎤"}
                                         </button>
-                                        <button className="key-dialog-action" onClick={handleSave} disabled={isVoiceRecording || isVoiceTranscribing}>
+                                        <button
+                                            className="key-dialog-action"
+                                            onClick={() => audioFileInputRef.current?.click()}
+                                            disabled={isVoiceRecording || isVoiceTranscribing || isAudioImporting}
+                                            title="Wgraj plik audio do transkrypcji"
+                                        >
+                                            {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Audio"}
+                                        </button>
+                                        <button className="key-dialog-action" onClick={handleSave} disabled={isVoiceRecording || isVoiceTranscribing || isAudioImporting}>
                                             💾 Zapisz
                                         </button>
                                         <button className="key-management-btn" onClick={handleCancelEdit} disabled={isVoiceRecording}>

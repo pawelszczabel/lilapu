@@ -23,8 +23,8 @@ RUN pip3 install --no-cache-dir \
 COPY server.py /app/server.py
 WORKDIR /app
 
-# Expose WebSocket port
-EXPOSE 8765
+# Expose WebSocket port + HTTP diarization endpoint
+EXPOSE 8765 8766
 
 # Pre-download Whisper model on build (faster cold start)
 RUN python3 -c "from faster_whisper import WhisperModel; WhisperModel('large-v3', device='cpu', compute_type='int8')" || true

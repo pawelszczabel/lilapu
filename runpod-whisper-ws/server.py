@@ -398,7 +398,127 @@ async def handle_client(websocket):
         logger.info(f"[{client_id}] Session ended, audio cleared from RAM")
 
 
+# ── HTTP handler for diarized transcription (uploaded files) ─────────
+
+from http.server import BaseHTTPRequestHandler
+import http.server
+import threading
+
+HTTP_PORT = int(os.environ.get("HTTP_PORT", "8766"))
+
+
+class DiarizeHandler(BaseHTTPRequestHandler):
+    """HTTP handler for /transcribe-diarize endpoint."""
+
+    def do_POST(self):
+        if self.path != "/transcribe-diarize":
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Not found"}')
+            return
+
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            data = json.loads(body)
+
+            audio_base64 = data.get("audio_base64", "")
+            if not audio_base64:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b'{"error": "Missing audio_base64"}')
+                return
+
+            # Decode base64 → float32 audio
+            import base64
+            audio_bytes = base64.b64decode(audio_base64)
+            # Parse WAV data
+            audio_float = int16_to_float32(audio_bytes)
+
+            # If WAV header present, skip it
+            if len(audio_bytes) > 44 and audio_bytes[:4] == b'RIFF':
+                # Try soundfile for proper WAV decoding
+                try:
+                    import soundfile as sf_lib
+                    audio_float, sr = sf_lib.read(io.BytesIO(audio_bytes))
+                    if sr != SAMPLE_RATE:
+                        # Simple resample by repeating/skipping
+                        ratio = SAMPLE_RATE / sr
+                        indices = np.arange(0, len(audio_float), 1.0 / ratio).astype(int)
+                        indices = indices[indices < len(audio_float)]
+                        audio_float = audio_float[indices]
+                    audio_float = audio_float.astype(np.float32)
+                    if len(audio_float.shape) > 1:
+                        audio_float = audio_float[:, 0]  # mono
+                except Exception:
+                    # Fallback: skip WAV header and parse as int16
+                    audio_float = int16_to_float32(audio_bytes[44:])
+
+            logger.info(f"HTTP diarize: {len(audio_float)} samples ({len(audio_float) / SAMPLE_RATE:.1f}s)")
+
+            # Transcribe plain text
+            plain_text = transcribe(audio_float)
+            plain_text = clean_transcript(plain_text)
+
+            # Transcribe with speakers
+            diarized_text = ""
+            speaker_count = 0
+            if diarize_pipeline is not None:
+                diarized_text = transcribe_with_speakers(audio_float)
+                if diarized_text:
+                    # Count unique speakers
+                    speaker_labels = set(re.findall(r'\[Mówca \d+\]', diarized_text))
+                    speaker_count = len(speaker_labels)
+
+            # ZERO-RETENTION
+            del audio_float
+            del audio_bytes
+
+            response_data = json.dumps({
+                "text": plain_text,
+                "diarized_text": diarized_text if diarized_text else None,
+                "speaker_count": speaker_count if speaker_count > 0 else None,
+            })
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(response_data.encode())
+
+            logger.info(f"HTTP diarize: {len(plain_text)} chars, {speaker_count} speakers")
+
+        except Exception as e:
+            logger.error(f"HTTP diarize error: {e}")
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+    def do_OPTIONS(self):
+        """Handle CORS preflight."""
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        """Suppress default HTTP server logs (we use our own logger)."""
+        pass
+
+
+def start_http_server():
+    """Start HTTP server in a background thread."""
+    server = http.server.HTTPServer((WS_HOST, HTTP_PORT), DiarizeHandler)
+    logger.info(f"HTTP diarization server on http://{WS_HOST}:{HTTP_PORT}/transcribe-diarize")
+    server.serve_forever()
+
+
 async def main():
+    # Start HTTP server in background thread
+    http_thread = threading.Thread(target=start_http_server, daemon=True)
+    http_thread.start()
+
     logger.info(f"Starting WebSocket server on ws://{WS_HOST}:{WS_PORT}")
     async with websockets.serve(
         handle_client,
