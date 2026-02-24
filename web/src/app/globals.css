@@ -1915,8 +1915,14 @@ textarea:focus {
 
 .landing-hero-cta {
   display: flex;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
   align-items: center;
+}
+
+.landing-hero-subinfo {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .landing-hero-cta .btn-primary {
@@ -2222,6 +2228,29 @@ textarea:focus {
   line-height: 1.6;
   padding-left: var(--space-4);
   border-left: 2px solid rgba(34, 197, 94, 0.3);
+}
+
+.landing-trust-badges-hero {
+  margin-top: var(--space-8);
+}
+
+.landing-trust-badges-hero .landing-trust-badge {
+  padding: var(--space-3) var(--space-4);
+  min-width: 80px;
+  background: rgba(19, 19, 29, 0.6);
+}
+
+.landing-trust-badges-hero .trust-badge-icon {
+  width: 28px;
+  height: 34px;
+}
+
+.landing-trust-badges-hero .trust-badge-name {
+  font-size: var(--text-xs);
+}
+
+.landing-trust-badges-hero .trust-badge-type {
+  font-size: 0.65rem;
 }
 
 /* Trust Badges */

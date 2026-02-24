@@ -472,23 +472,23 @@ export default function ChatPanel({
             if (hasScope) {
                 const scopeDescriptions = scopedItems.map((s) => `${s.icon} "${s.title}"`).join(", ");
                 systemPrompt = [
-                    "Jesteś Lilapu — prywatny asystent wiedzy. ZASADY:",
+                    "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
                     "1. Odpowiadaj WYŁĄCZNIE po polsku.",
                     "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
                     `3. Masz dostęp do: ${scopeDescriptions}. Odpowiadaj na podstawie podanego kontekstu.`,
-                    "4. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
-                    "5. Podawaj z jakiego źródła pochodzi informacja.",
+                    "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                    "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
                     "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
                     formatRule,
                 ].join("\n");
             } else {
                 systemPrompt = [
-                    "Jesteś Lilapu — prywatny asystent wiedzy. ZASADY:",
+                    "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
                     "1. Odpowiadaj WYŁĄCZNIE po polsku.",
                     "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
-                    "3. Masz dostęp do WSZYSTKICH transkrypcji tego projektu. Odpowiadaj na podstawie podanego kontekstu.",
-                    "4. ZAWSZE podawaj z jakiej transkrypcji pochodzi informacja.",
-                    "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w Twoich notatkach.'",
+                    "3. Masz dostęp do WSZYSTKICH transkrypcji i notatek tego klienta. Odpowiadaj na podstawie podanego kontekstu.",
+                    "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                    "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w danych tego klienta.'",
                     "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
                     formatRule,
                 ].join("\n");

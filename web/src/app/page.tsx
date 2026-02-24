@@ -112,7 +112,7 @@ export default function LandingPage() {
             <section className="landing-hero">
                 <div className="landing-hero-badge">🔒 5‑poziomowe bezpieczeństwo danych</div>
 
-                <h1>Bądź w 100% obecny z klientem. AI zrobi transkrypcję rozmowy.</h1>
+                <h1>Bądź w 100% obecny z klientem. Lilapu zrobi transkrypcję rozmowy.</h1>
 
                 <p>
                     Nagrywaj sesje z klientami — Lilapu automatycznie transkrybuje
@@ -126,9 +126,78 @@ export default function LandingPage() {
                         className="btn btn-primary btn-waitlist-hero"
                         onClick={() => setShowWaitlist(true)}
                     >
-                        Chcę skupić się na klientach →
+                        Zapisuję się na waitlistę →
                     </button>
+                    <p className="landing-hero-subinfo">
+                        Otrzymasz możliwość darmowego testowania Lilapu, gdy aplikacja będzie gotowa.
+                    </p>
                 </div>
+
+                <div className="landing-trust-badges landing-trust-badges-hero">
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="trust-badge-name">SOC 2</span>
+                        <span className="trust-badge-type">Type II</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="trust-badge-name">ISO</span>
+                        <span className="trust-badge-type">27001</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="trust-badge-name">ISO</span>
+                        <span className="trust-badge-type">27017</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="trust-badge-name">ISO</span>
+                        <span className="trust-badge-type">27018</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M15 20V18C15 15.2 17.2 13 20 13C22.8 13 25 15.2 25 18V20" stroke="currentColor" strokeWidth="1.5" />
+                            <rect x="13" y="20" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                            <circle cx="20" cy="25" r="1.5" fill="currentColor" />
+                        </svg>
+                        <span className="trust-badge-name">HIPAA</span>
+                        <span className="trust-badge-type">Compliant</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <circle cx="20" cy="22" r="6" stroke="currentColor" strokeWidth="1.5" />
+                            <path d="M16 22L20 18L24 22L20 26Z" fill="currentColor" opacity="0.6" />
+                        </svg>
+                        <span className="trust-badge-name">RODO</span>
+                        <span className="trust-badge-type">GDPR</span>
+                    </div>
+                    <div className="landing-trust-badge">
+                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
+                            <path d="M15 18L20 14L25 18V26L20 30L15 26Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                            <path d="M20 14V30M15 18L25 26M25 18L15 26" stroke="currentColor" strokeWidth="0.75" opacity="0.4" />
+                        </svg>
+                        <span className="trust-badge-name">CSA</span>
+                        <span className="trust-badge-type">STAR</span>
+                    </div>
+                </div>
+                <p className="landing-trust-disclaimer">
+                    Certyfikaty dotyczą infrastruktury chmurowej, na której hostowane są dane Lilapu.
+                </p>
             </section>
 
             {/* Problem */}
@@ -295,88 +364,6 @@ export default function LandingPage() {
                         <div className="landing-security-level-icon">⛓️</div>
                     </div>
                 </div>
-            </section>
-
-            {/* Trust Badges — Certifications */}
-            <section className="landing-section landing-trust">
-                <h2>Certyfikowana infrastruktura</h2>
-                <p className="landing-section-subtitle">
-                    Twoje dane hostowane są na infrastrukturze posiadającej
-                    najwyższe certyfikacje bezpieczeństwa.
-                </p>
-
-                <div className="landing-trust-badges">
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="trust-badge-name">SOC 2</span>
-                        <span className="trust-badge-type">Type II</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="trust-badge-name">ISO</span>
-                        <span className="trust-badge-type">27001</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="trust-badge-name">ISO</span>
-                        <span className="trust-badge-type">27017</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M14 24L18 28L26 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="trust-badge-name">ISO</span>
-                        <span className="trust-badge-type">27018</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M15 20V18C15 15.2 17.2 13 20 13C22.8 13 25 15.2 25 18V20" stroke="currentColor" strokeWidth="1.5" />
-                            <rect x="13" y="20" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                            <circle cx="20" cy="25" r="1.5" fill="currentColor" />
-                        </svg>
-                        <span className="trust-badge-name">HIPAA</span>
-                        <span className="trust-badge-type">Compliant</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <circle cx="20" cy="22" r="6" stroke="currentColor" strokeWidth="1.5" />
-                            <path d="M16 22L20 18L24 22L20 26Z" fill="currentColor" opacity="0.6" />
-                        </svg>
-                        <span className="trust-badge-name">RODO</span>
-                        <span className="trust-badge-type">GDPR</span>
-                    </div>
-
-                    <div className="landing-trust-badge">
-                        <svg className="trust-badge-icon" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2L4 10V22C4 33.1 10.8 43.3 20 46C29.2 43.3 36 33.1 36 22V10L20 2Z" stroke="currentColor" strokeWidth="2" fill="none" />
-                            <path d="M15 18L20 14L25 18V26L20 30L15 26Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                            <path d="M20 14V30M15 18L25 26M25 18L15 26" stroke="currentColor" strokeWidth="0.75" opacity="0.4" />
-                        </svg>
-                        <span className="trust-badge-name">CSA</span>
-                        <span className="trust-badge-type">STAR</span>
-                    </div>
-                </div>
-
-                <p className="landing-trust-disclaimer">
-                    Certyfikaty dotyczą infrastruktury chmurowej, na której hostowane są dane Lilapu.
-                </p>
             </section>
 
             {/* Dla kogo */}
