@@ -2470,6 +2470,107 @@ textarea:focus {
   text-decoration: underline;
 }
 
+/* Cookie Banner */
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 300;
+  padding: var(--space-4) var(--space-6);
+  background: rgba(13, 13, 20, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(124, 92, 252, 0.15);
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5);
+  animation: slideUpBanner 0.4s ease-out;
+}
+
+@keyframes slideUpBanner {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cookie-banner-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.cookie-banner-content p {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cookie-banner-content a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.cookie-btn-accept {
+  padding: var(--space-2) var(--space-5) !important;
+  font-size: var(--text-sm) !important;
+  border-radius: var(--radius-lg) !important;
+  white-space: nowrap;
+}
+
+.cookie-btn-reject {
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.cookie-btn-reject:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .cookie-banner {
+    padding: var(--space-4);
+  }
+
+  .cookie-banner-content {
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: center;
+  }
+
+  .cookie-banner-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .cookie-btn-accept,
+  .cookie-btn-reject {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 /* Waitlist Modal */
 .waitlist-modal-overlay {
   position: fixed;

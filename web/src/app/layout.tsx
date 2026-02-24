@@ -5,6 +5,7 @@ import ConvexClientProvider from "./ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { plPL } from "@clerk/localizations";
 import Script from "next/script";
+import CookieBanner from "./components/CookieBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <ClerkProvider localization={plPL} waitlistUrl="/waitlist">
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
+        <CookieBanner />
         <Script
           id="sw-register"
           strategy="afterInteractive"
