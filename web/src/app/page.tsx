@@ -311,7 +311,8 @@ export default function LandingPage() {
                 <h2>5 poziomów bezpieczeństwa Twoich danych</h2>
                 <p className="landing-section-subtitle">
                     Żadne inne narzędzie na rynku nie łączy tylu warstw ochrony w jednym
-                    produkcie. Twoje dane są chronione na każdym etapie.
+                    produkcie.<br />
+                    Twoje dane są chronione na każdym etapie.
                 </p>
 
                 <div className="landing-security-levels">
@@ -451,8 +452,10 @@ export default function LandingPage() {
             {/* Footer */}
             <footer className="landing-footer">
                 <p>
-                    © 2026 Lilapu · <a href="https://lilapu.com" style={{ color: "var(--accent)" }}>lilapu.com</a> ·
-                    Prywatność i bezpieczeństwo — zawsze.
+                    © 2026 Lilapu ·{" "}
+                    <a href="/polityka-prywatnosci">Polityka Prywatności</a> ·{" "}
+                    <a href="/regulamin">Regulamin</a> ·{" "}
+                    <a href="/polityka-ciasteczek">Polityka Ciasteczek</a>
                 </p>
             </footer>
         </div>

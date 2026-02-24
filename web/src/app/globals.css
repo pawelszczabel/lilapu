@@ -1912,7 +1912,7 @@ textarea:focus {
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  max-width: 700px;
+  max-width: 900px;
   margin-bottom: var(--space-4);
   background: linear-gradient(135deg, var(--text-primary) 0%, #a78bfa 50%, var(--accent) 100%);
   -webkit-background-clip: text;
@@ -1934,7 +1934,7 @@ textarea:focus {
 .landing-hero p {
   font-size: var(--text-lg);
   color: var(--text-secondary);
-  max-width: 550px;
+  max-width: 700px;
   line-height: 1.7;
   margin-bottom: var(--space-8);
 }
@@ -2457,6 +2457,17 @@ textarea:focus {
   color: var(--text-muted);
   font-size: var(--text-xs);
   border-top: 1px solid var(--border);
+}
+
+.landing-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.landing-footer a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 
 /* Waitlist Modal */
