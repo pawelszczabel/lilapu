@@ -731,15 +731,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                         >
                                             {isVoiceTranscribing ? "⏳" : isVoiceRecording ? "⏹️" : "🎤"}
                                         </button>
-                                        <button
-                                            className="key-dialog-action"
-                                            onClick={() => audioFileInputRef.current?.click()}
-                                            disabled={isVoiceRecording || isVoiceTranscribing || isAudioImporting}
-                                            title="Wgraj plik audio do transkrypcji"
-                                        >
-                                            {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Audio"}
-                                        </button>
-                                        <button className="key-dialog-action" onClick={handleSave} disabled={isVoiceRecording || isVoiceTranscribing || isAudioImporting}>
+                                        <button className="key-dialog-action" onClick={handleSave} disabled={isVoiceRecording || isVoiceTranscribing}>
                                             💾 Zapisz
                                         </button>
                                         <button className="key-management-btn" onClick={handleCancelEdit} disabled={isVoiceRecording}>
@@ -759,6 +751,14 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             📥 Importuj
+                                        </button>
+                                        <button
+                                            className="key-dialog-action"
+                                            onClick={() => audioFileInputRef.current?.click()}
+                                            disabled={isAudioImporting}
+                                            title="Wgraj plik audio do transkrypcji"
+                                        >
+                                            {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Wgraj audio"}
                                         </button>
                                         <div className="notes-export-wrapper">
                                             <button
@@ -850,6 +850,23 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                             >
                                 📥 Importuj plik
                             </button>
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => audioFileInputRef.current?.click()}
+                                disabled={isAudioImporting}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-2)',
+                                    color: 'var(--accent)',
+                                    borderColor: 'rgba(124, 92, 252, 0.3)',
+                                    background: 'transparent',
+                                    margin: '0 auto',
+                                    marginTop: 'var(--space-2)',
+                                }}
+                            >
+                                {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Wgraj audio"}
+                            </button>
                         </div>
                         <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: 'var(--space-3)' }}>
                             🔒 Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu.
@@ -859,42 +876,44 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             </div>
 
             {/* Rename modal */}
-            {noteToRename && (
-                <div className="modal-overlay" onClick={() => setNoteToRename(null)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>Zmień temat notatki</h2>
-                        <input
-                            type="text"
-                            placeholder="Nowy temat notatki"
-                            value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
-                            onKeyDown={async (e) => {
-                                if (e.key === "Enter" && renameValue.trim()) {
-                                    const key = await getSessionKeyOrThrow();
-                                    const encryptedTitle = await encryptString(key, renameValue.trim());
-                                    await updateNote({ noteId: noteToRename._id, title: encryptedTitle });
-                                    setNoteToRename(null);
-                                    setRenameValue("");
-                                }
-                            }}
-                            autoFocus
-                            style={{ width: "100%", marginBottom: "var(--space-4)" }}
-                        />
-                        <div className="modal-actions">
-                            <button className="btn btn-secondary" onClick={() => { setNoteToRename(null); setRenameValue(""); }}>Anuluj</button>
-                            <button className="btn btn-primary" onClick={async () => {
-                                if (renameValue.trim()) {
-                                    const key = await getSessionKeyOrThrow();
-                                    const encryptedTitle = await encryptString(key, renameValue.trim());
-                                    await updateNote({ noteId: noteToRename._id, title: encryptedTitle });
-                                    setNoteToRename(null);
-                                    setRenameValue("");
-                                }
-                            }}>Zapisz</button>
+            {
+                noteToRename && (
+                    <div className="modal-overlay" onClick={() => setNoteToRename(null)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <h2>Zmień temat notatki</h2>
+                            <input
+                                type="text"
+                                placeholder="Nowy temat notatki"
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                onKeyDown={async (e) => {
+                                    if (e.key === "Enter" && renameValue.trim()) {
+                                        const key = await getSessionKeyOrThrow();
+                                        const encryptedTitle = await encryptString(key, renameValue.trim());
+                                        await updateNote({ noteId: noteToRename._id, title: encryptedTitle });
+                                        setNoteToRename(null);
+                                        setRenameValue("");
+                                    }
+                                }}
+                                autoFocus
+                                style={{ width: "100%", marginBottom: "var(--space-4)" }}
+                            />
+                            <div className="modal-actions">
+                                <button className="btn btn-secondary" onClick={() => { setNoteToRename(null); setRenameValue(""); }}>Anuluj</button>
+                                <button className="btn btn-primary" onClick={async () => {
+                                    if (renameValue.trim()) {
+                                        const key = await getSessionKeyOrThrow();
+                                        const encryptedTitle = await encryptString(key, renameValue.trim());
+                                        await updateNote({ noteId: noteToRename._id, title: encryptedTitle });
+                                        setNoteToRename(null);
+                                        setRenameValue("");
+                                    }
+                                }}>Zapisz</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

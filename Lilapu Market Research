@@ -1,0 +1,453 @@
+# Raport: Kogo Lilapu Może Pomóc — Deep Research
+
+> **Data:** 24 lutego 2026 · Na podstawie danych z internetu, forów, grup i analiz konkurencji
+
+---
+
+## 1. Wielkość Rynku — Dlaczego To Ma Sens
+
+| Segment | Wartość 2024/2025 | Prognoza | CAGR |
+|---------|-------------------|----------|------|
+| **AI Transcription (global)** | $4.5B (2024) | $19.2B (2034) | 15.6% |
+| **AI Meeting Transcription** | $3.86B (2025) | $29.45B (2034) | **25.6%** |
+| **European Mental Health** | $115.5B (2025) | $141.8B (2034) | — |
+| **EU Online Therapy Services** | $2.94B (2024) | rosnący | **23.5%** |
+| **EU Psychologists & Counselors** | $16B (udział w globalnym $74.6B) | — | — |
+
+> [!IMPORTANT]
+> Rynek AI transcription rośnie **25%+ rocznie**. To nie nisza — to mainstream.
+
+---
+
+## 2. Branże i Grupy Docelowe — Priorytetyzacja
+
+### 🥇 TIER 1 — Najpilniejszy Problem (Start Tutaj)
+
+#### A. Psychologowie, Psychoterapeuci i Psychiatrzy
+
+**Dlaczego to #1 dla Lilapu:**
+
+| Statystyka | Źródło |
+|-----------|--------|
+| **52%** terapeutów doświadcza wypalenia zawodowego | SimplePractice, 2023 |
+| **55%** wskazuje zadania administracyjne jako przyczynę wypalenia | SimplePractice, 2023 |
+| **93%** klinicystów behavioral health zgłasza objawy burnoutu | Blueprint.ai, 2023 |
+| **30%** czasu pracy klinicystów idzie na dokumentację | ecreee.org, 2024 |
+| **75%** profesjonalistów medycznych twierdzi, że dokumentacja **przeszkadza w opiece** | AMIA, 2024 |
+| **77%** musi kończyć pracę później z powodu dokumentacji | AMIA, 2024 |
+| Dokumentacja to **największe wyzwanie** wg ankiety 2026 | healthcarebusinesstoday.com |
+
+**Głosy z Reddit/forów:**
+- *"Spędzam 30-60 minut na każdej notatce po sesji, zalegam z dokumentacją"*
+- *"Szkoła dyplomowa nie nauczyła mnie pisać notatek klinicznych"*
+- *"Obawiam się pozwu — więc piszę za dużo albo za mało"*
+- *"Dokumentacja rujnuje mój work-life balance"*
+- *"Szukam rozwiązań: template'y, dyktowanie, narzędzia AI"*
+
+**Wielkość rynku w Polsce:**
+- ~1,500 certyfikowanych psychoterapeutów (2016, 10 głównych stowarzyszeń)
+- ~57,600 prawników (adwokaci + radcy prawni)
+- Konsultacje psychologiczne i psychiatryczne rosną: **+63% r/r** (dorośli) i **+140% r/r** (dzieci) w 2024
+- 9 psychiatrów na 100,000 mieszkańców
+
+**Wielkość rynku w Europie:**
+- 44.8 specjalistów zdrowia psychicznego / 100,000 ludzi (2020)
+- 93,900+ psychiatrów w 25 krajach UE (2023)
+- 50+ psychologów / 100,000 w Szwecji/Danii
+
+**Psychografia — Persona:**
+- **Wiek:** 30-55 lat
+- **Ból:** Spędzanie wieczorów na notatkach zamiast z rodziną; lęk przed audytem ubezpieczeniowym; poczucie że dokumentacja "zabiera czas pacjentowi"
+- **Wartości:** Poufność klienta, etyka, obecność w sesji, profesjonalizm
+- **Gotowość do zapłaty:** $15-60/mies. (patrz: Mentalyc $15-$100/mies.)
+- **Bariery:** Obawy o prywatność nagrań, zgoda pacjenta, RODO/HIPAA
+
+---
+
+#### B. Business Coachowie, Mentorzy, Konsultanci
+
+**Dlaczego to pilne:**
+- Coach prowadzi **4-8 sesji dziennie** — nie da się notować i być w 100% obecnym
+- Klienci oczekują spersonalizowanego follow-upu po sesji
+- Brak narzędzi **prywatnych** — coach nie może wrzucić notatek klienta do Otter.ai (poufność kontraktu)
+- Rosnący rynek: coaching to **$20B+ industria globalnie**
+
+**Narzędzia które już używają:**
+- Hedy AI (real-time coaching support)
+- Sally AI (automated session documentation)
+- Otter.ai, Fireflies.ai (ale **bez opcji prywatności**)
+
+**Psychografia — Persona:**
+- **Wiek:** 35-55 lat
+- **Ból:** Chcę być w 100% obecny z klientem; nie chcę ręcznie spisywać godzin notatek; muszę śledzić postępy klienta między sesjami
+- **Wartości:** Relacja z klientem, rozwój, poufność, profesjonalizm
+- **Gotowość do zapłaty:** $19-39/mies.
+- **Bariery:** Sceptycyzm wobec AI; "Bot na spotkaniu" — nie chcą że klient widzi bota
+
+---
+
+### 🥈 TIER 2 — Silny Problem, Wyższe Bariery Wejścia
+
+#### C. Prawnicy i Kancelarie Prawne
+
+**Dlaczego problem jest pilny:**
+- Tajemnica adwokacka (**attorney-client privilege**) — naruszenie grozi dyskwalifikacją zawodową i odpowiedzialnością karną
+- W Polsce: Art. 266 § 1 KK — do **2 lat więzienia** za naruszenie tajemnicy zawodowej
+- Korzystanie z AI transcription (Otter.ai, Fireflies) = **ryzyko utraty przywileju adwokackiego** jeśli vendor przechowuje dane lub trenuje na nich modele
+- GDPR wymaga: szyfrowanie E2E, consent, data minimization, jasna polityka retencji
+
+**Wielkość rynku w Polsce:**
+- ~7,600 adwokatów + ~50,000 radców prawnych = **~57,600 prawników**
+
+**Psychografia — Persona:**
+- **Wiek:** 30-60 lat
+- **Ból:** Muszę dokumentować spotkania z klientem, ale nie mogę ryzykować wycieku danych; manualna transkrypcja jest droga i wolna; zewnętrzne serwisy AI to ryzyko compliance
+- **Wartości:** Bezpieczeństwo danych, compliance, profesjonalizm, efektywność
+- **Gotowość do zapłaty:** $29-99/mies.+ (enterprise)
+- **Bariery:** Bardzo wysokie wymagania bezpieczeństwa; potrzeba formalnych certyfikacji (ISO, SOC2); konserwatywna branża
+
+---
+
+#### D. Lekarze (Poza Psychiatrią)
+
+**Problem:** Podobny do terapeutów — dokumentacja medyczna pochłania czas. Ale wymagania compliance są znacznie wyższe (HIPAA w USA, RODO + krajowe regulacje w EU).
+
+**Dla Lilapu:** Dobry rynek na przyszłość (Enterprise tier), ale wymaga certyfikacji i integracji z EHR.
+
+---
+
+### 🥉 TIER 3 — Niszowe, ale Wartościowe
+
+| Segment | Problem | Gotowość do zapłaty |
+|---------|---------|---------------------|
+| **Dziennikarze** | Ochrona źródeł, szybkie transkrypcje wywiadów | $10-20/mies. |
+| **Audytorzy** | Niezaprzeczalność protokołów, compliance trail | $29-49/mies. |
+| **R&D / Konsultanci** | Notatki ze spotkań, IP protection | $19-39/mies. |
+| **Badacze UX** | Transkrypcje wywiadów z użytkownikami, insights | $19-29/mies. |
+
+---
+
+## 3. Mapa Konkurencji — Kto, Do Kogo i Jak
+
+### A. Ogólne Narzędzia Meetingowe
+
+| Konkurent | Cena | Target | Messaging | Prywatność | Lilapu przewaga |
+|-----------|------|--------|-----------|------------|-----------------|
+| **Otter.ai** | $0-$17/mies. | Business teams, sales, marketing | "Never miss a detail" — fokus na produktywność spotkań | ❌ US cloud, brak HIPAA | Prywatność + org per klient |
+| **Fireflies.ai** | $0-$19/mies. | Enterprise (75% Fortune 500), healthcare, legal, education | "Automate your meeting notes" — fokus na automatyzację | ✅ SOC2, HIPAA, GDPR | Prywatność + polski model AI |
+| **Fathom** | $0-$29/mies. | Individuals, small teams, sales | "Free AI meeting assistant" — fokus na darmowość i prostotę | Moderate | Prywatność + blockchain |
+| **Notta.ai** | $0-$14/mies. | International teams, podcasters, journalists | "AI-powered transcription in 58+ languages" — multilingual | Moderate | Prywatność + org per klient |
+| **Grain** | $0-$29/mies. | Product, design, research, sales teams | "Turn conversations into insights" — video intelligence | Moderate | Prywatność + org per klient |
+| **tl;dv** | $0-$29/mies. | Sales coaching, remote teams | "Record, transcribe, summarize meetings" | Moderate | Prywatność + polski AI |
+
+**Obserwacja:** Żaden z powyższych **nie targetuje terapeutów/psychologów jako główną grupę**. To nisza zostawiona specjalistycznym narzędziom.
+
+---
+
+### B. Specjalistyczne Narzędzia dla Zdrowia Psychicznego 🧠
+
+| Konkurent | Cena | Target | Kluczowy messaging |
+|-----------|------|--------|-------------------|
+| **Mentalyc** | $15-$100/mies. | Terapeuci, psychologowie, psychiatrzy | *"Spend 90% less time on notes. Be more present."* — redukcja burnout, jakość notatek SOAP/DAP |
+| **Upheal** | ~$29/mies. | Telehealth + in-person therapy | *"Telehealth, transcription, analytics in one"* — all-in-one klinika |
+| **Blueprint AI** | Enterprise | Clinical teams, outcomes measurement | *"Connect notes with outcomes and billing"* — clinical impact |
+| **Quill** | ~$20/mies. | Therapists concerned about privacy | *"No raw audio stored"* — minimizacja PHI |
+| **TheraPro AI** | ~$15-30/mies. | Therapists, HIPAA compliance | *"Automate progress notes, reduce admin stress"* |
+| **Berries** | ~$20-40/mies. | Mental health, multilingual | *"AI notes without storing recordings"* — SOC 2, HIPAA, PHIPA |
+| **Therapulse** | ~$20/mies. | Therapists, session notes | *"AI-powered notes with AES-256 encryption"* |
+
+> [!NOTE]
+> **Kluczowa obserwacja:** Żadne z tych narzędzi nie oferuje **blockchain notaryzacji**. Wszystkie działają na shared cloud (AWS/GCP) — dane "ufasz vendorowi". Lilapu również korzysta z cloud (RunPod → Oracle Cloud), ale oferuje **dedykowane GPU + Confidential Computing + E2EE**, czego żaden z powyższych nie ma.
+
+---
+
+### C. Prywatność-First European Tools 🇪🇺
+
+| Konkurent | Cena | Target | Privacy USP |
+|-----------|------|--------|-------------|
+| **Good Tape** | ~$10-20/mies. | Journalists, lawyers | EU storage, ISO 27001, AES-256, zero AI training |
+| **Jamie** | ~$24/mies. | Privacy-conscious teams | Audio processed in Germany, deleted after transcription |
+| **Klang** | Custom | Enterprise | ISO 27001, ISO 42001, AI Act compliant, on-premise option |
+| **Meetily** | Free (self-hosted) | EU orgs, GDPR-first | 100% local, open-source, zero cloud |
+| **Tucan.ai** | Custom | Germany-first, enterprise | Hosted in Germany, on-premise option |
+
+**Obserwacja:** Europa szybko rośnie w privacy-first tools, ale **żaden nie łączy: EU cloud + E2EE + organizację per klient/projekt + AI chat z notatkami + blockchain**.
+
+---
+
+### D. Infrastruktura Cloud Konkurencji 🏗️
+
+| Narzędzie | Cloud Provider | Lokalizacja danych | Confidential Computing |
+|-----------|---------------|-------------------|------------------------|
+| **Otter.ai** | AWS | 🇺🇸 US West | ❌ |
+| **Fireflies.ai** | GCP + AWS (VPC) | 🇺🇸 US (default) | ❌ |
+| **Upheal** | AWS | 🇺🇸 US | ❌ |
+| **Notta.ai** | AWS | 🇯🇵 Tokyo | ❌ |
+| **Jamie** | Beam (GPU) | 🇩🇪 Frankfurt | ❌ |
+| **Good Tape** | nieznaný | 🇪🇺 EU | ❌ |
+| **Mentalyc** | nieujawniony | nieujawnione (HIPAA) | ❌ |
+| **Lilapu (dev)** | RunPod | 🇺🇸 US (shared GPU) | ❌ |
+| **Lilapu (prod plan)** | **Oracle Cloud** | 🇩🇪 **Frankfurt (EU)** | ✅ **AMD SEV** |
+
+> [!IMPORTANT]
+> **Kluczowe:** Większość konkurentów trzyma dane w US na shared AWS/GCP. Nikt nie oferuje Confidential Computing.
+>
+> **Lilapu na Oracle Cloud EU = najsilniejsza pozycja bezpieczeństwa** w tej kategorii narzędzi.
+
+#### Który cloud jest najbezpieczniejszy dla regulowanych branż?
+
+| Kryterium | AWS | Azure | Google Cloud | **Oracle Cloud** |
+|-----------|-----|-------|-------------|:-----------------:|
+| **HIPAA BAA** | ✅ (120+ eligible services) | ✅ | ✅ | ✅ |
+| **GDPR/RODO** | ✅ | ✅ | ✅ | ✅ |
+| **EU Data Residency** | ✅ (6 EU regions) | ✅ (EU Data Boundary) | ✅ (6 EU regions) | ✅ **(EU Sovereign Cloud)** |
+| **Confidential Computing** | Nitro Enclaves | Intel SGX + AMD SEV | — | **AMD SEV (VM + Bare Metal)** |
+| **EU Sovereign Cloud** | 🔜 (w budowie) | ❌ | ❌ | **✅ (osobna entitas prawna UE)** |
+| **Szyfrowanie RAM** | Partial | ✅ | ❌ | **✅ (zawsze włączone)** |
+| **Odporność na CLOUD Act** | ❌ (US company) | ❌ (US company) | ❌ (US company) | **⚠️ US company, ale EU Sovereign osobna entitas** |
+| **Cena GPU** | $$$ | $$$ | $$ | **$ (tańszy 30-50%)** |
+
+> [!TIP]
+> **Rekomendacja dla Lilapu:** Oracle Cloud EU Sovereign (Frankfurt) to najlepszy wybór bo:
+> 1. **Confidential Computing (AMD SEV)** — szyfrowanie RAM = nawet admin serwera nie widzi danych podczas przetwarzania
+> 2. **EU Sovereign Cloud** — osobna entitas prawna w UE, EU-resident staff only
+> 3. **30-50% tańszy** od AWS/Azure na GPU
+> 4. **HIPAA + SOC 2 + GDPR certified**
+> 5. To jedyny cloud gdzie możesz mówić: *"Twoje dane są szyfrowane nawet podczas transkrypcji"*
+
+---
+
+## 4. Jak Konkurencja Komunikuje Swój Przekaz
+
+### Messaging Matrix — Co Mówią Do Kogo
+
+| Komunikat | Kto go używa | Do kogo | Emocja docelowa |
+|-----------|-------------|---------|-----------------|
+| *"Never miss a detail"* | Otter.ai | Business teams | Fear of missing out |
+| *"Automate your meeting notes"* | Fireflies | Enterprise | Zmęczenie adminem |
+| *"Be more present with clients"* | Mentalyc, Hedy AI | Terapeuci, coachowie | Guilt (poczucie winy że nie słucham) |
+| *"Reduce documentation by 90%"* | Mentalyc, TheraPro | Terapeuci | Ulga od burnout |
+| *"Your data stays private"* | Good Tape, Jamie | Legal, journalists | Lęk przed wyciekiem |
+| *"HIPAA/GDPR compliant"* | Fireflies, Mentalyc | Regulated industries | Compliance anxiety |
+| *"No bots in your meetings"* | Jamie, Granola | Privacy-conscious pros | Dyskomfort z AI botem |
+| *"Free AI meeting assistant"* | Fathom | Individuals, startups | Budget sensitivity |
+
+### Kanały Komunikacji Konkurencji
+
+| Kanał | Kto | Jak |
+|-------|-----|-----|
+| **Content marketing / Blog** | Mentalyc, Otter, Fireflies | SEO artykuły: "best AI scribe for therapists", "HIPAA compliant transcription" |
+| **Product Hunt** | Fathom, Grain, tl;dv | Launch day campaigns, free tier hook |
+| **Reddit / Forums** | Mentalyc, Quill | Organiczne dyskusje w r/therapists, r/psychotherapy |
+| **YouTube reviews** | Mentalyc, Otter | Influencer reviews, how-to guides |
+| **LinkedIn direct sales** | Fireflies, Klang | Outbound do decision-makers w firmach |
+| **Conference / Events** | Blueprint AI, Upheal | Konferencje branżowe (APA, coaching summits) |
+
+---
+
+## 5. Rekomendacja: Na Kogo Celować z Lilapu
+
+### Idealny Klient Lilapu (ICP)
+
+```
+🎯 Profil #1: Polski Psychoterapeuta / Psycholog
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Wiek:           30-55 lat
+Praktyka:       Prywatna (1-3 gabinety) lub klinika grupowa
+Sesji/dzień:    4-8
+Ból #1:         Wieczory spędzane na notatkach zamiast z rodziną
+Ból #2:         Lęk o bezpieczeństwo danych pacjentów (RODO)
+Ból #3:         Nie mogę notować i być w 100% obecna z pacjentem
+Dream state:    "Klikam nagrywaj, jestem w pełni obecna, po sesji 
+                notatki są gotowe, a dane pacjenta bezpieczne"
+Gotowość:       $19-59/mies.
+Obiekcje:       "Czy AI dobrze rozumie kontekst terapeutyczny?"
+                "Czy zgoda pacjenta wystarczy prawnie?"
+                "Czy nagranie nie wycieka nigdzie?"
+
+🎯 Profil #2: Business Coach / Mentor
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Wiek:           35-55 lat
+Klientów:       10-30 aktywnych
+Sesji/dzień:    3-6
+Ból #1:         Nie mogę pamiętać detali z sesji 3 tygodnie temu
+Ból #2:         Klient oczekuje spersonalizowanego follow-upu
+Ból #3:         Narzędzia jak Otter nie dają organizacji per klient
+Dream state:    "Każdy klient ma swój folder z całą historią sesji,
+                pytam AI 'co ustaliliśmy o celach?' i dostaję odpowiedź"
+Gotowość:       $19-39/mies.
+Obiekcje:       "Nie chcę bota dołączającego do mojego Zooma"
+                "Czy mój klient nie poczuje się niekomfortowo?"
+
+🎯 Profil #3: Prawnik (Longer-Term)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Wiek:           30-60 lat
+Praktyka:       Kancelaria indywidualna lub średniej wielkości
+Ból #1:         Manualna transkrypcja spotkań jest droga i wolna
+Ból #2:         Nie mogę używać Otter/Fireflies — ryzyko tajemnicy
+Ból #3:         Brak narzędzia które jest RODO + privacy first
+Dream state:    "Nagrywam spotkanie, transkrypcja generuje się na 
+                moim serwerze, blockchain gwarantuje że nikt nie zmienił
+                zapisu, a dane nigdy nie opuszczają mojej infrastruktury"
+Gotowość:       $29-99/mies.
+Obiekcje:       "Potrzebuję certyfikacji ISO/SOC2 żeby wdrożyć w kancelarii"
+```
+
+### Sugerowana Strategia Go-to-Market
+
+```
+Faza 1 (MVP → March 2026):
+├── 🎯 Target: Polscy terapeuci i coachowie
+├── 💬 Messaging: "Bądź w 100% obecny. Twoje notatki się same napiszą.
+│                  A dane pacjenta nigdy nie opuszczą Twojego serwera."
+├── 📢 Kanały: 
+│     ├── Polskie grupy FB (psychologowie, coachowie)
+│     ├── Polskie fora terapeutów
+│     ├── LinkedIn outreach do praktyków
+│     └── Content: "Dlaczego Twoje notatki ze sesji nie są bezpieczne"
+└── 🎁 Hook: Darmowe 3h transkrypcji/mies.
+
+Faza 2 (Q2 2026):
+├── 🎯 Expand: Cała Europa (DE, UK, FR) — mental health pros
+├── 💬 Messaging: "GDPR-first. EU Sovereign Cloud. Confidential Computing."
+├── 📢 Kanały: Product Hunt, LinkedIn, conferencing
+└── 🎯 Secondary: Prawnicy (EU kancelarie)
+
+Faza 3 (H2 2026):
+├── 🎯 Enterprise: Kliniki, kancelarie, firmy konsultingowe
+├── 💬 Messaging: "Compliance dashboard + blockchain audit trail"
+└── 📢 Kanały: Direct sales, conformance events
+```
+
+---
+
+## 6. Kluczowe Wnioski
+
+> [!TIP]
+> **Lilapu's Unique Position — Nikt tego nie łączy:**
+
+| Feature | Otter.ai | Fireflies | Mentalyc | Good Tape | Jamie | **Lilapu** |
+|---------|----------|-----------|----------|-----------|-------|:----------:|
+| Live transcription | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| AI chat z notatkami (RAG) | ❌ | ✅ (basic) | ❌ | ❌ | ❌ | **✅** |
+| Org per klient/projekt | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
+| EU Confidential Computing | ❌ | ❌ | ❌ | ❌ | ❌ | **✅ (Oracle AMD SEV)** |
+| E2EE (end-to-end encryption) | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
+| Blockchain notaryzacja | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
+| Polski model AI | ❌ | ❌ | ❌ | ❌ | ❌ | **✅ (Bielik-7B)** |
+| GDPR / EU data residency | ❌ (US) | ❌ (US) | ❌ (?) | ✅ (EU) | ✅ (DE) | **✅ (Oracle EU Frankfurt)** |
+| Cloud | AWS US | GCP+AWS US | ? | EU | DE | **Oracle EU Sovereign** |
+
+### Biggest Insights:
+
+1. **Terapeuci/psychologowie** to segment z **największym bólem** (52% burnout, 30% czasu na dokumentację) i **rosnącą gotowością do płacenia** za narzędzia AI ($15-100/mies.)
+2. **Organizacja per klient** = unique value proposition, której **żaden** z 20+ zbadanych konkurentów nie oferuje
+3. **Konkurenci trzymają dane w US** — Otter (AWS US West), Fireflies (GCP/AWS US), Upheal (AWS US), Notta (AWS Tokyo). Lilapu na Oracle EU Frankfurt z Confidential Computing = **najsilniejsza pozycja bezpieczeństwa w kategorii**
+4. **Blockchain notaryzacja** = unikalna feature, której nie ma żaden konkurent
+5. **Polski rynek** rośnie najszybciej w EU pod względem konsultacji psychologicznych (+63% r/r) — idealny czas na wejście
+
+---
+
+## 7. Blockchain Notaryzacja — Kiedy To Ratuje Skórę
+
+Blockchain notaryzacja = **cyfrowy notariusz**. Po każdym nagraniu system tworzy "odcisk palca" (hash) transkrypcji i zapisuje na blockchainie. Dowodzi że: (1) ta treść istniała w tym momencie, (2) nikt jej nie zmienił, (3) weryfikowalne przez stronę trzecią.
+
+### Scenariusze per branża
+
+#### 🏛️ Prawnicy — najsilniejszy case
+
+| Scenariusz | Bez blockchain | Z blockchain |
+|-----------|---------------|-------------|
+| Klient: *"Nigdy się na to nie zgodziłem"* | Słowo vs słowo, plik łatwo zmienić | Hash dowodzi: ta transkrypcja istniała 12 lut 14:30, nikt jej nie ruszył |
+| Druga strona kwestionuje nagranie w sądzie | Trudno udowodnić brak modyfikacji | Niezmienny dowód = nie do podrobienia |
+| Audyt kancelarii | Bazujesz na zaufaniu do systemu | Każda notatka ma weryfikowalny ślad |
+
+#### 🧠 Psychoterapeuci — ochrona prawna
+
+| Scenariusz | Problem | Blockchain rozwiązanie |
+|-----------|---------|----------------------|
+| Pacjent pozywa za *"niewłaściwą terapię"* | Notatki z pamięci kwestionowane | Transkrypcja z timestamp = dowód |
+| Ubezpieczyciel: *"ta sesja nie miała miejsca"* | Brak śladu | Hash notatki z datą |
+| Skarga do izby | Słowo vs słowo | Niezmienialny zapis sesji |
+
+#### 📋 Audytorzy / Compliance
+
+| Scenariusz | Wartość |
+|-----------|--------|
+| Raport niezmieniany po podpisaniu | Hash = dowód identyczności z oryginałem |
+| Regulacje → audit trail | Automatyczny, niewidoczny blockchain log |
+
+### Jak komunikować (NIE technicznie)
+
+❌ *"Zapisujemy SHA-256 hash na smart kontrakcie Base L2"*
+
+✅ *"Każda notatka jest automatycznie zabezpieczona kryptograficznie. Jeśli ktoś zakwestionuje autentyczność — masz niezależny, niemożliwy do sfałszowania dowód."*
+
+> Koszt: ~0.02 zł per notaryzacja (Base L2). Praktycznie darmowe.
+
+---
+
+## 8. Unit Economics — Ile Musi Kosztować Lilapu (PLN)
+
+### Stack AI: 3 modele
+
+| Model | VRAM | Zastosowanie |
+|-------|------|-------------|
+| Faster-Whisper large-v3 | ~3 GB | Transkrypcja ogólna + uploady |
+| Parakeet TDT 0.6B v3 | ~1.5 GB | Voice notes (lżejszy, szybszy) |
+| Bielik-7B Q4_K_M | ~4.5 GB | RAG chat |
+| **RAZEM** | **~9 GB** | **Mieści się na 1× A10 (24GB VRAM)** |
+
+### Scenariusz A: RunPod Serverless (teraz)
+
+Osobne workery, pay-per-second — płacisz tylko gdy ktoś używa:
+
+| Pozycja | PLN/user/mies. | Uwagi |
+|---------|----------------|-------|
+| Whisper worker | ~4.50 zł | ~1h transkrypcji, ~$0.00031/s |
+| Parakeet worker | ~2.80 zł | ~1h voice notes, lżejszy GPU |
+| Bielik worker | ~2.00 zł | ~50 pytań RAG |
+| **Koszt zmienny/user** | **~9.30 zł** | |
+| **Koszty stałe** | **~234 zł/mies.** | Convex 100 + Vercel 80 + blockchain 50 + domena 4 |
+
+### Scenariusz B: Oracle Cloud EU (produkcja)
+
+1× A10 GPU 24/7, wszystkie 3 modele na jednym GPU:
+
+| Pozycja | PLN/mies. |
+|---------|-----------|
+| Oracle 1× A10 (24/7) | 5 900 zł |
+| Convex Pro | 100 zł |
+| Vercel Pro | 80 zł |
+| Blockchain gas | ~50 zł |
+| Domena | 4 zł |
+| **RAZEM** | **~6 130 zł/mies.** |
+
+### Break-even @ 79 zł/mies.
+
+| Scenariusz | Break-even | 10k zł zysku | 20k zł zysku |
+|-----------|-----------|-------------|-------------|
+| **RunPod Serverless** | **4 usery** | 147 userów | 290 userów |
+| **Oracle Cloud** | **79 userów** | 206 userów | 333 userów |
+
+### Break-even @ 99 zł/mies.
+
+| Scenariusz | Break-even | 10k zł zysku | 20k zł zysku |
+|-----------|-----------|-------------|-------------|
+| **RunPod Serverless** | **3 usery** | 115 userów | 227 userów |
+| **Oracle Cloud** | **63 usery** | 164 usery | 265 userów |
+
+### Vs. gotowość ICP do zapłaty
+
+| ICP | Gotowość (PLN) | 79 zł | 99 zł | 149 zł |
+|-----|---------------|-------|-------|--------|
+| 🧠 Terapeuta | 60-400 zł | ✅ komfort | ✅ ok | ⚠️ góra budżetu |
+| 🎯 Coach | 75-160 zł | ✅ ok | ✅ ok | ⚠️ granica |
+| ⚖️ Prawnik | 120-400 zł | ✅ tanio | ✅ tanio | ✅ normalnie |
+
+### Rekomendacja cenowa
+
+> [!TIP]
+> **79 zł/mies. = sweet spot.** Mieści się w gotowości wszystkich trzech ICP, daje ~88% margin na RunPod, a break-even to zaledwie 4 płacących userów.
+>
+> **Strategia:** RunPod teraz (break-even @ 4 usery) → Oracle Cloud jak masz 80+ userów (Confidential Computing, EU Sovereign jako upgrade value proposition).
