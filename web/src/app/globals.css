@@ -1359,9 +1359,7 @@ textarea:focus {
   font-size: var(--text-sm);
   color: var(--text-secondary);
   transition: all 0.15s;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  position: relative;
 }
 
 .chat-sidebar-item:hover {
