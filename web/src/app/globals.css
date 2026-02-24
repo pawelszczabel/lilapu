@@ -2282,12 +2282,27 @@ textarea:focus {
 .landing-trust-badges-hero .landing-trust-badge {
   padding: var(--space-3) var(--space-4);
   min-width: 80px;
-  background: rgba(26, 26, 42, 0.9);
-  border: 1px solid rgba(124, 92, 252, 0.2);
+  background: linear-gradient(145deg, rgba(32, 32, 56, 0.95), rgba(20, 20, 36, 0.95));
+  border: 1px solid rgba(124, 92, 252, 0.25);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    0 0 15px rgba(124, 92, 252, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(124, 92, 252, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.landing-trust-badges-hero .landing-trust-badge:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(124, 92, 252, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  border-color: rgba(124, 92, 252, 0.4);
 }
 
 .landing-trust-badges-hero .trust-badge-icon {
@@ -2364,10 +2379,14 @@ textarea:focus {
 }
 
 .landing-trust-disclaimer {
-  margin-top: 64px;
+  margin-top: 24px;
   font-size: var(--text-xs);
   color: var(--text-muted);
   font-style: italic;
+  text-align: center;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Waitlist */
