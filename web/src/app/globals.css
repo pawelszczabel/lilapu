@@ -2268,7 +2268,7 @@ textarea:focus {
   margin-bottom: var(--space-2);
 }
 
-.landing-trust-hero>p {
+.landing-trust-hero>p:not(.landing-trust-disclaimer) {
   color: var(--text-secondary);
   font-size: var(--text-base);
   max-width: 500px;
@@ -2282,7 +2282,12 @@ textarea:focus {
 .landing-trust-badges-hero .landing-trust-badge {
   padding: var(--space-3) var(--space-4);
   min-width: 80px;
-  background: rgba(19, 19, 29, 0.6);
+  background: rgba(26, 26, 42, 0.9);
+  border: 1px solid rgba(124, 92, 252, 0.2);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(124, 92, 252, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .landing-trust-badges-hero .trust-badge-icon {
