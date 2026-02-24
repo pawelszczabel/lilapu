@@ -111,7 +111,7 @@ export default function LandingPage() {
 
             {/* Logo */}
             <div className="landing-logo">
-                <img src="/logo.svg" alt="Lilapu" width={40} height={40} />
+                <img src="/logo.svg" alt="Lilapu" width={56} height={56} />
             </div>
 
             {/* Hero */}
