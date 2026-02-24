@@ -1866,6 +1866,17 @@ textarea:focus {
   padding-top: 100px;
 }
 
+/* Landing page: +2px to all text sizes */
+.landing {
+  --text-xs: 0.875rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2.125rem;
+}
+
 .landing-logo {
   position: fixed;
   top: var(--space-5);
@@ -2011,12 +2022,15 @@ textarea:focus {
 }
 
 .landing-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-5);
 }
 
 .landing-feature-card {
+  flex: 0 1 calc(33.333% - var(--space-5));
+  min-width: 280px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);

@@ -72,6 +72,7 @@ export default function LandingPage() {
                                             borderRadius: "20px",
                                             boxShadow: "none",
                                             padding: "24px",
+                                            margin: "0 auto",
                                         },
                                         headerTitle: {
                                             color: "#e8e8f0",
@@ -140,10 +141,9 @@ export default function LandingPage() {
                 </div>
 
                 <div className="landing-trust-hero">
-                    <h3>Certyfikowana infrastruktura</h3>
+                    <h3>Bezpieczeństwo potwierdzone certyfikatami</h3>
                     <p>
-                        Twoje dane hostowane są na infrastrukturze posiadającej
-                        najwyższe certyfikacje bezpieczeństwa.
+                        Bezpieczeństwo Twoich danych jest najważniejsze, dlatego korzystamy z infrastruktury, która spełnia najwyższe standardy bezpieczeństwa.
                     </p>
 
                     <div className="landing-trust-badges landing-trust-badges-hero">
