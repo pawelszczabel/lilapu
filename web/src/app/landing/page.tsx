@@ -216,7 +216,7 @@ export default function LandingPage() {
 
             {/* Problem */}
             <section className="landing-section landing-problem">
-                <h2>Dokumentacja zabiera czas, który powinien należeć do klienta</h2>
+                <h2>Dokumentacja zabiera czas, który powinien należeć do Ciebie, Twojej rodziny, klientów</h2>
                 <div className="landing-problem-stats">
                     <div className="landing-problem-stat">
                         <span className="landing-problem-stat-value">52%</span>
@@ -240,6 +240,9 @@ export default function LandingPage() {
                 <p className="landing-problem-quote">
                     „Spędzam 30–60 minut na każdej notatce po sesji. Wieczory na dokumentacji
                     zamiast z rodziną. Szukam narzędzia, które to zmieni."
+                </p>
+                <p className="landing-problem-quote-source">
+                    — komentarz psychologa na Reddit
                 </p>
             </section>
 
