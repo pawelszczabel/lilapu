@@ -59,12 +59,12 @@ export default defineSchema({
     ),
   }).index("by_conversationId", ["conversationId"]),
 
-  // Embeddingi do RAG (vector search)
+  // Embeddingi do RAG (vector search) — ZERO PLAINTEXT: only stores embedding vectors + metadata
   embeddings: defineTable({
     projectId: v.id("projects"),
     transcriptionId: v.id("transcriptions"),
-    chunkText: v.string(),
     chunkIndex: v.number(),
+    chunkWordCount: v.number(), // enables client-side chunk reconstruction
     embedding: v.array(v.float64()),
   })
     .index("by_transcriptionId", ["transcriptionId"])

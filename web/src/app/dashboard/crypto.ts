@@ -14,7 +14,7 @@ const SESSION_KEY = "lilapu_derived_key";
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits — recommended for GCM
-const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_ITERATIONS = 600_000;
 
 // ── Key Derivation ─────────────────────────────────────────────────
 

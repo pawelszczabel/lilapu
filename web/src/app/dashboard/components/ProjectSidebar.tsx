@@ -49,7 +49,7 @@ export default function ProjectSidebar({
     const [expandedFolders, setExpandedFolders] = useState<Set<Id<"folders">>>(new Set());
     const [projectToMove, setProjectToMove] = useState<Project | null>(null); // State for nesting "przenieś do" 
 
-    const folders = useQuery(api.folders.list, { userId: userEmail });
+    const folders = useQuery(api.folders.list);
 
     const createProject = useMutation(api.projects.create);
     const updateProject = useMutation(api.projects.update);
@@ -61,7 +61,7 @@ export default function ProjectSidebar({
 
     const handleCreateProject = async () => {
         if (newName.trim()) {
-            await createProject({ name: newName.trim(), userId: userEmail });
+            await createProject({ name: newName.trim() });
             setNewName("");
             setShowNewProjectModal(false);
         }
@@ -69,7 +69,7 @@ export default function ProjectSidebar({
 
     const handleCreateFolder = async () => {
         if (newName.trim()) {
-            await createFolder({ name: newName.trim(), userId: userEmail });
+            await createFolder({ name: newName.trim() });
             setNewName("");
             setShowNewFolderModal(false);
         }

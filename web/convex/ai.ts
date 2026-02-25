@@ -76,7 +76,7 @@ export const transcribe = action({
             });
 
             // DEBUG: log raw Whisper response
-            console.log("Whisper raw result:", JSON.stringify(result).slice(0, 1000));
+            // Sensitive data — do not log raw transcription results
 
             // Faster Whisper worker returns { text: "..." } or { transcription: "..." }
             const resAny = result as Record<string, unknown>;
@@ -112,7 +112,7 @@ export const transcribe = action({
             const lowerText = text.toLowerCase().trim();
             for (const pattern of HALLUCINATION_PATTERNS) {
                 if (lowerText === pattern || lowerText === pattern + ".") {
-                    console.log(`Whisper hallucination filtered: "${text}"`);
+                    // Hallucination filtered (no content logged for privacy)
                     return "";
                 }
             }
@@ -159,7 +159,7 @@ export const transcribeFast = action({
                 language: "pl",
             });
 
-            console.log("Parakeet raw result:", JSON.stringify(result).slice(0, 1000));
+            // Sensitive data — do not log raw transcription results
 
             const resAny = result as Record<string, unknown>;
             const text = typeof resAny.text === "string" ? resAny.text : "";
@@ -240,7 +240,7 @@ export const transcribeWithDiarization = action({
             }
 
             const result = await response.json();
-            console.log("Diarization result:", JSON.stringify(result).slice(0, 1000));
+            // Sensitive data — do not log raw diarization results
 
             const text = result.text ?? "";
             const diarizedText = result.diarized_text ?? undefined;
@@ -301,15 +301,39 @@ export const transcribeWithDiarization = action({
 
 export const chat = action({
     args: {
-        systemPrompt: v.string(),
         userMessage: v.string(),
         context: v.optional(v.string()),
+        hasScope: v.optional(v.boolean()),
     },
     returns: v.string(),
     handler: async (_ctx, args) => {
+        // Server-side system prompt — NOT client-controlled (prevents prompt injection)
+        const formatRule = "FORMATOWANIE: Używaj akapitów, wypunktowań (- lub •), numeracji i pogrubionych nagłówków. NIE pisz ścian tekstu. Oddzielaj sekcje pustą linią.";
+
+        const systemPrompt = args.hasScope
+            ? [
+                "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
+                "1. Odpowiadaj WYŁĄCZNIE po polsku.",
+                "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
+                "3. Odpowiadaj na podstawie podanego kontekstu.",
+                "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
+                "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                formatRule,
+            ].join("\n")
+            : [
+                "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
+                "1. Odpowiadaj WYŁĄCZNIE po polsku.",
+                "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
+                "3. Masz dostęp do WSZYSTKICH transkrypcji i notatek tego klienta. Odpowiadaj na podstawie podanego kontekstu.",
+                "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w danych tego klienta.'",
+                "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                formatRule,
+            ].join("\n");
+
         // Merge system prompt and context into one system message
-        // (vLLM requires strict user/assistant alternation, no consecutive system messages)
-        let systemContent = args.systemPrompt;
+        let systemContent = systemPrompt;
         if (args.context) {
             systemContent += `\n\nKontekst z notatek:\n${args.context}`;
         }
@@ -340,7 +364,7 @@ export const chat = action({
                 180_000
             );
 
-            console.log("RunPod chat raw result:", JSON.stringify(result).slice(0, 2000));
+            // Sensitive data — do not log raw AI chat results
 
             // vLLM RunPod worker returns:
             // [{choices:[{tokens:["token1","token2",...]}], usage:{...}}]
@@ -379,7 +403,7 @@ export const chat = action({
                 return obj.text.trim();
             }
 
-            console.log("RunPod chat: unrecognized format, returning raw");
+            console.log("RunPod chat: unrecognized format, returning raw (content redacted)");
             return JSON.stringify(result);
         }
 

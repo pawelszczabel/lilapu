@@ -19,7 +19,7 @@ export default function EncryptionPasswordDialog({
     const [error, setError] = useState("");
 
     // Check if user already has a verification token (existing user)
-    const existingToken = useQuery(api.userKeys.getVerificationToken, { userId: email });
+    const existingToken = useQuery(api.userKeys.getVerificationToken);
     const setVerificationToken = useMutation(api.userKeys.setVerificationToken);
 
     const isNewUser = existingToken === null;
@@ -29,8 +29,8 @@ export default function EncryptionPasswordDialog({
         e.preventDefault();
         setError("");
 
-        if (password.length < 6) {
-            setError("Hasło musi mieć minimum 6 znaków");
+        if (password.length < 12) {
+            setError("Hasło musi mieć minimum 12 znaków");
             return;
         }
 
@@ -48,7 +48,7 @@ export default function EncryptionPasswordDialog({
             if (isNewUser) {
                 // First time — generate and store verification token
                 const token = await generateVerificationToken(key);
-                await setVerificationToken({ userId: email, verificationToken: token });
+                await setVerificationToken({ verificationToken: token });
                 onKeyReady();
             } else if (existingToken) {
                 // Existing user — verify password

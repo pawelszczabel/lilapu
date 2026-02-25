@@ -41,7 +41,7 @@ export default function DashboardPage() {
     // Fetch projects
     const projects = useQuery(
         api.projects.list,
-        userId ? { userId } : "skip"
+        userId ? {} : "skip"
     );
 
     const createProject = useMutation(api.projects.create);
@@ -50,7 +50,6 @@ export default function DashboardPage() {
         async (name: string) => {
             if (!userId) return;
             const id = await createProject({
-                userId,
                 name,
             });
             setActiveProjectId(id);

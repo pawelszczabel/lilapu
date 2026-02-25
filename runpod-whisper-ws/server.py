@@ -44,6 +44,12 @@ OVERLAP_DURATION_SEC = 2.0
 VAD_THRESHOLD = 0.5
 # HuggingFace token for pyannote (optional)
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
+# Rate limiting: max concurrent WebSocket connections per IP
+MAX_CONNECTIONS_PER_IP = int(os.environ.get("MAX_CONNECTIONS_PER_IP", "5"))
+
+# ── Per-IP connection tracking ───────────────────────────────────────
+from collections import defaultdict
+ip_connections: dict[str, int] = defaultdict(int)
 
 # ── Load models ──────────────────────────────────────────────────────
 
@@ -296,7 +302,19 @@ def transcribe_with_speakers(audio_float32: np.ndarray, previous_text: str = "")
 async def handle_client(websocket):
     """Handle one WebSocket client session."""
     client_id = id(websocket)
-    logger.info(f"[{client_id}] Client connected")
+    
+    # ── Rate limiting: per-IP connection tracking ──
+    client_ip = websocket.remote_address[0] if websocket.remote_address else "unknown"
+    ip_connections[client_ip] += 1
+    
+    if ip_connections[client_ip] > MAX_CONNECTIONS_PER_IP:
+        ip_connections[client_ip] -= 1
+        logger.warning(f"[{client_id}] Rate limit exceeded for {client_ip} ({ip_connections[client_ip]+1} connections)")
+        await websocket.send(json.dumps({"error": "Too many connections from this IP", "code": 429}))
+        await websocket.close(4029, "Rate limit exceeded")
+        return
+    
+    logger.info(f"[{client_id}] Client connected from {client_ip} ({ip_connections[client_ip]} active)")
 
     audio_buffer = bytearray()
     full_transcript = ""
@@ -395,7 +413,11 @@ async def handle_client(websocket):
         # ZERO-RETENTION: ensure cleanup
         audio_buffer.clear()
         all_audio_for_diarize.clear()
-        logger.info(f"[{client_id}] Session ended, audio cleared from RAM")
+        # Rate limiting: decrement connection count
+        ip_connections[client_ip] -= 1
+        if ip_connections[client_ip] <= 0:
+            del ip_connections[client_ip]
+        logger.info(f"[{client_id}] Session ended, audio cleared from RAM ({ip_connections.get(client_ip, 0)} active from {client_ip})")
 
 
 # ── HTTP handler for diarized transcription (uploaded files) ─────────
@@ -482,7 +504,9 @@ class DiarizeHandler(BaseHTTPRequestHandler):
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            origin = self.headers.get("Origin", "")
+            allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or origin.startswith("http://localhost:") else "https://lilapu.com"
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
             self.end_headers()
             self.wfile.write(response_data.encode())
 
@@ -497,9 +521,11 @@ class DiarizeHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         """Handle CORS preflight."""
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "")
+        allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or origin.startswith("http://localhost:") else "https://lilapu.com"
+        self.send_header("Access-Control-Allow-Origin", allowed_origin)
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
     def log_message(self, format, *args):

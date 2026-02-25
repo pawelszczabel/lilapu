@@ -1,5 +1,40 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
+
+// ── Auth helpers ────────────────────────────────────────────────────
+
+async function getAuthUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    const email = identity.email;
+    if (!email) throw new Error("Unauthorized: no email in identity");
+    return email;
+}
+
+async function verifyProjectAccess(
+    ctx: QueryCtx | MutationCtx,
+    projectId: Id<"projects">
+) {
+    const userId = await getAuthUserId(ctx);
+    const project = await ctx.db.get(projectId);
+    if (!project || project.userId !== userId) {
+        throw new Error("Forbidden: project not found or access denied");
+    }
+    return project;
+}
+
+async function verifyConversationAccess(
+    ctx: QueryCtx | MutationCtx,
+    conversationId: Id<"conversations">
+) {
+    const conv = await ctx.db.get(conversationId);
+    if (!conv) throw new Error("Conversation not found");
+    await verifyProjectAccess(ctx, conv.projectId);
+    return conv;
+}
+
+// ── Shape ───────────────────────────────────────────────────────────
 
 const conversationShape = v.object({
     _id: v.id("conversations"),
@@ -14,10 +49,13 @@ const conversationShape = v.object({
     scopedConversationIds: v.optional(v.array(v.id("conversations"))),
 });
 
+// ── Queries & Mutations ─────────────────────────────────────────────
+
 export const listByProject = query({
     args: { projectId: v.id("projects") },
     returns: v.array(conversationShape),
     handler: async (ctx, args) => {
+        await verifyProjectAccess(ctx, args.projectId);
         return await ctx.db
             .query("conversations")
             .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
@@ -36,6 +74,7 @@ export const create = mutation({
     },
     returns: v.id("conversations"),
     handler: async (ctx, args) => {
+        await verifyProjectAccess(ctx, args.projectId);
         return await ctx.db.insert("conversations", {
             projectId: args.projectId,
             title: args.title,
@@ -52,8 +91,7 @@ export const addTranscriptionScope = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
-        const conv = await ctx.db.get(args.conversationId);
-        if (!conv) throw new Error("Conversation not found");
+        const conv = await verifyConversationAccess(ctx, args.conversationId);
 
         const existing = conv.scopedTranscriptionIds ?? [];
         if (existing.includes(args.transcriptionId)) return null;
@@ -72,8 +110,7 @@ export const addNoteScope = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
-        const conv = await ctx.db.get(args.conversationId);
-        if (!conv) throw new Error("Conversation not found");
+        const conv = await verifyConversationAccess(ctx, args.conversationId);
 
         const existing = conv.scopedNoteIds ?? [];
         if (existing.includes(args.noteId)) return null;
@@ -92,8 +129,7 @@ export const addConversationScope = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
-        const conv = await ctx.db.get(args.conversationId);
-        if (!conv) throw new Error("Conversation not found");
+        const conv = await verifyConversationAccess(ctx, args.conversationId);
 
         // Prevent self-reference
         if (args.targetConversationId === args.conversationId) return null;
@@ -115,8 +151,7 @@ export const updateTitle = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
-        const conv = await ctx.db.get(args.conversationId);
-        if (!conv) throw new Error("Conversation not found");
+        await verifyConversationAccess(ctx, args.conversationId);
         await ctx.db.patch(args.conversationId, { title: args.title });
         return null;
     },
@@ -128,6 +163,8 @@ export const remove = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
+        await verifyConversationAccess(ctx, args.conversationId);
+
         // Delete all messages belonging to this conversation
         const messages = await ctx.db
             .query("messages")
@@ -148,7 +185,13 @@ export const get = query({
     args: { conversationId: v.id("conversations") },
     returns: v.union(conversationShape, v.null()),
     handler: async (ctx, args) => {
-        return await ctx.db.get(args.conversationId);
+        const conv = await ctx.db.get(args.conversationId);
+        if (!conv) return null;
+        // Verify ownership via project
+        const userId = await getAuthUserId(ctx);
+        const project = await ctx.db.get(conv.projectId);
+        if (!project || project.userId !== userId) return null;
+        return conv;
     },
 });
 
@@ -158,6 +201,9 @@ export const listByTranscription = query({
     handler: async (ctx, args) => {
         const transcription = await ctx.db.get(args.transcriptionId);
         if (!transcription) return [];
+
+        // Verify ownership via project
+        await verifyProjectAccess(ctx, transcription.projectId);
 
         const conversations = await ctx.db
             .query("conversations")

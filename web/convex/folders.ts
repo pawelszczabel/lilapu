@@ -1,8 +1,33 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
+
+// ── Auth helpers ────────────────────────────────────────────────────
+
+async function getAuthUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    const email = identity.email;
+    if (!email) throw new Error("Unauthorized: no email in identity");
+    return email;
+}
+
+async function verifyFolderAccess(
+    ctx: QueryCtx | MutationCtx,
+    folderId: Id<"folders">
+) {
+    const userId = await getAuthUserId(ctx);
+    const folder = await ctx.db.get(folderId);
+    if (!folder || folder.userId !== userId) {
+        throw new Error("Forbidden: folder not found or access denied");
+    }
+    return folder;
+}
+
+// ── Queries & Mutations ─────────────────────────────────────────────
 
 export const list = query({
-    args: { userId: v.string() },
+    args: {},
     returns: v.array(
         v.object({
             _id: v.id("folders"),
@@ -12,10 +37,11 @@ export const list = query({
             archived: v.boolean(),
         })
     ),
-    handler: async (ctx, args) => {
+    handler: async (ctx) => {
+        const userId = await getAuthUserId(ctx);
         return await ctx.db
             .query("folders")
-            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
             .filter((q) => q.eq(q.field("archived"), false))
             .collect();
     },
@@ -23,13 +49,13 @@ export const list = query({
 
 export const create = mutation({
     args: {
-        userId: v.string(),
         name: v.string(),
     },
     returns: v.id("folders"),
     handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
         return await ctx.db.insert("folders", {
-            userId: args.userId,
+            userId,
             name: args.name,
             archived: false,
         });
@@ -43,6 +69,7 @@ export const update = mutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
+        await verifyFolderAccess(ctx, args.folderId);
         await ctx.db.patch(args.folderId, { name: args.name });
         return null;
     },
@@ -52,6 +79,7 @@ export const archive = mutation({
     args: { folderId: v.id("folders") },
     returns: v.null(),
     handler: async (ctx, args) => {
+        await verifyFolderAccess(ctx, args.folderId);
         await ctx.db.patch(args.folderId, { archived: true });
 
         // Unlink projects that were in this folder

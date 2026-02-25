@@ -24,7 +24,7 @@ export declare const api: {
     chat: FunctionReference<
       "action",
       "public",
-      { context?: string; systemPrompt: string; userMessage: string },
+      { context?: string; hasScope?: boolean; userMessage: string },
       string
     >;
     embed: FunctionReference<
@@ -156,13 +156,13 @@ export declare const api: {
     create: FunctionReference<
       "mutation",
       "public",
-      { name: string; userId: string },
+      { name: string },
       Id<"folders">
     >;
     list: FunctionReference<
       "query",
       "public",
-      { userId: string },
+      {},
       Array<{
         _creationTime: number;
         _id: Id<"folders">;
@@ -295,12 +295,7 @@ export declare const api: {
     create: FunctionReference<
       "mutation",
       "public",
-      {
-        description?: string;
-        folderId?: Id<"folders">;
-        name: string;
-        userId: string;
-      },
+      { description?: string; folderId?: Id<"folders">; name: string },
       Id<"projects">
     >;
     get: FunctionReference<
@@ -320,7 +315,7 @@ export declare const api: {
     list: FunctionReference<
       "query",
       "public",
-      { userId: string },
+      {},
       Array<{
         _creationTime: number;
         _id: Id<"projects">;
@@ -355,7 +350,8 @@ export declare const api: {
       "public",
       { projectId: Id<"projects">; query: string; topK?: number },
       Array<{
-        chunkText: string;
+        chunkIndex: number;
+        chunkWordCount: number;
         score: number;
         transcriptionId: Id<"transcriptions">;
         transcriptionTitle: string;
@@ -371,7 +367,8 @@ export declare const api: {
         transcriptionIds: Array<Id<"transcriptions">>;
       },
       Array<{
-        chunkText: string;
+        chunkIndex: number;
+        chunkWordCount: number;
         score: number;
         transcriptionId: Id<"transcriptions">;
         transcriptionTitle: string;
@@ -441,13 +438,13 @@ export declare const api: {
     getVerificationToken: FunctionReference<
       "query",
       "public",
-      { userId: string },
+      {},
       string | null
     >;
     setVerificationToken: FunctionReference<
       "mutation",
       "public",
-      { userId: string; verificationToken: string },
+      { verificationToken: string },
       null
     >;
   };
@@ -507,7 +504,7 @@ export declare const internal: {
       "internal",
       {
         chunkIndex: number;
-        chunkText: string;
+        chunkWordCount: number;
         embedding: Array<number>;
         projectId: Id<"projects">;
         transcriptionId: Id<"transcriptions">;

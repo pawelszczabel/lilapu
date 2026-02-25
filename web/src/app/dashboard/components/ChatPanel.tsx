@@ -382,37 +382,84 @@ export default function ChatPanel({
                 const currentScopedNotes = scopedNoteIds;
                 const currentScopedConversations = scopedConversationIds;
 
-                // 1. Transcription context (RAG)
-                let results: Array<{
-                    chunkText: string;
+                // 1. Transcription context (RAG) — client-side chunk reconstruction
+                // RAG search returns metadata only (no plaintext): transcriptionId, chunkIndex, chunkWordCount, score
+                // Client reconstructs chunks from decrypted transcription content
+
+                const CHUNK_MAX_WORDS = 300;
+                const CHUNK_OVERLAP = 50;
+
+                /** Reconstruct a specific chunk from plaintext using same algo as server */
+                function reconstructChunk(plaintext: string, chunkIndex: number): string {
+                    const words = plaintext.split(/\s+/);
+                    if (words.length <= CHUNK_MAX_WORDS) return plaintext;
+
+                    let start = 0;
+                    let idx = 0;
+                    while (start < words.length) {
+                        const end = Math.min(start + CHUNK_MAX_WORDS, words.length);
+                        if (idx === chunkIndex) {
+                            return words.slice(start, end).join(" ");
+                        }
+                        if (end >= words.length) break;
+                        start += CHUNK_MAX_WORDS - CHUNK_OVERLAP;
+                        idx++;
+                    }
+                    return plaintext; // fallback
+                }
+
+                let ragResults: Array<{
                     transcriptionId: Id<"transcriptions">;
                     transcriptionTitle: string;
+                    chunkIndex: number;
+                    chunkWordCount: number;
                     score: number;
                 }> = [];
 
                 if (currentScopedTranscriptions.length > 0) {
-                    results = await ragSearchByTranscriptions({
+                    ragResults = await ragSearchByTranscriptions({
                         projectId,
                         transcriptionIds: currentScopedTranscriptions,
                         query: userMsg,
                         topK: 5,
                     });
                 } else if (chatMode === "project") {
-                    results = await ragSearch({
+                    ragResults = await ragSearch({
                         projectId,
                         query: userMsg,
                         topK: 5,
                     });
                 }
 
-                if (results.length > 0) {
-                    context += results
-                        .map((r) => `[Transkrypcja: "${r.transcriptionTitle}"]:\n${r.chunkText}`)
-                        .join("\n\n---\n\n");
-                    sources = results.map((r) => ({
-                        transcriptionId: r.transcriptionId,
-                        quote: r.chunkText.slice(0, 80),
-                    }));
+                if (ragResults.length > 0 && transcriptions) {
+                    // Reconstruct chunk text client-side from decrypted transcriptions
+                    const chunkTexts: Array<{ text: string; transcriptionTitle: string; transcriptionId: Id<"transcriptions"> }> = [];
+
+                    for (const r of ragResults) {
+                        const transcription = transcriptions.find((t) => t._id === r.transcriptionId);
+                        if (!transcription) continue;
+
+                        let plainContent = transcription.content;
+                        try {
+                            plainContent = await decryptString(key, transcription.content);
+                        } catch {
+                            // Legacy plaintext or decryption error
+                        }
+
+                        const chunkText = reconstructChunk(plainContent, r.chunkIndex);
+                        const title = decryptedTitles[r.transcriptionId] || r.transcriptionTitle;
+                        chunkTexts.push({ text: chunkText, transcriptionTitle: title, transcriptionId: r.transcriptionId });
+                    }
+
+                    if (chunkTexts.length > 0) {
+                        context += chunkTexts
+                            .map((r) => `[Transkrypcja: "${r.transcriptionTitle}"]:\n${r.text}`)
+                            .join("\n\n---\n\n");
+                        sources = chunkTexts.map((r) => ({
+                            transcriptionId: r.transcriptionId,
+                            quote: r.text.slice(0, 80),
+                        }));
+                    }
                 }
 
                 // 2. Notes context (E2EE — decrypt client-side)
@@ -465,44 +512,16 @@ export default function ChatPanel({
                 // Context building failed — continue without context
             }
 
-            // Build system prompt
-            let systemPrompt: string;
+            // System prompt is now built server-side — client only sends hasScope flag
             const hasScope = scopedTranscriptionIds.length > 0 || scopedNoteIds.length > 0 || scopedConversationIds.length > 0;
-
-            const formatRule = "FORMATOWANIE: Używaj akapitów, wypunktowań (- lub •), numeracji i pogrubionych nagłówków. NIE pisz ścian tekstu. Oddzielaj sekcje pustą linią.";
-
-            if (hasScope) {
-                const scopeDescriptions = scopedItems.map((s) => `${s.icon} "${s.title}"`).join(", ");
-                systemPrompt = [
-                    "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
-                    "1. Odpowiadaj WYŁĄCZNIE po polsku.",
-                    "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
-                    `3. Masz dostęp do: ${scopeDescriptions}. Odpowiadaj na podstawie podanego kontekstu.`,
-                    "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
-                    "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
-                    "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
-                    formatRule,
-                ].join("\n");
-            } else {
-                systemPrompt = [
-                    "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
-                    "1. Odpowiadaj WYŁĄCZNIE po polsku.",
-                    "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
-                    "3. Masz dostęp do WSZYSTKICH transkrypcji i notatek tego klienta. Odpowiadaj na podstawie podanego kontekstu.",
-                    "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
-                    "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w danych tego klienta.'",
-                    "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
-                    formatRule,
-                ].join("\n");
-            }
 
             // Call AI
             let response: string;
             try {
                 response = await chatAction({
-                    systemPrompt,
                     userMessage: userMsg,
                     context: context || undefined,
+                    hasScope,
                 });
             } catch (err) {
                 const msg = err instanceof Error ? err.message : "Nieznany błąd";

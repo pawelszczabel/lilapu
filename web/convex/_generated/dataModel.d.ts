@@ -58,7 +58,7 @@ export type DataModel = {
   embeddings: {
     document: {
       chunkIndex: number;
-      chunkText: string;
+      chunkWordCount: number;
       embedding: Array<number>;
       projectId: Id<"projects">;
       transcriptionId: Id<"transcriptions">;
@@ -69,7 +69,7 @@ export type DataModel = {
       | "_creationTime"
       | "_id"
       | "chunkIndex"
-      | "chunkText"
+      | "chunkWordCount"
       | "embedding"
       | "projectId"
       | "transcriptionId";

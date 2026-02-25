@@ -5,8 +5,8 @@ export const insertEmbedding = internalMutation({
     args: {
         projectId: v.id("projects"),
         transcriptionId: v.id("transcriptions"),
-        chunkText: v.string(),
         chunkIndex: v.number(),
+        chunkWordCount: v.number(),
         embedding: v.array(v.float64()),
     },
     handler: async (ctx, args) => {
