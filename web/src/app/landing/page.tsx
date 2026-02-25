@@ -258,9 +258,8 @@ export default function LandingPage() {
                         <div className="landing-feature-icon">🎙️</div>
                         <h3>Automatyczna transkrypcja sesji</h3>
                         <p>
-                            Nagrywaj spotkanie, a AI zamieni rozmowę w tekst w czasie
-                            rzeczywistym. Po polsku, angielsku i niemiecku. Oszczędź
-                            30–60 minut po każdej sesji.
+                            Nagrywaj spotkanie, a Lilapu zamieni rozmowę w tekst w czasie
+                            rzeczywistym. Oszczędź 30–60 minut po każdej sesji.
                         </p>
                     </div>
 
@@ -270,7 +269,7 @@ export default function LandingPage() {
                         <p>
                             „Co ustaliliśmy z Anną o celach?" — pytaj AI, a otrzymasz
                             odpowiedź z dokładnymi cytatami z notatek. Model AI nie
-                            jest trenowany na Twoich danych. Nigdy.
+                            jest trenowany na Twoich danych. To Twój prywatny, szyfrowany czat.
                         </p>
                     </div>
 
@@ -278,9 +277,8 @@ export default function LandingPage() {
                         <div className="landing-feature-icon">🔐</div>
                         <h3>Szyfrowanie end‑to‑end</h3>
                         <p>
-                            Twoje notatki są zaszyfrowane Twoim hasłem. Nawet zespół
-                            Lilapu nie ma do nich dostępu. Treść rozmów z AI też
-                            jest szyfrowana — nikt poza Tobą jej nie przeczyta.
+                            Twoje notatki, transkrypcje, rozmowy z AI są zaszyfrowane.
+                            Nikt nie ma do nich dostępu. Nikt poza Tobą ich nie przeczyta.
                         </p>
                     </div>
 
@@ -296,11 +294,10 @@ export default function LandingPage() {
 
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">🇪🇺</div>
-                        <h3>Europejskie bezpieczeństwo, polski AI</h3>
+                        <h3>Twoje dane nie opuszczają Europy</h3>
                         <p>
-                            Transkrypcja zoptymalizowana pod język polski. Dane
-                            przechowywane w UE, zgodne z RODO. Serwery
-                            w europejskim centrum danych.
+                            Serwery Lilapu są w Unii Europejskiej. Ich działanie
+                            jest w pełni zgodne z RODO. Szyfrowanie danych na każdym etapie.
                         </p>
                     </div>
                 </div>
@@ -321,9 +318,9 @@ export default function LandingPage() {
                         <div className="landing-security-level-content">
                             <h3>Weryfikacja tożsamości</h3>
                             <p>
-                                Logowanie zabezpieczone weryfikacją SMS i e‑mail.
-                                Tylko Ty masz dostęp do swojego konta — żadne hasło
-                                samo w sobie nie wystarczy.
+                                Logowanie z 2‑etapową weryfikacją (MFA) —
+                                samo hasło nie wystarczy. Rejestracja chroniona
+                                przez Cloudflare Turnstile, który blokuje boty.
                             </p>
                         </div>
                         <div className="landing-security-level-icon">📱</div>
@@ -335,8 +332,8 @@ export default function LandingPage() {
                             <h3>Szyfrowanie End‑to‑End</h3>
                             <p>
                                 Wszystkie notatki, transkrypcje i rozmowy z AI
-                                są zaszyfrowane Twoim prywatnym hasłem. Nawet zespół
-                                Lilapu nie jest w stanie ich odczytać.
+                                są zaszyfrowane Twoim prywatnym hasłem. Reset
+                                hasła = utrata Twoich danych.
                             </p>
                         </div>
                         <div className="landing-security-level-icon">🔐</div>
@@ -360,8 +357,8 @@ export default function LandingPage() {
                         <div className="landing-security-level-content">
                             <h3>Confidential Computing</h3>
                             <p>
-                                Dane są zaszyfrowane nawet w pamięci RAM serwera
-                                podczas przetwarzania przez AI. Technologia AMD SEV
+                                Dane są zaszyfrowane w pamięci RAM serwera
+                                podczas tworzenia transkrypcji. Technologia AMD SEV
                                 sprawia, że administrator serwera nie widzi Twoich danych.
                             </p>
                         </div>

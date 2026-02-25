@@ -50,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="pl" className="dark">
       <body className={`${inter.variable} ${roboto.variable}`}>
-        <ClerkProvider localization={plPL} waitlistUrl="/waitlist">
+        <ClerkProvider localization={plPL} waitlistUrl="/waitlist" taskUrls={{ 'setup-mfa': '/setup-mfa' }}>
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
         <CookieBanner />
