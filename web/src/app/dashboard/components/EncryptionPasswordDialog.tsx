@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 
@@ -17,6 +17,28 @@ export default function EncryptionPasswordDialog({
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const [isLocked, setIsLocked] = useState(false);
+    const [lockSeconds, setLockSeconds] = useState(0);
+
+    // Brute-force protection: progressive delay
+    const failCountRef = useRef(0);
+    const lockTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startLockout = useCallback((seconds: number) => {
+        setIsLocked(true);
+        setLockSeconds(seconds);
+        if (lockTimerRef.current) clearInterval(lockTimerRef.current);
+        lockTimerRef.current = setInterval(() => {
+            setLockSeconds((prev) => {
+                if (prev <= 1) {
+                    setIsLocked(false);
+                    if (lockTimerRef.current) clearInterval(lockTimerRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, []);
 
     // Check if user already has a verification token (existing user)
     const existingToken = useQuery(api.userKeys.getVerificationToken);
@@ -28,6 +50,8 @@ export default function EncryptionPasswordDialog({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (isLocked) return;
 
         if (password.length < 12) {
             setError("Hasło musi mieć minimum 12 znaków");
@@ -54,12 +78,24 @@ export default function EncryptionPasswordDialog({
                 // Existing user — verify password
                 const isValid = await verifyKey(key, existingToken);
                 if (isValid) {
+                    failCountRef.current = 0;
                     onKeyReady();
                 } else {
-                    // Wrong password — clear the bad key from session
+                    // Wrong password — apply progressive delay
+                    failCountRef.current += 1;
                     const { clearSessionKey } = await import("../crypto");
                     clearSessionKey();
-                    setError("Złe hasło szyfrowania. Spróbuj ponownie.");
+
+                    if (failCountRef.current >= 10) {
+                        startLockout(300); // 5 minutes
+                        setError("Zbyt wiele nieudanych prób. Spróbuj ponownie za 5 minut.");
+                    } else if (failCountRef.current >= 3) {
+                        const delaySec = Math.min(2 ** (failCountRef.current - 2), 60);
+                        startLockout(delaySec);
+                        setError(`Złe hasło szyfrowania. Następna próba za ${delaySec}s.`);
+                    } else {
+                        setError("Złe hasło szyfrowania. Spróbuj ponownie.");
+                    }
                 }
             }
         } catch {
@@ -120,14 +156,16 @@ export default function EncryptionPasswordDialog({
 
                     <button
                         type="submit"
-                        disabled={isLoading || !password}
+                        disabled={isLoading || !password || isLocked}
                         className="encryption-submit"
                     >
-                        {isLoading
-                            ? "Weryfikacja..."
-                            : isNewUser
-                                ? "🔒 Ustaw hasło"
-                                : "🔓 Odblokuj dane"}
+                        {isLocked
+                            ? `⏳ Zablokowane (${lockSeconds}s)`
+                            : isLoading
+                                ? "Weryfikacja..."
+                                : isNewUser
+                                    ? "🔒 Ustaw hasło"
+                                    : "🔓 Odblokuj dane"}
                     </button>
                 </form>
 
