@@ -341,7 +341,9 @@ export default function RecordPanel({
             // Connect WebSocket for live transcription
             if (useWebSocket) {
                 const wsUrl = process.env.NEXT_PUBLIC_WHISPER_WS_URL!;
-                const ws = new WebSocket(wsUrl);
+                const wsApiKey = process.env.NEXT_PUBLIC_WS_API_KEY;
+                const wsFullUrl = wsApiKey ? `${wsUrl}?token=${wsApiKey}` : wsUrl;
+                const ws = new WebSocket(wsFullUrl);
                 wsRef.current = ws;
 
                 ws.onmessage = (event) => {

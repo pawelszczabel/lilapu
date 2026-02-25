@@ -224,9 +224,13 @@ export const transcribeWithDiarization = action({
     handler: async (_ctx, args) => {
         if (WHISPER_WS_HTTP_URL) {
             // Use the HTTP diarization endpoint on the Whisper WS server
+            const diarizeApiKey = process.env.DIARIZE_API_KEY ?? "";
             const response = await fetch(`${WHISPER_WS_HTTP_URL}/transcribe-diarize`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(diarizeApiKey ? { "X-API-Key": diarizeApiKey } : {}),
+                },
                 body: JSON.stringify({
                     audio_base64: args.audioBase64,
                     language: "pl",

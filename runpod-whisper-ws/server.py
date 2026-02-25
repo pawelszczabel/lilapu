@@ -46,9 +46,13 @@ VAD_THRESHOLD = 0.5
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 # Rate limiting: max concurrent WebSocket connections per IP
 MAX_CONNECTIONS_PER_IP = int(os.environ.get("MAX_CONNECTIONS_PER_IP", "5"))
+# Authentication keys (if empty, auth is disabled — dev mode)
+WS_API_KEY = os.environ.get("WS_API_KEY", "")
+DIARIZE_API_KEY = os.environ.get("DIARIZE_API_KEY", "")
 
 # ── Per-IP connection tracking ───────────────────────────────────────
 from collections import defaultdict
+from urllib.parse import urlparse, parse_qs
 ip_connections: dict[str, int] = defaultdict(int)
 
 # ── Load models ──────────────────────────────────────────────────────
@@ -303,6 +307,23 @@ async def handle_client(websocket):
     """Handle one WebSocket client session."""
     client_id = id(websocket)
     
+    # ── Authentication: validate API key from query string ──
+    if WS_API_KEY:
+        try:
+            path = websocket.request.path if hasattr(websocket, 'request') and websocket.request else ""
+            params = parse_qs(urlparse(path).query)
+            token = params.get("token", [None])[0]
+            if token != WS_API_KEY:
+                logger.warning(f"[{client_id}] Unauthorized WebSocket connection (invalid token)")
+                await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
+                await websocket.close(4001, "Unauthorized")
+                return
+        except Exception as e:
+            logger.warning(f"[{client_id}] Auth check failed: {e}")
+            await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
+            await websocket.close(4001, "Unauthorized")
+            return
+    
     # ── Rate limiting: per-IP connection tracking ──
     client_ip = websocket.remote_address[0] if websocket.remote_address else "unknown"
     ip_connections[client_ip] += 1
@@ -433,6 +454,17 @@ class DiarizeHandler(BaseHTTPRequestHandler):
     """HTTP handler for /transcribe-diarize endpoint."""
 
     def do_POST(self):
+        # ── Authentication: validate API key ──
+        if DIARIZE_API_KEY:
+            api_key = self.headers.get("X-API-Key", "")
+            if api_key != DIARIZE_API_KEY:
+                self.send_response(401)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"error": "Unauthorized"}')
+                logger.warning(f"HTTP diarize: unauthorized request (invalid API key)")
+                return
+
         if self.path != "/transcribe-diarize":
             self.send_response(404)
             self.end_headers()
