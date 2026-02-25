@@ -371,7 +371,7 @@ export default function LandingPage() {
                             <h3>Confidential Computing</h3>
                             <p>
                                 Dane są zaszyfrowane w pamięci RAM serwera
-                                podczas tworzenia transkrypcji. Technologia AMD SEV
+                                podczas tworzenia transkrypcji. Technologia Confidential Computing
                                 sprawia, że administrator serwera nie widzi Twoich danych.
                             </p>
                         </div>
@@ -381,15 +381,14 @@ export default function LandingPage() {
                     <div className="landing-security-level">
                         <div className="landing-security-level-number">5</div>
                         <div className="landing-security-level-content">
-                            <h3>Blockchain Notaryzacja</h3>
+                            <h3>Zero‑Retention</h3>
                             <p>
-                                Każda notatka otrzymuje kryptograficzny „odcisk palca"
-                                zapisany na blockchainie. Niezależny, niemożliwy do
-                                sfałszowania dowód autentyczności — na wypadek audytu
-                                lub sporu.
+                                Audio jest przetwarzane wyłącznie w pamięci RAM serwera
+                                i usuwane natychmiast po transkrypcji. Żadne nagranie
+                                nie jest zapisywane na dysku — zero śladów.
                             </p>
                         </div>
-                        <div className="landing-security-level-icon">⛓️</div>
+                        <div className="landing-security-level-icon">🗑️</div>
                     </div>
                 </div>
             </section>
@@ -437,8 +436,8 @@ export default function LandingPage() {
                             Manualna transkrypcja jest droga i wolna."
                         </p>
                         <p className="landing-persona-solution">
-                            Szyfrowanie E2E + blockchain notaryzacja = niepodważalny dowód
-                            autentyczności zapisu. Zgodne z wymogami poufności.
+                            Szyfrowanie E2E + zero-retention = Twoje dane nigdy nie są
+                            dostępne dla osób trzecich. Zgodne z wymogami poufności.
                         </p>
                     </div>
                 </div>
