@@ -112,6 +112,18 @@ export default function PolitykaPrywatnosci() {
                                 <td style={{ padding: "8px 12px" }}>USA</td>
                                 <td style={{ padding: "8px 12px" }}>Logowanie, MFA, zarządzanie kontem, weryfikacja przy rejestracji</td>
                             </tr>
+                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                                <td style={{ padding: "8px 12px" }}>Analityka i reklamy</td>
+                                <td style={{ padding: "8px 12px" }}>Google LLC</td>
+                                <td style={{ padding: "8px 12px" }}>USA</td>
+                                <td style={{ padding: "8px 12px" }}>Google Analytics (analiza ruchu), Google Ads (remarketing, konwersje). Ładowane wyłącznie po wyrażeniu zgody.</td>
+                            </tr>
+                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                                <td style={{ padding: "8px 12px" }}>Reklamy</td>
+                                <td style={{ padding: "8px 12px" }}>Meta Platforms Inc.</td>
+                                <td style={{ padding: "8px 12px" }}>USA</td>
+                                <td style={{ padding: "8px 12px" }}>Meta Pixel (remarketing, konwersje na Facebooku i Instagramie). Ładowane wyłącznie po wyrażeniu zgody.</td>
+                            </tr>
                         </tbody>
                     </table>
                     <p style={{ marginTop: "1rem" }}>
@@ -150,10 +162,10 @@ export default function PolitykaPrywatnosci() {
                 {/* 7. Transfer danych poza EOG */}
                 <Section title="7. Transfer danych poza Europejski Obszar Gospodarczy">
                     <p>
-                        Korzystamy z usług Clerk i Convex, których serwery znajdują się w USA. Transfer danych
-                        odbywa się na podstawie <strong>Standardowych Klauzul Umownych (SCC)</strong> zatwierdzonych
-                        przez Komisję Europejską oraz w oparciu o <strong>EU-US Data Privacy Framework</strong>,
-                        zapewniając odpowiedni poziom ochrony danych.
+                        Korzystamy z usług Clerk, Convex, Google LLC i Meta Platforms Inc., których serwery
+                        znajdują się w USA. Transfer danych odbywa się na podstawie <strong>Standardowych
+                            Klauzul Umownych (SCC)</strong> zatwierdzonych przez Komisję Europejską oraz w oparciu
+                        o <strong>EU-US Data Privacy Framework</strong>, zapewniając odpowiedni poziom ochrony danych.
                     </p>
                     <p>
                         Treści użytkownika (notatki, transkrypcje, rozmowy) przechowywane w Convex są zaszyfrowane
@@ -163,24 +175,25 @@ export default function PolitykaPrywatnosci() {
 
                 {/* 8. Cookies */}
                 <Section title="8. Pliki cookie">
-                    <p>Lilapu używa następujących plików cookie:</p>
+                    <p>Lilapu używa następujących kategorii plików cookie:</p>
                     <ul>
                         <li><strong>Niezbędne</strong> — sesja logowania (Clerk), preferencje interfejsu, zgoda na cookies. Nie wymagają zgody.</li>
-                        <li><strong>Opcjonalne</strong> — obecnie Lilapu nie wykorzystuje plików cookie analitycznych ani marketingowych.</li>
+                        <li><strong>Analityczne</strong> — Google Analytics (Google LLC) — analiza ruchu na stronie. Ładowane wyłącznie po wyrażeniu zgody.</li>
+                        <li><strong>Marketingowe</strong> — Google Ads (Google LLC) i Meta Ads (Meta Platforms Inc.) — remarketing i śledzenie konwersji. Ładowane wyłącznie po wyrażeniu zgody.</li>
                     </ul>
                     <p>
                         Przy pierwszej wizycie wyświetlamy baner z możliwością wyboru: „Akceptuję wszystkie"
-                        lub „Tylko niezbędne". Możesz zmienić ustawienia w dowolnym momencie, usuwając
-                        pliki cookie w przeglądarce.
+                        lub „Tylko niezbędne". Szczegółowe informacje o używanych plikach cookie znajdziesz
+                        w <a href="/polityka-ciasteczek" style={{ color: "var(--accent)" }}>Polityce plików cookie</a>.
                     </p>
                 </Section>
 
                 {/* 9. Okres przechowywania */}
                 <Section title="9. Okres przechowywania danych">
                     <ul>
+                        <li><strong>Oracle Cloud (transkrypcja, AI)</strong> — zero-retention. Nagrania audio są przetwarzane wyłącznie w pamięci RAM serwera i usuwane natychmiast po zakończeniu transkrypcji. Żadne dane użytkownika nie są trwale zapisywane na serwerach Oracle.</li>
+                        <li><strong>Convex (baza danych)</strong> — zaszyfrowane dane (notatki, transkrypcje, rozmowy z AI) przechowywane przez czas posiadania konta. Możesz je usunąć w dowolnym momencie z poziomu aplikacji.</li>
                         <li><strong>Dane konta</strong> — przez czas posiadania konta w Lilapu. Po usunięciu konta dane są usuwane w ciągu 30 dni.</li>
-                        <li><strong>Treści użytkownika</strong> — przez czas posiadania konta. Możesz je usunąć w dowolnym momencie z poziomu aplikacji.</li>
-                        <li><strong>Nagrania audio</strong> — przetwarzane wyłącznie w pamięci RAM podczas transkrypcji, nie są trwale zapisywane.</li>
                         <li><strong>Dane waitlisty</strong> — do momentu wycofania zgody lub uruchomienia usługi.</li>
                         <li><strong>Logi bezpieczeństwa</strong> — do 90 dni.</li>
                     </ul>
