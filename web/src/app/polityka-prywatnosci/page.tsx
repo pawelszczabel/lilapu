@@ -30,7 +30,7 @@ export default function PolitykaPrywatnosci() {
                     <ul>
                         <li><strong>Dane konta</strong> — adres e-mail, imię (podane przy rejestracji przez Clerk).</li>
                         <li><strong>Dane sesji</strong> — adres IP, typ przeglądarki i urządzenia (automatycznie, w celach bezpieczeństwa).</li>
-                        <li><strong>Treści użytkownika</strong> — notatki, transkrypcje sesji, nagrania audio, rozmowy z czatem AI. Wszystkie te dane są <strong>szyfrowane end-to-end</strong> (AES-256-GCM) i niedostępne dla Administratora.</li>
+                        <li><strong>Treści użytkownika</strong> — notatki, transkrypcje sesji, nagrania audio, rozmowy z czatem AI. Wszystkie te dane są <strong>szyfrowane end-to-end</strong> i niedostępne dla Administratora.</li>
                         <li><strong>Pliki cookie</strong> — niezbędne do działania aplikacji (sesja, preferencje). Szczegóły w sekcji 8.</li>
                     </ul>
                 </Section>
@@ -69,8 +69,8 @@ export default function PolitykaPrywatnosci() {
                 <Section title="4. Szyfrowanie end-to-end">
                     <p>
                         Wszystkie treści użytkownika (notatki, transkrypcje, rozmowy z AI) są <strong>szyfrowane w przeglądarce</strong> przed
-                        wysłaniem na serwer, z wykorzystaniem algorytmu <strong>AES-256-GCM</strong>. Klucz szyfrowania jest
-                        wyprowadzany z Twojego prywatnego hasła szyfrowania (PBKDF2, 100 000 iteracji).
+                        wysłaniem na serwer, z wykorzystaniem <strong>silnego algorytmu szyfrowania</strong>. Klucz szyfrowania jest
+                        wyprowadzany z Twojego prywatnego hasła szyfrowania przy użyciu silnej funkcji kryptograficznej zgodnej z rekomendacjami OWASP.
                     </p>
                     <p>
                         <strong>Administrator nie zna Twojego hasła szyfrowania i nie ma możliwości odszyfrowania Twoich danych.</strong>
@@ -137,18 +137,18 @@ export default function PolitykaPrywatnosci() {
                     <ul>
                         <li>
                             <strong>Bielik</strong> (SpeakLeash / ACK Cyfronet AGH) — polski model językowy (LLM) używany w czacie AI.
-                            Model open-source (Apache 2.0), hostowany na infrastrukturze Oracle Cloud w UE. <strong>Model nie jest trenowany na Twoich danych.</strong>
+                            Model open-source, hostowany na infrastrukturze Oracle Cloud w UE. <strong>Model nie jest trenowany na Twoich danych.</strong>
                         </li>
                         <li>
-                            <strong>Faster Whisper</strong> (large-v3, bazujący na OpenAI Whisper) — transkrypcja sesji w czasie rzeczywistym.
+                            <strong>Model rozpoznawania mowy</strong> — transkrypcja sesji w czasie rzeczywistym.
                             Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                         <li>
-                            <strong>NVIDIA Parakeet TDT 0.6B</strong> — szybka transkrypcja notatek głosowych.
+                            <strong>Model transkrypcji notatek głosowych</strong> — szybka transkrypcja notatek głosowych.
                             Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                         <li>
-                            <strong>pyannote</strong> — rozpoznawanie mówców (diaryzacja) w nagraniach.
+                            <strong>Model rozpoznawania mówców</strong> — diaryzacja (rozpoznawanie mówców) w nagraniach.
                             Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                     </ul>
@@ -245,11 +245,11 @@ export default function PolitykaPrywatnosci() {
                 {/* 12. Bezpieczeństwo */}
                 <Section title="12. Zabezpieczenia techniczne i organizacyjne">
                     <ul>
-                        <li>Szyfrowanie end-to-end (AES-256-GCM) — dane szyfrowane w przeglądarce przed wysłaniem na serwer.</li>
+                        <li>Szyfrowanie end-to-end — dane szyfrowane w przeglądarce przed wysłaniem na serwer.</li>
                         <li>Szyfrowanie w trakcie transferu (TLS/HTTPS).</li>
                         <li>2-etapowa weryfikacja (MFA) przy logowaniu.</li>
                         <li>Ochrona przed botami przy rejestracji (Clerk).</li>
-                        <li>Confidential Computing (AMD SEV) — dane zaszyfrowane nawet w pamięci RAM serwera.</li>
+                        <li>Confidential Computing — dane zaszyfrowane nawet w pamięci RAM serwera.</li>
                         <li>Zero-retention na serwerach AI — audio przetwarzane wyłącznie w RAM, natychmiast usuwane.</li>
                         <li>Infrastruktura w Unii Europejskiej (Oracle Cloud, Frankfurt), zgodna z RODO.</li>
                     </ul>

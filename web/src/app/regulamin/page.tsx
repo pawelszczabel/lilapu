@@ -38,8 +38,8 @@ export default function Regulamin() {
                     <ol>
                         <li><strong>Transkrypcja sesji</strong> — nagrywanie i automatyczna transkrypcja rozmów w czasie rzeczywistym z rozpoznawaniem mówców.</li>
                         <li><strong>Notatki</strong> — tworzenie, edycja i przechowywanie zaszyfrowanych notatek tekstowych i głosowych.</li>
-                        <li><strong>Czat AI</strong> — prywatny asystent oparty na modelu językowym Bielik, działający na infrastrukturze Oracle Cloud w UE.</li>
-                        <li><strong>Szyfrowanie end-to-end</strong> — szyfrowanie treści Użytkownika (AES-256-GCM) kluczem wyprowadzanym z hasła szyfrowania.</li>
+                        <li><strong>Czat AI</strong> — prywatny asystent oparty na polskim modelu językowym, działający na infrastrukturze w UE.</li>
+                        <li><strong>Szyfrowanie end-to-end</strong> — szyfrowanie treści Użytkownika silnym algorytmem szyfrowania, kluczem wyprowadzanym z hasła szyfrowania.</li>
                         <li><strong>Organizacja w foldery</strong> — grupowanie transkrypcji i notatek w foldery (np. per klient/pacjent).</li>
                     </ol>
                 </Section>
@@ -81,7 +81,7 @@ export default function Regulamin() {
                 {/* 7. Szyfrowanie */}
                 <Section title="7. Szyfrowanie end-to-end">
                     <ol>
-                        <li>Treści Użytkownika (notatki, transkrypcje, rozmowy z AI) są szyfrowane w przeglądarce Użytkownika przed wysłaniem na serwer, algorytmem AES-256-GCM.</li>
+                        <li>Treści Użytkownika (notatki, transkrypcje, rozmowy z AI) są szyfrowane w przeglądarce Użytkownika przed wysłaniem na serwer, silnym algorytmem szyfrowania.</li>
                         <li>Usługodawca nie ma technicznej możliwości odszyfrowania treści Użytkownika.</li>
                         <li>Utrata hasła szyfrowania skutkuje nieodwracalną utratą dostępu do zaszyfrowanych danych. Usługodawca nie ponosi odpowiedzialności za skutki utraty hasła szyfrowania.</li>
                         <li>To samo hasło szyfrowania na różnych urządzeniach zapewnia dostęp do tych samych danych.</li>
@@ -91,8 +91,8 @@ export default function Regulamin() {
                 {/* 8. Przetwarzanie audio */}
                 <Section title="8. Przetwarzanie nagrań audio">
                     <ol>
-                        <li>Podczas transkrypcji nieszyfrowane audio jest przetwarzane w pamięci RAM serwera (Oracle Cloud, UE) i usuwane natychmiast po zakończeniu transkrypcji (zero-retention).</li>
-                        <li>Po zakończeniu transkrypcji nagranie audio jest <strong>szyfrowane w przeglądarce Użytkownika</strong> (AES-256-GCM) i przesyłane w formie zaszyfrowanej do bazy danych (Convex), gdzie jest przechowywane razem z zaszyfrowaną transkrypcją.</li>
+                        <li>Podczas transkrypcji nieszyfrowane audio jest przetwarzane w pamięci RAM serwera (infrastruktura w UE) i usuwane natychmiast po zakończeniu transkrypcji (zero-retention).</li>
+                        <li>Po zakończeniu transkrypcji nagranie audio jest <strong>szyfrowane w przeglądarce Użytkownika</strong> i przesyłane w formie zaszyfrowanej do bazy danych, gdzie jest przechowywane razem z zaszyfrowaną transkrypcją.</li>
                         <li>Usługodawca nie ma technicznej możliwości odsłuchania zaszyfrowanych nagrań.</li>
                         <li>Użytkownik może usunąć nagrania w dowolnym momencie z poziomu aplikacji.</li>
                         <li>Użytkownik jest odpowiedzialny za uzyskanie zgody osób, których głos jest nagrywany, zgodnie z obowiązującym prawem.</li>
