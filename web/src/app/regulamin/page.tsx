@@ -91,8 +91,10 @@ export default function Regulamin() {
                 {/* 8. Przetwarzanie audio */}
                 <Section title="8. Przetwarzanie nagrań audio">
                     <ol>
-                        <li>Nagrania audio są przetwarzane wyłącznie w pamięci RAM serwera (Oracle Cloud, UE) i usuwane natychmiast po zakończeniu transkrypcji (zero-retention).</li>
-                        <li>Nagrania audio nie są trwale zapisywane na serwerach.</li>
+                        <li>Podczas transkrypcji nieszyfrowane audio jest przetwarzane w pamięci RAM serwera (Oracle Cloud, UE) i usuwane natychmiast po zakończeniu transkrypcji (zero-retention).</li>
+                        <li>Po zakończeniu transkrypcji nagranie audio jest <strong>szyfrowane w przeglądarce Użytkownika</strong> (AES-256-GCM) i przesyłane w formie zaszyfrowanej do bazy danych (Convex), gdzie jest przechowywane razem z zaszyfrowaną transkrypcją.</li>
+                        <li>Usługodawca nie ma technicznej możliwości odsłuchania zaszyfrowanych nagrań.</li>
+                        <li>Użytkownik może usunąć nagrania w dowolnym momencie z poziomu aplikacji.</li>
                         <li>Użytkownik jest odpowiedzialny za uzyskanie zgody osób, których głos jest nagrywany, zgodnie z obowiązującym prawem.</li>
                     </ol>
                 </Section>
@@ -106,11 +108,11 @@ export default function Regulamin() {
                                 <li>przerwy w działaniu wynikające z przyczyn technicznych, konserwacji lub siły wyższej;</li>
                                 <li>utratę danych spowodowaną utratą hasła szyfrowania przez Użytkownika;</li>
                                 <li>treści tworzone i przechowywane przez Użytkownika;</li>
-                                <li>dokładność transkrypcji generowanych przez modele AI;</li>
+                                <li>dokładność transkrypcji generowanych przez modele rozpoznawania mowy;</li>
                                 <li>skutki korzystania z odpowiedzi czatu AI.</li>
                             </ul>
                         </li>
-                        <li>Usługodawca zastrzega prawo do czasowego zawieszenia usługi w celu przeprowadzenia prac konserwacyjnych.</li>
+                        <li>Usługodawca zastrzega prawo do czasowego zawieszenia usługi w celu przeprowadzenia prac konserwacyjnych. O planowanych przerwach Użytkownicy zostaną poinformowani drogą mailową z co najmniej <strong>48-godzinnym</strong> wyprzedzeniem. W przypadku awarii lub pilnych aktualizacji bezpieczeństwa przerwa może nastąpić bez wcześniejszego powiadomienia.</li>
                     </ol>
                 </Section>
 

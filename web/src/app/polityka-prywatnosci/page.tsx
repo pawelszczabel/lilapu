@@ -191,8 +191,15 @@ export default function PolitykaPrywatnosci() {
                 {/* 9. Okres przechowywania */}
                 <Section title="9. Okres przechowywania danych">
                     <ul>
-                        <li><strong>Oracle Cloud (transkrypcja, AI)</strong> — zero-retention. Nagrania audio są przetwarzane wyłącznie w pamięci RAM serwera i usuwane natychmiast po zakończeniu transkrypcji. Żadne dane użytkownika nie są trwale zapisywane na serwerach Oracle.</li>
-                        <li><strong>Convex (baza danych)</strong> — zaszyfrowane dane (notatki, transkrypcje, rozmowy z AI) przechowywane przez czas posiadania konta. Możesz je usunąć w dowolnym momencie z poziomu aplikacji.</li>
+                        <li><strong>Oracle Cloud (transkrypcja, AI)</strong> — zero-retention. Nieszyfrowane audio jest przetwarzane wyłącznie w pamięci RAM serwera na czas transkrypcji i usuwane natychmiast po jej zakończeniu. Żadne dane użytkownika nie są trwale zapisywane na serwerach Oracle.</li>
+                        <li><strong>Convex (baza danych)</strong> — zaszyfrowane dane przechowywane przez czas posiadania konta:
+                            <ul style={{ marginTop: "0.5rem" }}>
+                                <li>Zaszyfrowane pliki audio nagrań (szyfrowane w przeglądarce przed uploadem)</li>
+                                <li>Zaszyfrowane teksty transkrypcji i tytuły</li>
+                                <li>Zaszyfrowane notatki i rozmowy z AI</li>
+                            </ul>
+                            Możesz je usunąć w dowolnym momencie z poziomu aplikacji. Convex przechowuje wyłącznie zaszyfrowane dane — nie ma dostępu do ich treści.
+                        </li>
                         <li><strong>Dane konta</strong> — przez czas posiadania konta w Lilapu. Po usunięciu konta dane są usuwane w ciągu 30 dni.</li>
                         <li><strong>Dane waitlisty</strong> — do momentu wycofania zgody lub uruchomienia usługi.</li>
                         <li><strong>Logi bezpieczeństwa</strong> — do 90 dni.</li>
