@@ -95,10 +95,10 @@ export default function PolitykaPrywatnosci() {
                         </thead>
                         <tbody style={{ color: "var(--text-secondary)" }}>
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                                <td style={{ padding: "8px 12px" }}>Infrastruktura (serwery)</td>
+                                <td style={{ padding: "8px 12px" }}>Infrastruktura (serwery, AI, transkrypcja)</td>
                                 <td style={{ padding: "8px 12px" }}>Oracle Cloud</td>
                                 <td style={{ padding: "8px 12px" }}>UE (Frankfurt)</td>
-                                <td style={{ padding: "8px 12px" }}>Hosting modeli AI, przetwarzanie transkrypcji</td>
+                                <td style={{ padding: "8px 12px" }}>Hosting modeli AI, przetwarzanie transkrypcji i czatu AI (zero-retention — dane przetwarzane wyłącznie w RAM)</td>
                             </tr>
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                                 <td style={{ padding: "8px 12px" }}>Baza danych</td>
@@ -107,28 +107,16 @@ export default function PolitykaPrywatnosci() {
                                 <td style={{ padding: "8px 12px" }}>Przechowywanie zaszyfrowanych danych</td>
                             </tr>
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                                <td style={{ padding: "8px 12px" }}>Uwierzytelnianie</td>
+                                <td style={{ padding: "8px 12px" }}>Uwierzytelnianie i ochrona przed botami</td>
                                 <td style={{ padding: "8px 12px" }}>Clerk</td>
                                 <td style={{ padding: "8px 12px" }}>USA</td>
-                                <td style={{ padding: "8px 12px" }}>Logowanie, MFA, zarządzanie kontem</td>
-                            </tr>
-                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                                <td style={{ padding: "8px 12px" }}>Obliczenia GPU</td>
-                                <td style={{ padding: "8px 12px" }}>RunPod</td>
-                                <td style={{ padding: "8px 12px" }}>UE</td>
-                                <td style={{ padding: "8px 12px" }}>Transkrypcja i czat AI (zero-retention — dane przetwarzane wyłącznie w RAM)</td>
-                            </tr>
-                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                                <td style={{ padding: "8px 12px" }}>Ochrona przed botami</td>
-                                <td style={{ padding: "8px 12px" }}>Cloudflare</td>
-                                <td style={{ padding: "8px 12px" }}>Globalnie</td>
-                                <td style={{ padding: "8px 12px" }}>Turnstile — weryfikacja przy rejestracji</td>
+                                <td style={{ padding: "8px 12px" }}>Logowanie, MFA, zarządzanie kontem, weryfikacja przy rejestracji</td>
                             </tr>
                         </tbody>
                     </table>
                     <p style={{ marginTop: "1rem" }}>
-                        <strong>Ważne:</strong> Dane przechowywane w Convex i RunPod są <strong>zaszyfrowane end-to-end</strong> — dostawcy
-                        nie mają dostępu do treści Twoich notatek, transkrypcji ani rozmów z AI.
+                        <strong>Ważne:</strong> Dane przechowywane w Convex są <strong>zaszyfrowane end-to-end</strong> — dostawca
+                        nie ma dostępu do treści Twoich notatek, transkrypcji ani rozmów z AI.
                     </p>
                 </Section>
 
@@ -137,23 +125,23 @@ export default function PolitykaPrywatnosci() {
                     <ul>
                         <li>
                             <strong>Bielik</strong> (SpeakLeash / ACK Cyfronet AGH) — polski model językowy (LLM) używany w czacie AI.
-                            Model open-source (Apache 2.0), hostowany na naszych serwerach. <strong>Model nie jest trenowany na Twoich danych.</strong>
+                            Model open-source (Apache 2.0), hostowany na infrastrukturze Oracle Cloud w UE. <strong>Model nie jest trenowany na Twoich danych.</strong>
                         </li>
                         <li>
                             <strong>Faster Whisper</strong> (large-v3, bazujący na OpenAI Whisper) — transkrypcja sesji w czasie rzeczywistym.
-                            Hostowany na naszych serwerach, zero-retention.
+                            Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                         <li>
                             <strong>NVIDIA Parakeet TDT 0.6B</strong> — szybka transkrypcja notatek głosowych.
-                            Hostowany na naszych serwerach, zero-retention.
+                            Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                         <li>
                             <strong>pyannote</strong> — rozpoznawanie mówców (diaryzacja) w nagraniach.
-                            Hostowany na naszych serwerach, zero-retention.
+                            Hostowany na infrastrukturze Oracle Cloud w UE, zero-retention.
                         </li>
                     </ul>
                     <p>
-                        Wszystkie modele AI działają na naszych własnych serwerach (Oracle Cloud, UE).
+                        Wszystkie modele AI działają na infrastrukturze Oracle Cloud w UE.
                         Audio jest przetwarzane wyłącznie w pamięci RAM i usuwane natychmiast po transkrypcji.
                         Żadne dane nie są używane do trenowania tych modeli.
                     </p>
@@ -240,7 +228,7 @@ export default function PolitykaPrywatnosci() {
                         <li>Szyfrowanie end-to-end (AES-256-GCM) — dane szyfrowane w przeglądarce przed wysłaniem na serwer.</li>
                         <li>Szyfrowanie w trakcie transferu (TLS/HTTPS).</li>
                         <li>2-etapowa weryfikacja (MFA) przy logowaniu.</li>
-                        <li>Ochrona przed botami (Cloudflare Turnstile).</li>
+                        <li>Ochrona przed botami przy rejestracji (Clerk).</li>
                         <li>Confidential Computing (AMD SEV) — dane zaszyfrowane nawet w pamięci RAM serwera.</li>
                         <li>Zero-retention na serwerach AI — audio przetwarzane wyłącznie w RAM, natychmiast usuwane.</li>
                         <li>Infrastruktura w Unii Europejskiej (Oracle Cloud, Frankfurt), zgodna z RODO.</li>

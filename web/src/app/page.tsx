@@ -321,7 +321,7 @@ export default function LandingPage() {
                             <p>
                                 Logowanie z 2‑etapową weryfikacją (MFA) —
                                 samo hasło nie wystarczy. Rejestracja chroniona
-                                przez Cloudflare Turnstile, który blokuje boty.
+                                weryfikacją Clerk, który blokuje boty.
                             </p>
                         </div>
                         <div className="landing-security-level-icon">📱</div>
