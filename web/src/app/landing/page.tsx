@@ -140,6 +140,20 @@ export default function LandingPage() {
                     </p>
                 </div>
 
+                <div style={{ display: "flex", justifyContent: "center", padding: "3rem 0" }}>
+                    <img
+                        src="/demo.gif"
+                        alt="Demo aplikacji Lilapu"
+                        style={{
+                            maxWidth: "100%",
+                            width: 700,
+                            borderRadius: "16px",
+                            boxShadow: "0 8px 40px rgba(124, 92, 252, 0.2)",
+                            border: "1px solid rgba(124, 92, 252, 0.15)",
+                        }}
+                    />
+                </div>
+
                 <div className="landing-trust-hero">
                     <h3>Bezpieczeństwo potwierdzone certyfikatami</h3>
                     <p>
