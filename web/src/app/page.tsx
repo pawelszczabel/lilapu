@@ -294,10 +294,11 @@ export default function LandingPage() {
 
                     <div className="landing-feature-card">
                         <div className="landing-feature-icon">🇪🇺</div>
-                        <h3>Twoje dane nie opuszczają Europy</h3>
+                        <h3>Zapisy rozmów nie opuszczają UE</h3>
                         <p>
                             Serwery Lilapu są w Unii Europejskiej. Ich działanie
-                            jest w pełni zgodne z RODO. Szyfrowanie danych na każdym etapie.
+                            jest w pełni zgodne z RODO. Twoje transkrypcje i rozmowy
+                            z AI są niewidoczne dla administratora serwera.
                         </p>
                     </div>
                 </div>
@@ -332,8 +333,8 @@ export default function LandingPage() {
                             <h3>Szyfrowanie End‑to‑End</h3>
                             <p>
                                 Wszystkie notatki, transkrypcje i rozmowy z AI
-                                są zaszyfrowane Twoim prywatnym hasłem. Reset
-                                hasła = utrata Twoich danych.
+                                są zaszyfrowane Twoim prywatnym hasłem. Zapomniane
+                                hasło = brak dostępu do danych. Nie da się go odzyskać.
                             </p>
                         </div>
                         <div className="landing-security-level-icon">🔐</div>
@@ -344,9 +345,8 @@ export default function LandingPage() {
                         <div className="landing-security-level-content">
                             <h3>Dane w Unii Europejskiej</h3>
                             <p>
-                                Twoje dane nie opuszczają UE. Serwery w europejskim
-                                centrum danych, pełna zgodność z RODO. Twoja
-                                dokumentacja podlega europejskiemu prawu.
+                                Transkrypcje spotkań i rozmowy z AI nie opuszczają UE.
+                                Serwery Oracle Cloud są w Europie, w pełni zgodne z RODO.
                             </p>
                         </div>
                         <div className="landing-security-level-icon">🇪🇺</div>
