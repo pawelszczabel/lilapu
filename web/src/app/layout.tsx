@@ -50,7 +50,21 @@ export default function RootLayout({
   return (
     <html lang="pl" className="dark">
       <body className={`${inter.variable} ${roboto.variable}`}>
-        <ClerkProvider localization={plPL} waitlistUrl="/waitlist" taskUrls={{ 'setup-mfa': '/setup-mfa' }}>
+        <ClerkProvider
+          localization={{
+            ...plPL,
+            waitlist: {
+              ...plPL.waitlist,
+              success: {
+                ...plPL.waitlist?.success,
+                subtitle: "Skontaktujemy się z Tobą, gdy aplikacja będzie gotowa do testowania.",
+                message: "",
+              },
+            },
+          }}
+          waitlistUrl="/waitlist"
+          taskUrls={{ 'setup-mfa': '/setup-mfa' }}
+        >
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ClerkProvider>
         <CookieBanner />

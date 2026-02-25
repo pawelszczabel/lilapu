@@ -104,16 +104,6 @@ export default function LandingPage() {
                                     },
                                 }}
                             />
-                            <p style={{
-                                color: "#9898b0",
-                                fontSize: "0.8rem",
-                                textAlign: "center",
-                                marginTop: "12px",
-                                lineHeight: 1.5,
-                            }}>
-                                Po zatwierdzeniu Twojej prośby otrzymasz e-mail
-                                z potwierdzeniem od <strong style={{ color: "#c4b5fd" }}>Lilapu &lt;noreply@lilapu.com&gt;</strong>.
-                            </p>
                         </div>
                     </div>
                 </div>
