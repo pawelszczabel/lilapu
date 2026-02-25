@@ -60,7 +60,6 @@ export default function LandingPage() {
                         {/* Clerk Waitlist — only if GDPR accepted */}
                         <div style={{ opacity: gdprConsent ? 1 : 0.3, pointerEvents: gdprConsent ? "auto" : "none", transition: "opacity 0.3s" }}>
                             <Waitlist
-                                afterJoinWaitlistUrl="/"
                                 appearance={{
                                     elements: {
                                         rootBox: {
@@ -100,10 +99,6 @@ export default function LandingPage() {
                                             display: "none",
                                         },
                                         footer: {
-                                            display: "none",
-                                        },
-                                        // Hide the hanging redirect spinner
-                                        loading: {
                                             display: "none",
                                         },
                                     },
