@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { plPL } from "@clerk/localizations";
 import Script from "next/script";
 import CookieBanner from "./components/CookieBanner";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -79,6 +80,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <Analytics />
       </body>
     </html>
   );
