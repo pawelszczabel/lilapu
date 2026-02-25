@@ -116,7 +116,7 @@ export default function LandingPage() {
 
             {/* Hero */}
             <section className="landing-hero">
-                <div className="landing-hero-badge">🔒 5‑poziomowe bezpieczeństwo danych</div>
+                <div className="landing-hero-badge">🔒 6‑poziomowe bezpieczeństwo danych</div>
 
                 <h1>Bądź w 100% obecny z klientem. Lilapu zrobi transkrypcję rozmowy.</h1>
 
@@ -319,7 +319,7 @@ export default function LandingPage() {
 
             {/* 5 Poziomów Bezpieczeństwa */}
             <section className="landing-section landing-security">
-                <h2>5 poziomów bezpieczeństwa Twoich danych</h2>
+                <h2>6 poziomów bezpieczeństwa Twoich danych</h2>
                 <p className="landing-section-subtitle">
                     Żadne inne narzędzie na rynku nie łączy tylu warstw ochrony w jednym
                     produkcie.<br />
@@ -390,6 +390,20 @@ export default function LandingPage() {
                         </div>
                         <div className="landing-security-level-icon">🗑️</div>
                     </div>
+
+                    <div className="landing-security-level">
+                        <div className="landing-security-level-number">6</div>
+                        <div className="landing-security-level-content">
+                            <h3>Blockchain Notaryzacja</h3>
+                            <p>
+                                Każda notatka otrzymuje kryptograficzny „odcisk palca"
+                                zapisany na blockchainie. Niezależny, niemożliwy do
+                                sfałszowania dowód autentyczności — na wypadek audytu
+                                lub sporu.
+                            </p>
+                        </div>
+                        <div className="landing-security-level-icon">⛓️</div>
+                    </div>
                 </div>
             </section>
 
@@ -436,8 +450,8 @@ export default function LandingPage() {
                             Manualna transkrypcja jest droga i wolna."
                         </p>
                         <p className="landing-persona-solution">
-                            Szyfrowanie E2E + zero-retention = Twoje dane nigdy nie są
-                            dostępne dla osób trzecich. Zgodne z wymogami poufności.
+                            Szyfrowanie E2E + blockchain notaryzacja = niepodważalny dowód
+                            autentyczności zapisu. Zgodne z wymogami poufności.
                         </p>
                     </div>
                 </div>
