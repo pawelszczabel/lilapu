@@ -13,8 +13,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Apple Silicon (M1+) — native build on ARM runner
           - platform: macos-latest
             args: --target aarch64-apple-darwin
+            rust_target: aarch64-apple-darwin
+          # Intel Mac — native build on Intel runner (macos-13)
+          - platform: macos-13
+            args: --target x86_64-apple-darwin
+            rust_target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -29,7 +35,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: ${{ matrix.rust_target }}
 
       # desktop/convex is a symlink to ../web/convex in local dev.
       # Git may not resolve symlinks properly on CI, so we replace
