@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { Id } from "@convex/_generated/dataModel";
-import { getSessionKeyOrThrow, decryptString } from "../crypto";
+import { getSessionKeyOrThrow, decryptString, encryptString } from "../crypto";
 
 interface TranscriptionData {
     _id: Id<"transcriptions">;
     _creationTime: number;
     title?: string;
     content: string;
+    summary?: string;
     durationSeconds?: number;
     blockchainVerified: boolean;
     blockchainTxHash?: string;
@@ -16,20 +19,28 @@ interface TranscriptionData {
 
 interface TranscriptionViewProps {
     transcription: TranscriptionData;
+    projectId: Id<"projects">;
     onClose: () => void;
 }
 
 export default function TranscriptionView({
     transcription,
+    projectId,
     onClose,
 }: TranscriptionViewProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [copied, setCopied] = useState(false);
+    const [summaryExpanded, setSummaryExpanded] = useState(true);
+    const [savedToNotes, setSavedToNotes] = useState(false);
+    const [savingToNotes, setSavingToNotes] = useState(false);
 
     // E2EE: Decrypted content
     const [decryptedTitle, setDecryptedTitle] = useState(transcription.title || "Nagranie bez tytułu");
     const [decryptedContent, setDecryptedContent] = useState("");
+    const [decryptedSummary, setDecryptedSummary] = useState<string | null>(null);
     const [isDecrypting, setIsDecrypting] = useState(true);
+
+    const createNote = useMutation(api.notes.create);
 
     useEffect(() => {
         let cancelled = false;
@@ -41,6 +52,7 @@ export default function TranscriptionView({
 
                 let title = transcription.title || "Nagranie bez tytułu";
                 let content = transcription.content;
+                let summary: string | null = null;
 
                 try {
                     title = await decryptString(key, transcription.title || "");
@@ -52,15 +64,24 @@ export default function TranscriptionView({
                 } catch {
                     // Legacy plaintext
                 }
+                if (transcription.summary) {
+                    try {
+                        summary = await decryptString(key, transcription.summary);
+                    } catch {
+                        summary = transcription.summary; // Legacy plaintext
+                    }
+                }
 
                 if (!cancelled) {
                     setDecryptedTitle(title);
                     setDecryptedContent(content);
+                    setDecryptedSummary(summary);
                 }
             } catch {
                 // No encryption key — show as-is
                 if (!cancelled) {
                     setDecryptedContent(transcription.content);
+                    if (transcription.summary) setDecryptedSummary(transcription.summary);
                 }
             } finally {
                 if (!cancelled) setIsDecrypting(false);
@@ -128,6 +149,29 @@ export default function TranscriptionView({
         a.download = `${decryptedTitle || "transkrypcja"}_${dateStr}.txt`;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    const handleSaveToNotes = async () => {
+        if (!decryptedSummary || savedToNotes || savingToNotes) return;
+        setSavingToNotes(true);
+        try {
+            const key = await getSessionKeyOrThrow();
+            const noteTitle = `Podsumowanie: ${decryptedTitle}`;
+            const encryptedTitle = await encryptString(key, noteTitle);
+            const encryptedContent = await encryptString(key, decryptedSummary);
+            await createNote({
+                projectId,
+                title: encryptedTitle,
+                content: encryptedContent,
+                format: "md",
+            });
+            setSavedToNotes(true);
+        } catch (err) {
+            console.error("Failed to save summary to notes:", err);
+            alert("Nie udało się zapisać podsumowania do notatek.");
+        } finally {
+            setSavingToNotes(false);
+        }
     };
 
     const wordCount = decryptedContent.split(/\s+/).filter(Boolean).length;
@@ -243,6 +287,105 @@ export default function TranscriptionView({
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Summary Section (collapsible) ── */}
+            <div style={{
+                margin: 'var(--space-4) 0',
+                border: '1px solid rgba(124, 92, 252, 0.2)',
+                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(124, 92, 252, 0.04)',
+                overflow: 'hidden',
+            }}>
+                <button
+                    onClick={() => setSummaryExpanded(!summaryExpanded)}
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: 'var(--space-4) var(--space-5)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)',
+                        fontSize: 'var(--text-base)',
+                        fontWeight: 600,
+                    }}
+                >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        Podsumowanie sesji
+                    </span>
+                    <svg
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ transform: summaryExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                    >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                {summaryExpanded && (
+                    <div style={{ padding: '0 var(--space-5) var(--space-5)' }}>
+                        {decryptedSummary ? (
+                            <>
+                                <div
+                                    style={{
+                                        fontSize: 'var(--text-sm)',
+                                        lineHeight: 1.7,
+                                        color: 'var(--text-secondary)',
+                                        whiteSpace: 'pre-wrap',
+                                    }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: decryptedSummary
+                                            .replace(/^## (.+)$/gm, '<h3 style="color: var(--text-primary); margin: 1em 0 0.3em; font-size: var(--text-base);">$1</h3>')
+                                            .replace(/^- (.+)$/gm, '<li style="margin-left: 1.5em;">$1</li>')
+                                            .replace(/\n/g, '<br/>')
+                                    }}
+                                />
+                                <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid rgba(124, 92, 252, 0.1)' }}>
+                                    <button
+                                        className="btn btn-secondary btn-ghost"
+                                        onClick={handleSaveToNotes}
+                                        disabled={savedToNotes || savingToNotes}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 'var(--space-2)',
+                                            fontSize: 'var(--text-sm)',
+                                            opacity: savedToNotes ? 0.6 : 1,
+                                        }}
+                                    >
+                                        {savedToNotes ? (
+                                            <>✅ Dodano do notatek</>
+                                        ) : savingToNotes ? (
+                                            <>⏳ Zapisywanie...</>
+                                        ) : (
+                                            <>📝 Dodaj do notatek</>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--space-2)',
+                                color: 'var(--text-muted)',
+                                fontSize: 'var(--text-sm)',
+                                fontStyle: 'italic',
+                            }}>
+                                <span className="audio-player-spinner" style={{ width: 14, height: 14 }} />
+                                Generowanie podsumowania...
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="transcription-view-content" style={{ display: 'flex', justifyContent: 'center' }}>

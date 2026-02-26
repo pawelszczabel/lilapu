@@ -40,8 +40,10 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioFileInputRef = useRef<HTMLInputElement>(null);
+    const ocrFileInputRef = useRef<HTMLInputElement>(null);
     const [isAudioImporting, setIsAudioImporting] = useState(false);
     const [audioImportProgress, setAudioImportProgress] = useState("");
+    const [isScanning, setIsScanning] = useState(false);
 
     // Queries
     const notes = useQuery(api.notes.listByProject, { projectId });
@@ -55,6 +57,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const updateNote = useMutation(api.notes.update);
     const removeNote = useMutation(api.notes.remove);
     const transcribeFast = useAction(api.ai.transcribeFast);
+    const ocrHandwriting = useAction(api.ai.ocrHandwriting);
 
     // E2EE: Decrypt note titles for sidebar display
     const [decryptedTitles, setDecryptedTitles] = useState<Record<string, string>>({});
@@ -414,6 +417,68 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
         }
     }, [transcribeFast]);
 
+    // ── OCR Scan Handler ──
+    const handleScanNote = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = "";
+
+        setIsScanning(true);
+
+        try {
+            // Read image as base64
+            const arrayBuffer = await file.arrayBuffer();
+
+            // Resize if too large (max 1024px) for faster upload
+            const blob = new Blob([arrayBuffer], { type: file.type });
+            const imageBitmap = await createImageBitmap(blob);
+            const maxDim = 1024;
+            let w = imageBitmap.width;
+            let h = imageBitmap.height;
+            if (w > maxDim || h > maxDim) {
+                const scale = maxDim / Math.max(w, h);
+                w = Math.round(w * scale);
+                h = Math.round(h * scale);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(imageBitmap, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL("image/png", 0.9);
+            const base64 = dataUrl.split(",")[1];
+
+            // Run OCR
+            const text = await ocrHandwriting({ imageBase64: base64 });
+            const trimmed = text?.trim();
+
+            if (!trimmed) {
+                alert("Nie udało się rozpoznać tekstu na zdjęciu. Spróbuj ponownie z lepszym oświetleniem.");
+                return;
+            }
+
+            // Create new note with scanned content
+            const key = await getSessionKeyOrThrow();
+            const title = `Skan ${new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+            const encryptedContent = await encryptString(key, trimmed);
+            const encryptedTitle = await encryptString(key, title);
+
+            const id = await createNote({
+                projectId,
+                title: encryptedTitle,
+                content: encryptedContent,
+                format: "md" as const,
+            });
+            setActiveNoteId(id);
+            setIsEditing(false);
+        } catch (err) {
+            console.error("OCR scan error:", err);
+            alert("Błąd skanowania. Sprawdź połączenie i spróbuj ponownie.");
+        } finally {
+            setIsScanning(false);
+        }
+    }, [ocrHandwriting, projectId, createNote]);
+
     // ── Simple markdown renderer ──
     const renderMarkdown = (text: string): React.ReactNode[] => {
         const lines = text.split("\n");
@@ -547,6 +612,42 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </div>
                         <span style={{ fontWeight: 500 }}>Nowa notatka</span>
+                    </button>
+                </div>
+
+                <div style={{ padding: '0 var(--space-2)' }}>
+                    <button
+                        onClick={() => ocrFileInputRef.current?.click()}
+                        disabled={isScanning}
+                        title="Skanuj notatkę ze zdjęcia"
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 'var(--space-3)',
+                            padding: 'var(--space-2) var(--space-3)',
+                            borderRadius: 'var(--radius-lg)',
+                            background: 'transparent',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text-secondary)',
+                            transition: 'all 0.2s',
+                            cursor: isScanning ? 'wait' : 'pointer',
+                            fontSize: 'var(--text-sm)',
+                            opacity: isScanning ? 0.6 : 1,
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isScanning) {
+                                e.currentTarget.style.background = 'var(--bg-surface-hover)';
+                                e.currentTarget.style.borderColor = 'rgba(124, 92, 252, 0.3)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                        }}
+                    >
+                        {isScanning ? "⏳ Skanowanie..." : "📷 Skanuj notatkę"}
                     </button>
                 </div>
 
@@ -704,6 +805,34 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                     onChange={handleAudioImport}
                     style={{ display: "none" }}
                 />
+                <input
+                    ref={ocrFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleScanNote}
+                    style={{ display: "none" }}
+                />
+                {isScanning && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        gap: 'var(--space-3)',
+                        zIndex: 100,
+                        borderRadius: 'var(--radius-lg)',
+                        backdropFilter: 'blur(4px)',
+                    }}>
+                        <div style={{ fontSize: '2rem' }}>📷</div>
+                        <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Rozpoznawanie pisma...</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>GOT-OCR 2.0 + korekta Bielik</div>
+                        <div className="loading-spinner" style={{ width: 24, height: 24, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                )}
                 {activeNote ? (
                     <>
                         {/* Toolbar */}
@@ -866,6 +995,23 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                 }}
                             >
                                 {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Wgraj audio"}
+                            </button>
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => ocrFileInputRef.current?.click()}
+                                disabled={isScanning}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-2)',
+                                    color: 'var(--accent)',
+                                    borderColor: 'rgba(124, 92, 252, 0.3)',
+                                    background: 'transparent',
+                                    margin: '0 auto',
+                                    marginTop: 'var(--space-2)',
+                                }}
+                            >
+                                {isScanning ? "⏳ Skanowanie..." : "📷 Skanuj notatkę"}
                             </button>
                         </div>
                         <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: 'var(--space-3)' }}>

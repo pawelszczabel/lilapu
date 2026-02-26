@@ -257,7 +257,7 @@ export default function TranscriptionList({
     if (viewingId) {
         const viewing = transcriptions.find((t) => t._id === viewingId);
         if (viewing) {
-            return <TranscriptionView transcription={viewing} onClose={() => setViewingId(null)} />;
+            return <TranscriptionView transcription={viewing} projectId={projectId} onClose={() => setViewingId(null)} />;
         }
     }
 

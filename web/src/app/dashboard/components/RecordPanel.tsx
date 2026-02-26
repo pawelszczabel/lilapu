@@ -209,6 +209,7 @@ export default function RecordPanel({
     const [seconds, setSeconds] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
+    const [isPolishing, setIsPolishing] = useState(false);
 
 
 
@@ -237,6 +238,9 @@ export default function RecordPanel({
     const generateUploadUrl = useMutation(api.transcriptions.generateUploadUrl);
     const indexTranscription = useAction(api.rag.indexTranscription);
     const transcribeAudio = useAction(api.ai.transcribe);
+    const polishText = useAction(api.ai.polishTranscription);
+    const summarizeText = useAction(api.ai.summarizeSession);
+    const updateSummary = useMutation(api.transcriptions.updateSummary);
 
     // Fetch recordings for this project (only those with audio)
     const transcriptions = useQuery(api.transcriptions.listByProject, { projectId });
@@ -508,8 +512,24 @@ export default function RecordPanel({
         }
 
         const durationSeconds = seconds;
-        const plaintextContent = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
+        let plaintextContent = finalTranscript || "[Transkrypcja niedostępna — serwer AI nie zwrócił tekstu]";
         const plaintextTitle = title || `Nagranie ${new Date().toLocaleDateString("pl-PL")}`;
+
+        // ── Bielik post-processing: polish raw Whisper output ──
+        if (finalTranscript && finalTranscript.length > 10) {
+            try {
+                setIsPolishing(true);
+                const polished = await polishText({ rawText: finalTranscript });
+                if (polished && polished.trim().length > 5) {
+                    plaintextContent = polished;
+                    setTranscript(polished);
+                }
+            } catch (err) {
+                console.warn("Bielik polishing failed, using raw Whisper text:", err);
+            } finally {
+                setIsPolishing(false);
+            }
+        }
 
         try {
             const key = await getSessionKeyOrThrow();
@@ -565,6 +585,26 @@ export default function RecordPanel({
                 console.warn("RAG indexing skipped:", err)
             );
 
+            // ── Async: generate session summary via Bielik ──
+            (async () => {
+                try {
+                    const summaryText = await summarizeText({
+                        content: plaintextContent,
+                        title: plaintextTitle,
+                    });
+                    if (summaryText && summaryText.trim()) {
+                        const key = await getSessionKeyOrThrow();
+                        const encryptedSummary = await encryptString(key, summaryText);
+                        await updateSummary({
+                            transcriptionId,
+                            summary: encryptedSummary,
+                        });
+                    }
+                } catch (err) {
+                    console.warn("Session summary generation failed:", err);
+                }
+            })();
+
             setTranscript("");
             setTitle("");
             onRecordingComplete();
@@ -574,7 +614,7 @@ export default function RecordPanel({
         } finally {
             setIsSaving(false);
         }
-    }, [seconds, title, projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio, onRecordingComplete, processQueue]);
+    }, [seconds, title, projectId, createTranscription, generateUploadUrl, indexTranscription, transcribeAudio, polishText, summarizeText, updateSummary, onRecordingComplete, processQueue]);
 
 
 
@@ -634,7 +674,9 @@ export default function RecordPanel({
                         <span className="live-transcript-placeholder">
                             {isTranscribing
                                 ? "⏳ Przetwarzam audio..."
-                                : "🎙️ Mów — tekst pojawi się na żywo..."}
+                                : isPolishing
+                                    ? "✨ Polerowanie tekstu..."
+                                    : "🎙️ Mów — tekst pojawi się na żywo..."}
                         </span>
                     )}
                 </div>

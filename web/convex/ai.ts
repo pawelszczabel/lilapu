@@ -9,6 +9,7 @@ const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY ?? "";
 const WHISPER_ENDPOINT_ID = process.env.WHISPER_ENDPOINT_ID ?? "";
 const PARAKEET_ENDPOINT_ID = process.env.PARAKEET_ENDPOINT_ID ?? "";
 const BIELIK_ENDPOINT_ID = process.env.BIELIK_ENDPOINT_ID ?? "";
+const OCR_ENDPOINT_ID = process.env.OCR_ENDPOINT_ID ?? "";
 
 // Whisper WebSocket server HTTP endpoint (for diarized transcription of uploads)
 const WHISPER_WS_HTTP_URL = process.env.WHISPER_WS_HTTP_URL ?? "";
@@ -20,6 +21,7 @@ const LOCAL_WHISPER_URL =
 
 const USE_RUNPOD = !!(RUNPOD_API_KEY && WHISPER_ENDPOINT_ID);
 const USE_PARAKEET = !!(RUNPOD_API_KEY && PARAKEET_ENDPOINT_ID);
+const USE_OCR = !!(RUNPOD_API_KEY && OCR_ENDPOINT_ID);
 
 // ── RunPod helpers ───────────────────────────────────────────────────
 
@@ -301,6 +303,46 @@ export const transcribeWithDiarization = action({
     },
 });
 
+// ── vLLM response parser (shared by chat, polish, summarize) ────────
+
+function extractChatResponse(result: Record<string, unknown>): string {
+    let parsed: unknown = result;
+
+    // If it's an array, take the first element
+    if (Array.isArray(parsed)) {
+        parsed = parsed[0];
+    }
+
+    const obj = parsed as Record<string, unknown>;
+
+    // Format: choices[0].tokens[] (vLLM native)
+    if (Array.isArray(obj?.choices)) {
+        const choice = (obj.choices as Array<Record<string, unknown>>)[0];
+        if (choice) {
+            // tokens array → join
+            if (Array.isArray(choice.tokens)) {
+                return (choice.tokens as string[]).join("").trim();
+            }
+            // OpenAI format: message.content
+            const msg = choice.message as Record<string, unknown> | undefined;
+            if (msg?.content) return String(msg.content).trim();
+            // Alt: choice.text
+            if (typeof choice.text === "string") return choice.text.trim();
+        }
+    }
+
+    // Fallback: text array or string
+    if (Array.isArray(obj?.text)) {
+        return ((obj.text as string[])[0] ?? "").trim();
+    }
+    if (typeof obj?.text === "string") {
+        return obj.text.trim();
+    }
+
+    console.log("RunPod chat: unrecognized format, returning raw (content redacted)");
+    return JSON.stringify(result);
+}
+
 // ── Chat ─────────────────────────────────────────────────────────────
 
 export const chat = action({
@@ -369,46 +411,7 @@ export const chat = action({
             );
 
             // Sensitive data — do not log raw AI chat results
-
-            // vLLM RunPod worker returns:
-            // [{choices:[{tokens:["token1","token2",...]}], usage:{...}}]
-            // or sometimes just the inner object
-
-            let parsed: unknown = result;
-
-            // If it's an array, take the first element
-            if (Array.isArray(parsed)) {
-                parsed = parsed[0];
-            }
-
-            const obj = parsed as Record<string, unknown>;
-
-            // Format: choices[0].tokens[] (vLLM native)
-            if (Array.isArray(obj?.choices)) {
-                const choice = (obj.choices as Array<Record<string, unknown>>)[0];
-                if (choice) {
-                    // tokens array → join
-                    if (Array.isArray(choice.tokens)) {
-                        return (choice.tokens as string[]).join("").trim();
-                    }
-                    // OpenAI format: message.content
-                    const msg = choice.message as Record<string, unknown> | undefined;
-                    if (msg?.content) return String(msg.content).trim();
-                    // Alt: choice.text
-                    if (typeof choice.text === "string") return choice.text.trim();
-                }
-            }
-
-            // Fallback: text array or string
-            if (Array.isArray(obj?.text)) {
-                return ((obj.text as string[])[0] ?? "").trim();
-            }
-            if (typeof obj?.text === "string") {
-                return obj.text.trim();
-            }
-
-            console.log("RunPod chat: unrecognized format, returning raw (content redacted)");
-            return JSON.stringify(result);
+            return extractChatResponse(result);
         }
 
         // Local llama.cpp fallback
@@ -462,5 +465,208 @@ export const embed = action({
 
         const result = await response.json();
         return result.embedding ?? [];
+    },
+});
+
+// ── Polish Transcription (Bielik post-processing) ───────────────────
+
+export const polishTranscription = action({
+    args: {
+        rawText: v.string(),
+    },
+    returns: v.string(),
+    handler: async (_ctx, args) => {
+        if (!args.rawText.trim()) return "";
+
+        const systemPrompt = [
+            "Jesteś profesjonalnym korektorem transkrypcji mowy polskiej. ZASADY:",
+            "1. Usuń wypełniacze: \"yyy\", \"eee\", \"no więc\", \"tak jakby\", \"wiesz\", \"znaczy\", \"kurczę\", \"no\", \"w sumie\".",
+            "2. Popraw interpunkcję — dodaj kropki, przecinki, wielkie litery na początku zdania.",
+            "3. Popraw błędy fleksyjne i składniowe wynikające z mowy potocznej.",
+            "4. Połącz korekty mówcy: \"o piątej, nie, o szóstej\" → \"o szóstej\".",
+            "5. Podziel tekst na akapity przy naturalnych zmianach tematu.",
+            "6. ZACHOWAJ dokładne znaczenie — NIE zmieniaj treści merytorycznej.",
+            "7. NIE dodawaj informacji, których nie ma w oryginale.",
+            "8. NIE dodawaj nagłówków, komentarzy ani podsumowań.",
+            "9. Zwróć TYLKO poprawiony tekst, nic więcej.",
+        ].join("\n");
+
+        const messages = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: args.rawText },
+        ];
+
+        if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
+            const result = await runpodRequest(
+                BIELIK_ENDPOINT_ID,
+                {
+                    messages,
+                    sampling_params: {
+                        max_tokens: 4096,
+                        temperature: 0.3,
+                    },
+                },
+                180_000
+            );
+
+            return extractChatResponse(result);
+        }
+
+        // Local llama.cpp fallback
+        const response = await fetch(`${LOCAL_AI_URL}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages,
+                max_tokens: 4096,
+                temperature: 0.3,
+                stream: false,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`LLM error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.choices?.[0]?.message?.content ?? args.rawText;
+    },
+});
+
+// ── Summarize Session (Bielik topic-based summary) ──────────────────
+
+export const summarizeSession = action({
+    args: {
+        content: v.string(),
+        title: v.optional(v.string()),
+    },
+    returns: v.string(),
+    handler: async (_ctx, args) => {
+        if (!args.content.trim()) return "";
+
+        const systemPrompt = [
+            "Jesteś analitykiem sesji terapeutycznych, coachingowych i profesjonalnych rozmów. ZASADY:",
+            "1. Przeanalizuj CAŁĄ transkrypcję i zidentyfikuj WSZYSTKIE poruszane wątki i tematy.",
+            "2. Dla KAŻDEGO wątku napisz rzetelne, szczegółowe streszczenie — NIE 3-5 zdań, ale tyle, ile wymaga temat.",
+            "3. Formatuj w markdown: nagłówek ## dla każdego wątku, treść pod spodem.",
+            "4. NIE zmyślaj — jeśli coś nie było powiedziane, NIE dodawaj tego.",
+            "5. NIE halucynuj — bazuj WYŁĄCZNIE na treści transkrypcji.",
+            "6. Zachowaj kluczowe cytaty i konkrety (daty, imiona, liczby).",
+            "7. Na końcu dodaj sekcję \"## Kluczowe ustalenia\" z wypunktowaną listą konkretnych ustaleń, zadań, follow-upów — TYLKO jeśli takie padły w rozmowie.",
+            "8. Pisz po polsku. Bądź profesjonalny i zwięzły, ale kompletny.",
+        ].join("\n");
+
+        const userContent = args.title
+            ? `Tytuł sesji: ${args.title}\n\nTranskrypcja:\n${args.content}`
+            : `Transkrypcja:\n${args.content}`;
+
+        const messages = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+        ];
+
+        if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
+            const result = await runpodRequest(
+                BIELIK_ENDPOINT_ID,
+                {
+                    messages,
+                    sampling_params: {
+                        max_tokens: 4096,
+                        temperature: 0.5,
+                    },
+                },
+                300_000 // 5 min — long sessions may take time
+            );
+
+            return extractChatResponse(result);
+        }
+
+        // Local llama.cpp fallback
+        const response = await fetch(`${LOCAL_AI_URL}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages,
+                max_tokens: 4096,
+                temperature: 0.5,
+                stream: false,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`LLM error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.choices?.[0]?.message?.content ?? "";
+    },
+});
+
+// ── OCR Handwriting (GOT-OCR 2.0) ───────────────────────────────────
+
+export const ocrHandwriting = action({
+    args: {
+        imageBase64: v.string(),
+        postProcess: v.optional(v.boolean()),
+    },
+    returns: v.string(),
+    handler: async (_ctx, args) => {
+        if (!USE_OCR) {
+            throw new Error("OCR not configured: set OCR_ENDPOINT_ID in Convex env");
+        }
+
+        // 1. OCR via RunPod (GOT-OCR 2.0)
+        const ocrResult = await runpodRequest(
+            OCR_ENDPOINT_ID,
+            {
+                image_base64: args.imageBase64,
+                ocr_type: "format", // Markdown output
+            },
+            120_000
+        );
+
+        let text = (ocrResult as { text?: string }).text ?? "";
+
+        if (!text.trim()) {
+            return "";
+        }
+
+        // 2. Post-process with Bielik (Polish spelling correction)
+        if (args.postProcess !== false && BIELIK_ENDPOINT_ID) {
+            try {
+                const result = await runpodRequest(
+                    BIELIK_ENDPOINT_ID,
+                    {
+                        messages: [
+                            {
+                                role: "system",
+                                content: [
+                                    "Popraw literówki i polską ortografię w tekście z OCR pisma ręcznego.",
+                                    "Zachowaj sens i formatowanie Markdown.",
+                                    "NIE dodawaj nowej treści. NIE dodawaj komentarzy.",
+                                    "Zwróć TYLKO poprawiony tekst.",
+                                ].join(" "),
+                            },
+                            { role: "user", content: text },
+                        ],
+                        sampling_params: {
+                            max_tokens: 4096,
+                            temperature: 0.2,
+                        },
+                    },
+                    180_000
+                );
+
+                const corrected = extractChatResponse(result);
+                if (corrected.trim()) {
+                    text = corrected;
+                }
+            } catch (e) {
+                // Bielik correction failed — return raw OCR text
+                console.warn("Bielik post-processing failed, using raw OCR:", e);
+            }
+        }
+
+        return text;
     },
 });

@@ -33,6 +33,24 @@ export declare const api: {
       { text: string },
       Array<number>
     >;
+    ocrHandwriting: FunctionReference<
+      "action",
+      "public",
+      { imageBase64: string; postProcess?: boolean },
+      string
+    >;
+    polishTranscription: FunctionReference<
+      "action",
+      "public",
+      { rawText: string },
+      string
+    >;
+    summarizeSession: FunctionReference<
+      "action",
+      "public",
+      { content: string; title?: string },
+      string
+    >;
     transcribe: FunctionReference<
       "action",
       "public",
@@ -386,6 +404,7 @@ export declare const api: {
         durationSeconds?: number;
         projectId: Id<"projects">;
         speakerCount?: number;
+        summary?: string;
         title?: string;
       },
       Id<"transcriptions">
@@ -406,6 +425,7 @@ export declare const api: {
         durationSeconds?: number;
         projectId: Id<"projects">;
         speakerCount?: number;
+        summary?: string;
         title?: string;
       } | null
     >;
@@ -430,8 +450,15 @@ export declare const api: {
         durationSeconds?: number;
         projectId: Id<"projects">;
         speakerCount?: number;
+        summary?: string;
         title?: string;
       }>
+    >;
+    updateSummary: FunctionReference<
+      "mutation",
+      "public",
+      { summary: string; transcriptionId: Id<"transcriptions"> },
+      null
     >;
   };
   userKeys: {

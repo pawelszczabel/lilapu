@@ -193,6 +193,7 @@ export type DataModel = {
       durationSeconds?: number;
       projectId: Id<"projects">;
       speakerCount?: number;
+      summary?: string;
       title?: string;
       _id: Id<"transcriptions">;
       _creationTime: number;
@@ -208,6 +209,7 @@ export type DataModel = {
       | "durationSeconds"
       | "projectId"
       | "speakerCount"
+      | "summary"
       | "title";
     indexes: {
       by_id: ["_id"];

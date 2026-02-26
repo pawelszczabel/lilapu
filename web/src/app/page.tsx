@@ -222,7 +222,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                     <p className="landing-trust-disclaimer">
-                        Certyfikaty dotyczą infrastruktury chmurowej, na której hostowane są dane Lilapu.
+                        Certyfikaty dotyczą infrastruktury chmurowej Oracle Cloud, na której hostowane są dane Lilapu.
                     </p>
                 </div>
             </section>

@@ -36,6 +36,7 @@ const transcriptionShape = v.object({
     speakerCount: v.optional(v.number()),
     audioStorageId: v.optional(v.id("_storage")),
     durationSeconds: v.optional(v.number()),
+    summary: v.optional(v.string()),
     blockchainTxHash: v.optional(v.string()),
     blockchainVerified: v.boolean(),
 });
@@ -103,6 +104,7 @@ export const create = mutation({
         speakerCount: v.optional(v.number()),
         audioStorageId: v.optional(v.id("_storage")),
         durationSeconds: v.optional(v.number()),
+        summary: v.optional(v.string()),
     },
     returns: v.id("transcriptions"),
     handler: async (ctx, args) => {
@@ -115,8 +117,33 @@ export const create = mutation({
             speakerCount: args.speakerCount,
             audioStorageId: args.audioStorageId,
             durationSeconds: args.durationSeconds,
+            summary: args.summary,
             blockchainTxHash: undefined,
             blockchainVerified: false,
         });
+    },
+});
+
+// ── Update summary (async, after session save) ──────────────────────
+
+export const updateSummary = mutation({
+    args: {
+        transcriptionId: v.id("transcriptions"),
+        summary: v.string(),
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        const transcription = await ctx.db.get(args.transcriptionId);
+        if (!transcription) throw new Error("Transcription not found");
+        // Verify ownership via project
+        const userId = await getAuthUserId(ctx);
+        const project = await ctx.db.get(transcription.projectId);
+        if (!project || project.userId !== userId) {
+            throw new Error("Forbidden");
+        }
+        await ctx.db.patch(args.transcriptionId, {
+            summary: args.summary,
+        });
+        return null;
     },
 });
