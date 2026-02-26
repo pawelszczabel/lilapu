@@ -9,6 +9,86 @@ interface EncryptionPasswordDialogProps {
     onKeyReady: () => void;
 }
 
+// ── Stepper Component ────────────────────────────────────────────────
+
+function OnboardingStepper({ currentStep }: { currentStep: number }) {
+    const steps = [
+        { label: "Konto", icon: "👤" },
+        { label: "Szyfrowanie", icon: "🔒" },
+        { label: "Gotowe!", icon: "🚀" },
+    ];
+
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0',
+            marginBottom: '24px',
+            padding: '0 16px',
+        }}>
+            {steps.map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        minWidth: '70px',
+                    }}>
+                        <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '16px',
+                            background: i < currentStep
+                                ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+                                : i === currentStep
+                                    ? 'linear-gradient(135deg, #7c5cfc, #6d28d9)'
+                                    : 'rgba(255,255,255,0.06)',
+                            border: i === currentStep
+                                ? '2px solid rgba(124, 92, 252, 0.5)'
+                                : '2px solid transparent',
+                            transition: 'all 0.3s ease',
+                            boxShadow: i === currentStep
+                                ? '0 0 12px rgba(124, 92, 252, 0.3)'
+                                : 'none',
+                        }}>
+                            {i < currentStep ? '✓' : step.icon}
+                        </div>
+                        <span style={{
+                            fontSize: '11px',
+                            fontWeight: i === currentStep ? 600 : 400,
+                            color: i <= currentStep
+                                ? 'var(--text-primary, #fff)'
+                                : 'var(--text-muted, #666)',
+                            transition: 'all 0.3s ease',
+                        }}>
+                            {step.label}
+                        </span>
+                    </div>
+                    {i < steps.length - 1 && (
+                        <div style={{
+                            width: '40px',
+                            height: '2px',
+                            background: i < currentStep
+                                ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                                : 'rgba(255,255,255,0.1)',
+                            marginBottom: '20px',
+                            transition: 'all 0.3s ease',
+                        }} />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ── Main Dialog ──────────────────────────────────────────────────────
+
 export default function EncryptionPasswordDialog({
     email,
     onKeyReady,
@@ -119,24 +199,25 @@ export default function EncryptionPasswordDialog({
     return (
         <div className="encryption-dialog-overlay">
             <div className="encryption-dialog">
-                <div className="encryption-dialog-icon">🔐</div>
-                <h2>Hasło szyfrowania</h2>
+                <OnboardingStepper currentStep={1} />
+
+                <div className="encryption-dialog-icon">{isNewUser ? "🔒" : "🔐"}</div>
+                <h2>{isNewUser ? "Utwórz hasło szyfrowania" : "Odblokuj dane"}</h2>
                 <p className="encryption-dialog-desc">
-                    Twoje nagrania i notatki są szyfrowane end-to-end.
                     {isNewUser
-                        ? " Ustaw hasło szyfrowania, aby chronić swoje dane."
-                        : " Podaj hasło szyfrowania, aby uzyskać dostęp do swoich danych."}
+                        ? "Twoje nagrania i notatki będą szyfrowane end-to-end. Wymyśl unikalne hasło — tylko Ty będziesz mieć dostęp do swoich danych. To NIE jest hasło do logowania."
+                        : "Twoje dane są zaszyfrowane. Podaj hasło szyfrowania, które ustawiłeś przy pierwszym logowaniu."}
                 </p>
                 {isNewUser && (
                     <p className="encryption-dialog-hint">
-                        To samo hasło na każdym urządzeniu = dostęp do wszystkich danych.
+                        💡 Użyj tego samego hasła na każdym urządzeniu, aby mieć dostęp do tych samych danych.
                     </p>
                 )}
 
                 <form onSubmit={handleSubmit}>
                     <input
                         type="password"
-                        placeholder="Hasło szyfrowania"
+                        placeholder={isNewUser ? "Wymyśl hasło (min. 12 znaków)" : "Hasło szyfrowania"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         autoFocus
@@ -164,7 +245,7 @@ export default function EncryptionPasswordDialog({
                             : isLoading
                                 ? "Weryfikacja..."
                                 : isNewUser
-                                    ? "🔒 Ustaw hasło"
+                                    ? "🔒 Ustaw hasło i przejdź dalej →"
                                     : "🔓 Odblokuj dane"}
                     </button>
                 </form>
