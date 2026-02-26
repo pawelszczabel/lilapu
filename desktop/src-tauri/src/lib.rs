@@ -1,4 +1,5 @@
 mod audio;
+mod proxy;
 mod screenshot;
 mod system_audio;
 mod tray;
@@ -180,6 +181,7 @@ pub fn run() {
             screenshot::capture_screenshot,
             screenshot::capture_screen_region,
             screenshot::read_file_as_base64,
+            proxy::proxy_request,
         ])
         .setup(|app| {
             let _ = tray::create_tray(app.handle());
