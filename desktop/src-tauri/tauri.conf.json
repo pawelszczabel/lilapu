@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Lilapu",
+  "version": "0.1.0",
+  "identifier": "com.lilapu.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Lilapu — Prywatny Asystent Wiedzy",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.lilapu.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.clerk.accounts.dev https://clerk.lilapu.com https://*.runpod.net wss://*.runpod.net https://api.clerk.com; img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com; frame-src https://*.clerk.accounts.dev https://clerk.lilapu.com;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/pawelszczabel/lilapu/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3RjE5QTIzNDdGQzJDN0QKUldSOUxQeEhJNXJ4cDBTVS9CUThBakpHVHRVTGY3d042UUJ4REtXYnVybHZtTDdwN09XczV6eXYK"
+    }
+  }
+}
