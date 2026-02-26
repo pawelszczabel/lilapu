@@ -21,6 +21,10 @@ jobs:
           - platform: macos-13
             args: --target x86_64-apple-darwin
             rust_target: x86_64-apple-darwin
+          # Windows
+          - platform: windows-latest
+            args: ""
+            rust_target: x86_64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform }}
 
@@ -40,12 +44,20 @@ jobs:
       # desktop/convex is a symlink to ../web/convex in local dev.
       # Git may not resolve symlinks properly on CI, so we replace
       # the symlink with an actual copy of the convex directory.
-      - name: Resolve Convex symlink
+      - name: Resolve Convex symlink (Unix)
+        if: runner.os != 'Windows'
         run: |
           rm -f desktop/convex
           cp -r web/convex desktop/convex
-          echo "✅ Convex directory copied:"
           ls -la desktop/convex/_generated/
+
+      - name: Resolve Convex symlink (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path desktop/convex) { Remove-Item desktop/convex -Force -Recurse }
+          Copy-Item -Recurse web/convex desktop/convex
+          Get-ChildItem desktop/convex/_generated/
 
       - name: Install desktop dependencies
         working-directory: desktop
