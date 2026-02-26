@@ -14,13 +14,11 @@ jobs:
       matrix:
         include:
           # Apple Silicon (M1+) — native build on ARM runner
+          # Note: x86_64 dropped — native deps (cpal, xcap, screencapturekit)
+          # can't cross-compile and GitHub has no Intel runners (macos-13 EOL)
           - platform: macos-latest
             args: --target aarch64-apple-darwin
             rust_target: aarch64-apple-darwin
-          # Intel Mac — cross-compile from ARM runner (macos-13 deprecated)
-          - platform: macos-latest
-            args: --target x86_64-apple-darwin
-            rust_target: x86_64-apple-darwin
           # Windows
           - platform: windows-latest
             args: ""
