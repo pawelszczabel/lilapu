@@ -615,42 +615,6 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                     </button>
                 </div>
 
-                <div style={{ padding: '0 var(--space-2)' }}>
-                    <button
-                        onClick={() => ocrFileInputRef.current?.click()}
-                        disabled={isScanning}
-                        title="Skanuj notatkę ze zdjęcia"
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 'var(--space-3)',
-                            padding: 'var(--space-2) var(--space-3)',
-                            borderRadius: 'var(--radius-lg)',
-                            background: 'transparent',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-secondary)',
-                            transition: 'all 0.2s',
-                            cursor: isScanning ? 'wait' : 'pointer',
-                            fontSize: 'var(--text-sm)',
-                            opacity: isScanning ? 0.6 : 1,
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!isScanning) {
-                                e.currentTarget.style.background = 'var(--bg-surface-hover)';
-                                e.currentTarget.style.borderColor = 'rgba(124, 92, 252, 0.3)';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.borderColor = 'var(--border)';
-                        }}
-                    >
-                        {isScanning ? "⏳ Skanowanie..." : "📷 Skanuj notatkę"}
-                    </button>
-                </div>
-
                 {isCreating && (
                     <div className="notes-create-form">
                         <input
