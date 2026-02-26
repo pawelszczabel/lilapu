@@ -34,15 +34,7 @@ jobs:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       # desktop/convex is a symlink to ../web/convex
-      # We need to install web deps and generate Convex types first
-      - name: Install web dependencies (for Convex codegen)
-        working-directory: web
-        run: npm ci
-
-      - name: Generate Convex types
-        working-directory: web
-        run: npx convex codegen
-
+      # Convex _generated types are already committed to git, so no codegen needed
       - name: Install desktop dependencies
         working-directory: desktop
         run: npm ci
