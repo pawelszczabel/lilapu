@@ -33,11 +33,23 @@ jobs:
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-      # desktop/convex is a symlink to ../web/convex
-      # Convex _generated types are already committed to git, so no codegen needed
+      # desktop/convex is a symlink to ../web/convex in local dev.
+      # Git may not resolve symlinks properly on CI, so we replace
+      # the symlink with an actual copy of the convex directory.
+      - name: Resolve Convex symlink
+        run: |
+          rm -f desktop/convex
+          cp -r web/convex desktop/convex
+          echo "✅ Convex directory copied:"
+          ls -la desktop/convex/_generated/
+
       - name: Install desktop dependencies
         working-directory: desktop
         run: npm ci
+
+      - name: Verify TypeScript compiles
+        working-directory: desktop
+        run: npx tsc --noEmit
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
