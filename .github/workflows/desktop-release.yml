@@ -17,8 +17,8 @@ jobs:
           - platform: macos-latest
             args: --target aarch64-apple-darwin
             rust_target: aarch64-apple-darwin
-          # Intel Mac — native build on Intel runner (macos-13)
-          - platform: macos-13
+          # Intel Mac — cross-compile from ARM runner (macos-13 deprecated)
+          - platform: macos-latest
             args: --target x86_64-apple-darwin
             rust_target: x86_64-apple-darwin
           # Windows
