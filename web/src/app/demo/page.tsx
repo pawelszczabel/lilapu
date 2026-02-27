@@ -97,7 +97,7 @@ const STEPS: OnboardingStep[] = [
         emoji: "👤",
         title: "Nowy klient / projekt",
         story: "Każda osoba, sprawa lub projekt to oddzielny workspace. Tworzysz go jednym kliknięciem — i od razu masz osobne miejsce na nagrania, notatki i czaty z AI.",
-        proTip: "Prawnik tworzy osobny projekt per sprawę. Lekarz per pacjenta. Zero bałaganu, pełna separacja danych.",
+        proTip: "Dodajesz klienta raz, a potem wszystko co nagrasz, zapiszesz lub zapytasz AI — automatycznie trafia pod jego profil, widzisz tylko jego dane.",
         cardPosition: "right",
     },
     {
