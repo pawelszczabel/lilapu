@@ -104,9 +104,9 @@ const STEPS: OnboardingStep[] = [
         id: "new-folder",
         targetId: "demo-new-folder-btn",
         emoji: "📂",
-        title: "Foldery — organizacja klientów",
-        story: "Grupuj projekty w foldery. Nazwij folder imieniem klienta, a w środku umieść jego sprawy. Albo odwrotnie — jak wolisz.",
-        proTip: "Kancelaria prawna? Folder = klient, projekty w środku = poszczególne sprawy. Klinika? Folder = oddział, projekty = pacjenci.",
+        title: "Foldery — tworzysz katalogi",
+        story: "Grupuj klientów w folderach. Nazwij folder tak, żebyś mógł szybko odnaleźć odpowiednią osobę.",
+        proTip: "Kancelaria prawna? Folder = temat sprawy, osoby w środku = osoby biorące udział w sprawie. Psycholog? Folder = miejsce pracy, osoby w środku = pacjenci których przyjmuje w danym miejscu.",
         cardPosition: "right",
     },
     {
@@ -114,8 +114,8 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-tab-record",
         emoji: "🎙️",
         title: "Nagrywaj — transkrypcja na żywo",
-        story: "Kliknij 'Nagrywaj' i mów. Twoje słowa zamieniają się w tekst w czasie rzeczywistym. Koniec z ręcznym spisywaniem notatek ze spotkań.",
-        proTip: "Lilapu obsługuje nagrywanie przez mikrofon, a wkrótce także rozmowy online (Meet, Zoom). Latencja < 2 sekundy.",
+        story: "Kliknij 'Nagrywaj' i zacznij rozmowę. Twoja rozmowa z klientem zamienia się w tekst niemal w czasie rzeczywistym. Koniec z ręcznym spisywaniem notatek ze spotkań. Po zakończonej rozmowie możesz szybko wygenerować podsumowanie spotkania.",
+        proTip: "Transkrypcję, podsumowanie i inne notatki możesz dodać jako kontekst do rozmowy z AI, korzystając ze znaku @. Możesz też ponownie odtworzyć nagraną rozmowę. Wszystkie rozmowy są szyfrowane i poufne.",
         tab: "record",
         cardPosition: "bottom",
     },
@@ -124,8 +124,8 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-tab-transcriptions",
         emoji: "📝",
         title: "Transkrypcje — Twoja pamięć",
-        story: "Każde nagranie to automatyczna transkrypcja. Wracasz do niej kiedy chcesz — szukaj, czytaj, eksportuj. Nigdy więcej 'co on mówił na tamtym spotkaniu?'",
-        proTip: "Każda transkrypcja jest zabezpieczona kryptograficznie. Badge ✅ oznacza, że nikt jej nie zmienił od momentu nagrania.",
+        story: "Każde nagranie to automatyczna transkrypcja. Wracasz do niej kiedy chcesz. Możesz je eksportować, oraz importować z dysku inne nagrania (dostaniesz ich transkrypcję z podsumowaniem). Transkrypcje to Twój drugi mózg.",
+        proTip: "Każda transkrypcja jest zabezpieczona kryptograficznie — czyli zamieniona w zaszyfrowany kod, co oznacza, że tylko Ty widzisz treść transkrypcji.",
         tab: "transcriptions",
         cardPosition: "bottom",
     },
@@ -133,9 +133,9 @@ const STEPS: OnboardingStep[] = [
         id: "tab-notes",
         targetId: "demo-tab-notes",
         emoji: "📓",
-        title: "Notatki — pisz, importuj, skanuj",
-        story: "Pisz notatki w Markdown, importuj pliki .txt/.md/.docx, nagraj głosową notatkę, a nawet zeskanuj odręcznie pisane notatki aparatem. Wszystko w jednym miejscu.",
-        proTip: "Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu. Nawet administrator serwera nie ma dostępu.",
+        title: "Notatki — pisz, nagrywaj, importuj, skanuj",
+        story: "Pisz lub nagrywaj notatki, importuj pliki .txt/.md/.docx, a nawet zeskanuj odręcznie pisane notatki aparatem/kamerą komputera. Wszystko w jednym miejscu.",
+        proTip: `Każda notatka otrzymuje kryptograficzny \u201Eodcisk palca\u201D zapisany na blockchainie (notaryzacja). Niezależny, niemożliwy do sfałszowania dowód autentyczności \u2014 dla bezpieczeństwa Twojego i klientów.`,
         tab: "notes",
         cardPosition: "bottom",
     },
@@ -144,8 +144,8 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-tab-chat",
         emoji: "💬",
         title: "Czat AI — pytaj o swoje notatki",
-        story: "Zapytaj AI: 'Co ustaliliśmy z klientem X?', 'Podsumuj ostatnie spotkanie', 'Znajdź wzmianki o budżecie'. AI odpowiada na podstawie TWOICH dokumentów.",
-        proTip: "AI działa wyłącznie na Twoich notatkach z danego projektu. Zero halucynacji z internetu, zero cross-project leaks. Twoje dane nigdy nie trafiają do OpenAI.",
+        story: "Kliknij @. Dodaj potrzebne notatki. Zapytaj AI: 'Co ustaliliśmy z klientem X?', 'Podsumuj ostatnie spotkanie', 'Znajdź wzmianki o Y'. AI odpowiada na podstawie TWOICH dokumentów. Rozmowę z AI możesz potem dodać do notatek.",
+        proTip: "AI działa wyłącznie na Twoich notatkach dotyczących konkretnej osoby. Te rozmowy są prywatne, szyfrowane, nigdy nie trafią na serwery BigTechów.",
         tab: "chat",
         cardPosition: "bottom",
     },
@@ -153,9 +153,9 @@ const STEPS: OnboardingStep[] = [
         id: "waitlist",
         targetId: "demo-waitlist",
         emoji: "🚀",
-        title: "Odkryłeś Lilapu!",
-        story: "Gratulacje! Teraz wiesz, jak działa Lilapu. Dołącz do wczesnego dostępu — startujemy wkrótce.",
-        proTip: "Pierwsi użytkownicy dostaną dożywotni plan Pro za darmo. Bądź jednym z nich.",
+        title: "Tak działa Lilapu!",
+        story: "Gratulacje! Ale to dopiero przedsmak. Dołącz do osób z wczesnym dostępem — startujemy wkrótce.",
+        proTip: "Pierwsi użytkownicy przetestują Lilapu za darmo i dostaną najlepszą z możliwych ofert.",
         cardPosition: "center",
     },
 ];
@@ -753,15 +753,47 @@ function WaitlistCTA({ onRestart }: { onRestart: () => void }) {
     const [email, setEmail] = useState("");
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [gdprConsent, setGdprConsent] = useState(false);
+    const [gdprError, setGdprError] = useState(false);
+    const [apiError, setApiError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email) return;
+
+        // Validate GDPR checkbox
+        if (!gdprConsent) {
+            setGdprError(true);
+            return;
+        }
+
+        setGdprError(false);
+        setApiError("");
         setSubmitting(true);
-        // Simulate API call
-        await new Promise((r) => setTimeout(r, 1000));
-        setSubmitted(true);
-        setSubmitting(false);
+
+        try {
+            const res = await fetch("/api/waitlist", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ emailAddress: email }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Błąd zapisu");
+            }
+
+            setSubmitted(true);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "Błąd zapisu";
+            if (msg.includes("already")) {
+                setApiError("Ten e-mail jest już na liście oczekujących!");
+            } else {
+                setApiError("Błąd zapisu. Spróbuj ponownie.");
+            }
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -769,26 +801,67 @@ function WaitlistCTA({ onRestart }: { onRestart: () => void }) {
             <Confetti />
             <div className="demo-waitlist-card">
                 <div className="demo-waitlist-emoji">🎉</div>
-                <h2 className="demo-waitlist-title">Odkryłeś Lilapu!</h2>
+                <h2 className="demo-waitlist-title">Tak działa Lilapu!</h2>
                 <p className="demo-waitlist-desc">
-                    Gratulacje! Teraz wiesz, jak działa Lilapu. Dołącz do wczesnego dostępu —
-                    startujemy wkrótce. Pierwsi użytkownicy dostaną <strong>dożywotni plan Pro za darmo</strong>.
+                    Gratulacje! Ale to dopiero przedsmak. Dołącz do osób z wczesnym dostępem —
+                    startujemy wkrótce. Pierwsi użytkownicy przetestują Lilapu za darmo i dostaną <strong>najlepszą z możliwych ofert</strong>.
                 </p>
 
                 {!submitted ? (
-                    <form className="demo-waitlist-form" onSubmit={handleSubmit}>
-                        <input
-                            className="demo-waitlist-input"
-                            type="email"
-                            placeholder="twoj@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <button className="demo-waitlist-submit" type="submit" disabled={submitting}>
-                            {submitting ? "⏳" : "Dołącz →"}
-                        </button>
-                    </form>
+                    <>
+                        <form className="demo-waitlist-form" onSubmit={handleSubmit}>
+                            <div className="demo-waitlist-input-wrapper">
+                                <input
+                                    className="demo-waitlist-input"
+                                    type="email"
+                                    placeholder="twoj@email.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <button className="demo-waitlist-submit" type="submit" disabled={submitting}>
+                                {submitting ? "⏳" : "Dołącz do Waitlist"}
+                            </button>
+                        </form>
+
+                        {/* GDPR Consent */}
+                        <div className={`demo-waitlist-gdpr ${gdprError ? "demo-waitlist-gdpr-error" : ""}`}>
+                            <label className="demo-waitlist-gdpr-label">
+                                <input
+                                    type="checkbox"
+                                    checked={gdprConsent}
+                                    onChange={(e) => {
+                                        setGdprConsent(e.target.checked);
+                                        if (e.target.checked) setGdprError(false);
+                                    }}
+                                    className="demo-waitlist-gdpr-checkbox"
+                                />
+                                <span>
+                                    Wyrażam zgodę na przetwarzanie mojego adresu e‑mail
+                                    w celu informowania o dostępności Lilapu, zgodnie
+                                    z{" "}
+                                    <a
+                                        href="/polityka-prywatnosci"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Polityką Prywatności
+                                    </a>
+                                    . Mogę wycofać zgodę w dowolnym momencie.
+                                </span>
+                            </label>
+                        </div>
+
+                        {gdprError && (
+                            <p className="demo-waitlist-error">
+                                ⚠️ Zaznacz zgodę na przetwarzanie danych, aby dołączyć do waitlisty.
+                            </p>
+                        )}
+                        {apiError && (
+                            <p className="demo-waitlist-error">{apiError}</p>
+                        )}
+                    </>
                 ) : (
                     <p className="demo-waitlist-success">
                         ✅ Świetnie! Damy Ci znać, gdy Lilapu będzie gotowe.
