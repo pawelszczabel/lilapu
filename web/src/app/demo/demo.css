@@ -58,7 +58,7 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: #020205;
+    background: #010108;
     font-family: var(--font-inter);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -71,16 +71,16 @@
 /* ── Ambient Glow ── */
 .demo-glow {
     position: absolute;
-    width: 80%;
-    height: 70%;
-    top: 15%;
-    left: 10%;
+    width: 90%;
+    height: 80%;
+    top: 10%;
+    left: 5%;
     background: radial-gradient(ellipse at 50% 50%,
-            rgba(124, 92, 252, 0.15) 0%,
-            rgba(124, 92, 252, 0.08) 30%,
-            rgba(124, 92, 252, 0.03) 50%,
+            rgba(124, 92, 252, 0.25) 0%,
+            rgba(124, 92, 252, 0.15) 25%,
+            rgba(124, 92, 252, 0.06) 50%,
             transparent 70%);
-    filter: blur(60px);
+    filter: blur(50px);
     pointer-events: none;
     z-index: 0;
     animation: glowPulse 6s ease-in-out infinite;
@@ -96,20 +96,21 @@
 
     50% {
         opacity: 1;
-        transform: scale(1.05);
+        transform: scale(1.04);
     }
 }
 
 .demo-glow-accent {
     position: absolute;
-    width: 40%;
-    height: 30%;
+    width: 50%;
+    height: 40%;
     top: 5%;
-    left: 30%;
+    left: 25%;
     background: radial-gradient(ellipse at 50% 50%,
-            rgba(167, 139, 250, 0.12) 0%,
-            transparent 60%);
-    filter: blur(80px);
+            rgba(167, 139, 250, 0.2) 0%,
+            rgba(124, 92, 252, 0.1) 40%,
+            transparent 65%);
+    filter: blur(70px);
     pointer-events: none;
     z-index: 0;
     animation: glowPulse 8s ease-in-out infinite 2s;
@@ -125,11 +126,13 @@
     background: var(--bg-primary);
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow:
-        0 25px 80px rgba(0, 0, 0, 0.6),
-        0 0 60px rgba(124, 92, 252, 0.08),
-        0 0 120px rgba(124, 92, 252, 0.04);
+        0 25px 80px rgba(0, 0, 0, 0.7),
+        0 0 80px rgba(124, 92, 252, 0.15),
+        0 0 160px rgba(124, 92, 252, 0.08),
+        0 0 240px rgba(124, 92, 252, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
 }
