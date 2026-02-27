@@ -666,6 +666,7 @@ function StoryCard({
     onNext,
     onBack,
     onSkip,
+    transitioning,
 }: {
     step: OnboardingStep;
     stepIndex: number;
@@ -673,6 +674,7 @@ function StoryCard({
     onNext: () => void;
     onBack: () => void;
     onSkip: () => void;
+    transitioning: boolean;
 }) {
     const cardRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState({ top: "50%", left: "50%" });
@@ -713,7 +715,7 @@ function StoryCard({
     return (
         <div
             ref={cardRef}
-            className="demo-story-card"
+            className={`demo-story-card ${transitioning ? "demo-story-card-exit" : "demo-story-card-enter"}`}
             style={{
                 top: step.cardPosition === "center" ? "50%" : position.top,
                 left: step.cardPosition === "center" ? "50%" : position.left,
@@ -892,6 +894,7 @@ export default function DemoPage() {
     const [activeTab, setActiveTab] = useState<string>("notes");
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [showWaitlist, setShowWaitlist] = useState(false);
+    const [transitioning, setTransitioning] = useState(false);
     const audioCtxRef = useRef<AudioContext | null>(null);
 
     // Initialize audio context on first interaction
@@ -915,28 +918,42 @@ export default function DemoPage() {
     }, [step]);
 
     const goNext = useCallback(() => {
+        if (transitioning) return;
         const ctx = ensureAudioCtx();
         if (soundEnabled) playClickSound(ctx);
 
         if (currentStep === STEPS.length - 2) {
             // Going to waitlist
-            if (soundEnabled) playSuccessSound(ctx);
-            setShowWaitlist(true);
-            setCurrentStep(STEPS.length - 1);
+            setTransitioning(true);
+            setTimeout(() => {
+                if (soundEnabled) playSuccessSound(ctx);
+                setShowWaitlist(true);
+                setCurrentStep(STEPS.length - 1);
+                setTransitioning(false);
+            }, 200);
         } else if (currentStep < STEPS.length - 1) {
-            if (soundEnabled) playWhooshSound(ctx);
-            setCurrentStep((s) => s + 1);
+            setTransitioning(true);
+            setTimeout(() => {
+                if (soundEnabled) playWhooshSound(ctx);
+                setCurrentStep((s) => s + 1);
+                setTransitioning(false);
+            }, 200);
         }
-    }, [currentStep, soundEnabled, ensureAudioCtx]);
+    }, [currentStep, soundEnabled, ensureAudioCtx, transitioning]);
 
     const goBack = useCallback(() => {
+        if (transitioning) return;
         const ctx = ensureAudioCtx();
         if (soundEnabled) playClickSound(ctx);
         if (currentStep > 0) {
-            setCurrentStep((s) => s - 1);
-            setShowWaitlist(false);
+            setTransitioning(true);
+            setTimeout(() => {
+                setCurrentStep((s) => s - 1);
+                setShowWaitlist(false);
+                setTransitioning(false);
+            }, 200);
         }
-    }, [currentStep, soundEnabled, ensureAudioCtx]);
+    }, [currentStep, soundEnabled, ensureAudioCtx, transitioning]);
 
     const skipToEnd = useCallback(() => {
         const ctx = ensureAudioCtx();
@@ -1022,12 +1039,9 @@ export default function DemoPage() {
                 <div className="demo-fog-overlay" />
             )}
 
-            {/* Spotlight Overlay */}
+            {/* Spotlight Overlay — blocks interaction with background, does NOT advance steps */}
             {!showWaitlist && (
-                <div
-                    className="demo-spotlight-overlay"
-                    onClick={goNext}
-                />
+                <div className="demo-spotlight-overlay" />
             )}
 
             {/* Story Card */}
@@ -1039,6 +1053,7 @@ export default function DemoPage() {
                     onNext={goNext}
                     onBack={goBack}
                     onSkip={skipToEnd}
+                    transitioning={transitioning}
                 />
             )}
 
@@ -1063,6 +1078,26 @@ export default function DemoPage() {
             >
                 {soundEnabled ? "🔊" : "🔇"}
             </button>
+
+            {/* Mobile Portrait — Rotate Screen */}
+            <div className="demo-rotate-screen">
+                <div className="demo-rotate-screen-content">
+                    <div className="demo-rotate-screen-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                            <line x1="12" y1="18" x2="12" y2="18" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                        <div className="demo-rotate-screen-arrows">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="1 4 1 10 7 10" />
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 className="demo-rotate-screen-title">Obróć ekran</h2>
+                    <p className="demo-rotate-screen-desc">Demo najlepiej wygląda w trybie poziomym</p>
+                </div>
+            </div>
         </div>
     );
 }
