@@ -8,7 +8,7 @@ export default function PolitykaPrywatnosci() {
                     Polityka Prywatności
                 </h1>
                 <p style={{ color: "var(--text-secondary)", marginBottom: "2.5rem", fontSize: "0.95rem" }}>
-                    Ostatnia aktualizacja: 25 lutego 2026
+                    Ostatnia aktualizacja: 27 lutego 2026
                 </p>
 
                 {/* 1. Administrator */}
@@ -113,10 +113,16 @@ export default function PolitykaPrywatnosci() {
                                 <td style={{ padding: "8px 12px" }}>Logowanie, MFA, zarządzanie kontem, weryfikacja przy rejestracji</td>
                             </tr>
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                                <td style={{ padding: "8px 12px" }}>Analityka i reklamy</td>
+                                <td style={{ padding: "8px 12px" }}>Analityka produktowa</td>
+                                <td style={{ padding: "8px 12px" }}>PostHog Inc.</td>
+                                <td style={{ padding: "8px 12px" }}>UE (Frankfurt)</td>
+                                <td style={{ padding: "8px 12px" }}>Analiza ruchu na stronach publicznych (landing page, demo). Dane przetwarzane na serwerach w UE. Ładowane wyłącznie po wyrażeniu zgody. Nie działa wewnątrz aplikacji (dashboard).</td>
+                            </tr>
+                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                                <td style={{ padding: "8px 12px" }}>Reklamy</td>
                                 <td style={{ padding: "8px 12px" }}>Google LLC</td>
                                 <td style={{ padding: "8px 12px" }}>USA</td>
-                                <td style={{ padding: "8px 12px" }}>Google Analytics (analiza ruchu), Google Ads (remarketing, konwersje). Ładowane wyłącznie po wyrażeniu zgody.</td>
+                                <td style={{ padding: "8px 12px" }}>Google Ads (remarketing, konwersje). Ładowane wyłącznie po wyrażeniu zgody.</td>
                             </tr>
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                                 <td style={{ padding: "8px 12px" }}>Reklamy</td>
@@ -168,6 +174,10 @@ export default function PolitykaPrywatnosci() {
                         o <strong>EU-US Data Privacy Framework</strong>, zapewniając odpowiedni poziom ochrony danych.
                     </p>
                     <p>
+                        PostHog Inc. przetwarza dane analityczne na serwerach w <strong>UE (Frankfurt)</strong> — dane
+                        analityczne nie opuszczają Europejskiego Obszaru Gospodarczego.
+                    </p>
+                    <p>
                         Treści użytkownika (notatki, transkrypcje, rozmowy) przechowywane w Convex są zaszyfrowane
                         end-to-end — Convex przechowuje wyłącznie zaszyfrowane dane, do których nie ma dostępu.
                     </p>
@@ -178,7 +188,7 @@ export default function PolitykaPrywatnosci() {
                     <p>Lilapu używa następujących kategorii plików cookie:</p>
                     <ul>
                         <li><strong>Niezbędne</strong> — sesja logowania (Clerk), preferencje interfejsu, zgoda na cookies. Nie wymagają zgody.</li>
-                        <li><strong>Analityczne</strong> — Google Analytics (Google LLC) — analiza ruchu na stronie. Ładowane wyłącznie po wyrażeniu zgody.</li>
+                        <li><strong>Analityczne</strong> — PostHog (PostHog Inc., serwery UE) — analiza ruchu na stronach publicznych, nie działa wewnątrz aplikacji. Ładowane wyłącznie po wyrażeniu zgody.</li>
                         <li><strong>Marketingowe</strong> — Google Ads (Google LLC) i Meta Ads (Meta Platforms Inc.) — remarketing i śledzenie konwersji. Ładowane wyłącznie po wyrażeniu zgody.</li>
                     </ul>
                     <p>

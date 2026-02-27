@@ -8,7 +8,7 @@ export default function Regulamin() {
                     Regulamin
                 </h1>
                 <p style={{ color: "var(--text-secondary)", marginBottom: "2.5rem", fontSize: "0.95rem" }}>
-                    Ostatnia aktualizacja: 25 lutego 2026
+                    Ostatnia aktualizacja: 27 lutego 2026
                 </p>
 
                 {/* 1. Postanowienia ogólne */}
@@ -167,7 +167,7 @@ export default function Regulamin() {
                     <ol>
                         <li>W sprawach nieuregulowanych niniejszym Regulaminem zastosowanie mają przepisy prawa polskiego, w szczególności Kodeksu Cywilnego, Ustawy o świadczeniu usług drogą elektroniczną oraz Ustawy o prawach konsumenta.</li>
                         <li>Wszelkie spory wynikłe z korzystania z Lilapu będą rozstrzygane przez sąd właściwy dla siedziby Usługodawcy, z zastrzeżeniem praw konsumentów do wyboru sądu właściwego dla ich miejsca zamieszkania.</li>
-                        <li>Regulamin wchodzi w życie z dniem 25 lutego 2026.</li>
+                        <li>Regulamin wchodzi w życie z dniem 27 lutego 2026.</li>
                     </ol>
                 </Section>
 

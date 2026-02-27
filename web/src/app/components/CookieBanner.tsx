@@ -42,7 +42,7 @@ export default function CookieBanner() {
         <div className="cookie-banner" role="dialog" aria-label="Baner ciasteczek">
             <div className="cookie-banner-content">
                 <p>
-                    Używamy plików cookie: niezbędnych do działania strony, analitycznych (Google Analytics)
+                    Używamy plików cookie: niezbędnych do działania strony, analitycznych (PostHog)
                     oraz marketingowych (Google Ads, Meta Ads).
                     Możesz zaakceptować wszystkie lub wybrać tylko niezbędne.{" "}
                     <a href="/polityka-ciasteczek">Dowiedz się więcej</a>.

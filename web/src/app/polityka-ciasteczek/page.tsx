@@ -8,7 +8,7 @@ export default function PolitykaCiasteczek() {
                     Polityka Plików Cookie
                 </h1>
                 <p style={{ color: "var(--text-secondary)", marginBottom: "2.5rem", fontSize: "0.95rem" }}>
-                    Ostatnia aktualizacja: 25 lutego 2026
+                    Ostatnia aktualizacja: 27 lutego 2026
                 </p>
 
                 {/* 1. Czym są cookies */}
@@ -47,9 +47,9 @@ export default function PolitykaCiasteczek() {
                             {/* Analityczne */}
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                                 <td style={{ padding: "8px 12px" }}><strong>Analityczne</strong></td>
-                                <td style={{ padding: "8px 12px" }}>Google Analytics</td>
-                                <td style={{ padding: "8px 12px" }}>Analiza ruchu na stronie, statystyki odwiedzin, zachowania użytkowników</td>
-                                <td style={{ padding: "8px 12px" }}>Do 2 lat</td>
+                                <td style={{ padding: "8px 12px" }}>PostHog (serwery UE)</td>
+                                <td style={{ padding: "8px 12px" }}>Analiza ruchu na stronach publicznych (landing, demo). Nie działa wewnątrz aplikacji (dashboard).</td>
+                                <td style={{ padding: "8px 12px" }}>1 rok</td>
                             </tr>
                             {/* Marketingowe */}
                             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
@@ -74,7 +74,7 @@ export default function PolitykaCiasteczek() {
                     </p>
                     <ul>
                         <li><strong>„Akceptuję wszystkie"</strong> — włącza cookies niezbędne, analityczne i marketingowe.</li>
-                        <li><strong>„Tylko niezbędne"</strong> — włącza wyłącznie cookies niezbędne do działania aplikacji. Google Analytics, Google Ads i Meta Ads nie są ładowane.</li>
+                        <li><strong>„Tylko niezbędne"</strong> — włącza wyłącznie cookies niezbędne do działania aplikacji. PostHog, Google Ads i Meta Ads nie są ładowane.</li>
                     </ul>
                     <p>
                         Pliki cookie niezbędne nie wymagają zgody — są konieczne do prawidłowego działania aplikacji.
@@ -82,18 +82,18 @@ export default function PolitykaCiasteczek() {
                     </p>
                 </Section>
 
-                {/* 4. Google Analytics */}
-                <Section title="4. Google Analytics">
+                {/* 4. PostHog */}
+                <Section title="4. PostHog">
                     <p>
-                        Google Analytics (Google LLC) służy do analizy ruchu na stronie. Zbiera anonimowe dane
-                        o odwiedzinach, takie jak: liczba wizyt, czas spędzony na stronie, źródło ruchu, typ urządzenia.
+                        PostHog (PostHog Inc.) służy do analizy ruchu na stronach publicznych Lilapu (landing page, demo).
+                        <strong> PostHog nie działa wewnątrz aplikacji (dashboard)</strong> — Twoja aktywność w aplikacji nie jest śledzona.
                     </p>
                     <p>
-                        Dane są przetwarzane przez Google LLC (USA) zgodnie z <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>Polityką prywatności Google</a>.
-                        Google uczestniczy w EU-US Data Privacy Framework.
+                        Dane są przetwarzane na serwerach w <strong>UE (Frankfurt)</strong> — dane analityczne nie
+                        opuszczają Europejskiego Obszaru Gospodarczego. Ładowane wyłącznie po wyrażeniu zgody.
                     </p>
                     <p>
-                        Możesz zablokować Google Analytics, instalując <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>dodatek do przeglądarki od Google</a>.
+                        Więcej informacji: <a href="https://posthog.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>Polityka prywatności PostHog</a>.
                     </p>
                 </Section>
 
@@ -122,8 +122,8 @@ export default function PolitykaCiasteczek() {
                     </p>
                 </Section>
 
-                {/* 7. Zmiana ustawień */}
-                <Section title="7. Jak zmienić ustawienia cookies?">
+                {/* 6. Zmiana ustawień */}
+                <Section title="6. Jak zmienić ustawienia cookies?">
                     <p>Możesz zmienić ustawienia plików cookie na kilka sposobów:</p>
                     <ul>
                         <li><strong>Usunięcie cookies z przeglądarki</strong> — przy następnej wizycie baner pojawi się ponownie.</li>
@@ -132,8 +132,8 @@ export default function PolitykaCiasteczek() {
                     </ul>
                 </Section>
 
-                {/* 8. Kontakt */}
-                <Section title="8. Kontakt">
+                {/* 7. Kontakt */}
+                <Section title="7. Kontakt">
                     <p>
                         W razie pytań dotyczących plików cookie skontaktuj się z nami:{" "}
                         <a href="mailto:pawelszczabel@gmail.com" style={{ color: "var(--accent)" }}>pawelszczabel@gmail.com</a>.
