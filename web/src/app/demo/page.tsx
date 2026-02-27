@@ -568,7 +568,7 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
 function MockChatContent({ activeStep }: { activeStep: string }) {
     const isActive = activeStep === "tab-chat";
     const { displayed: userMsg } = useTypingEffect(
-        "Co ustaliliśmy z klientem X na ostatnim spotkaniu?",
+        "Co ustaliliśmy z klientem na ostatnim spotkaniu?",
         35,
         isActive
     );
@@ -579,43 +579,77 @@ function MockChatContent({ activeStep }: { activeStep: string }) {
         "- Budzet projektu: 450 000 PLN\n" +
         "- Pan Nowak podtrzymal opcje przedluzenia do konca Q1\n" +
         "- Kolejne spotkanie: piatek, godz. 10:00\n\n" +
-        "Zrodlo: Spotkanie z klientem X (27 lut 2026, 14:30)",
+        "Zrodlo: Spotkanie z klientem (27 lut 2026, 14:30)",
         20,
         isActive
     );
 
     return (
-        <div className="demo-chat-panel">
-            <div className="demo-chat-messages">
-                {isActive && userMsg && (
-                    <div className="demo-chat-message user">
-                        {userMsg}
-                        {!userMsg.endsWith("?") && <span className="demo-typing-cursor" />}
+        <div className="demo-chat-layout">
+            {/* Chat Sidebar */}
+            <div className="demo-chat-sidebar">
+                <div className="demo-notes-sidebar-header">
+                    <span className="demo-notes-sidebar-title">ROZMOWY</span>
+                    <button className="demo-sidebar-toggle" style={{ width: 24, height: 24 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    </button>
+                </div>
+                <div style={{ padding: 'var(--space-2)' }}>
+                    <button className="demo-notes-new-btn" style={{ marginBottom: 'var(--space-2)' }}>
+                        <div className="demo-sidebar-action-icon" style={{ width: 28, height: 28 }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </div>
+                        <span style={{ fontWeight: 500 }}>Nowa rozmowa</span>
+                    </button>
+                </div>
+                {isActive ? (
+                    <div className="demo-notes-list-item" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>Nowa rozmowa</span>
+                        <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                        </button>
                     </div>
-                )}
-                {isActive && userMsg.endsWith("?") && aiMsg && (
-                    <div className="demo-chat-message assistant">
-                        <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
-                            {aiMsg}
-                            <span className="demo-typing-cursor" />
-                        </pre>
-                    </div>
-                )}
-                {!isActive && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, color: "var(--text-muted)", gap: "var(--space-3)" }}>
-                        <span style={{ fontSize: "2rem" }}>💬</span>
-                        <p style={{ fontSize: "var(--text-sm)" }}>Zapytaj AI o swoje notatki i transkrypcje</p>
-                    </div>
+                ) : (
+                    <p style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: 'var(--text-xs)', textAlign: 'center' }}>
+                        Brak rozmów. Zadaj pytanie poniżej.
+                    </p>
                 )}
             </div>
-            <div className="demo-chat-input-area">
-                <input className="demo-chat-input" placeholder="Zapytaj AI o swoje notatki..." readOnly />
-                <button className="demo-chat-send-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13" />
-                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
-                </button>
+
+            {/* Chat Main */}
+            <div className="demo-chat-panel">
+                <div className="demo-chat-messages">
+                    {isActive && userMsg && (
+                        <div className="demo-chat-message user">
+                            {userMsg}
+                            {!userMsg.endsWith("?") && <span className="demo-typing-cursor" />}
+                        </div>
+                    )}
+                    {isActive && userMsg.endsWith("?") && aiMsg && (
+                        <div className="demo-chat-message assistant">
+                            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
+                                {aiMsg}
+                                <span className="demo-typing-cursor" />
+                            </pre>
+                        </div>
+                    )}
+                    {!isActive && (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, color: "var(--text-muted)", gap: "var(--space-3)" }}>
+                            <span style={{ fontSize: "2rem" }}>💬</span>
+                            <p style={{ fontSize: "var(--text-sm)" }}>Zapytaj AI o swoje notatki i transkrypcje</p>
+                            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>💡 Użyj @ aby dołączyć transkrypcje, notatki lub inne rozmowy jako kontekst.</p>
+                        </div>
+                    )}
+                </div>
+                <div className="demo-chat-input-area">
+                    <input className="demo-chat-input" placeholder="Zapytaj o swoje notatki... (@ dodaj kontekst)" readOnly />
+                    <button className="demo-chat-send-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     );
