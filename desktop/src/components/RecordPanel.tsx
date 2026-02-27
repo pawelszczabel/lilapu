@@ -234,6 +234,9 @@ export default function RecordPanel({
     const wsRef = useRef<WebSocket | null>(null);
     const useWebSocket = !isTauri && !!import.meta.env.VITE_WHISPER_WS_URL;
 
+    // WS auth token
+    const generateWsToken = useAction(api.wsToken.generateWsToken);
+
     // Accumulate samples for chunked sending (browser mode only)
     const chunkBufferRef = useRef<Float32Array[]>([]);
     const chunkSampleCountRef = useRef(0);
@@ -371,9 +374,7 @@ export default function RecordPanel({
             // Connect WebSocket for live transcription
             if (useWebSocket) {
                 const wsUrl = import.meta.env.VITE_WHISPER_WS_URL!;
-                const wsApiKey = import.meta.env.VITE_WS_API_KEY;
-                const wsFullUrl = wsApiKey ? `${wsUrl}?token=${wsApiKey}` : wsUrl;
-                const ws = new WebSocket(wsFullUrl);
+                const ws = new WebSocket(wsUrl);
                 wsRef.current = ws;
 
                 ws.onmessage = (event) => {
@@ -392,14 +393,35 @@ export default function RecordPanel({
                     console.warn("WebSocket error:", err);
                 };
 
-                // Wait for connection
-                await new Promise<void>((resolve, reject) => {
-                    ws.onopen = () => {
-                        ws.send(JSON.stringify({ mode: "diarize" }));
-                        resolve();
+                // Wait for connection, then authenticate with HMAC token
+                await new Promise<void>(async (resolve, reject) => {
+                    ws.onopen = async () => {
+                        try {
+                            const token = await generateWsToken();
+                            ws.send(JSON.stringify({ auth: token }));
+                        } catch (err) {
+                            reject(new Error("Failed to get WS auth token"));
+                        }
                     };
                     ws.onerror = () => reject(new Error("WebSocket connection failed"));
-                    setTimeout(() => reject(new Error("WebSocket timeout")), 5000);
+
+                    const origOnMessage = ws.onmessage;
+                    ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.status === "authenticated") {
+                                ws.onmessage = origOnMessage;
+                                ws.send(JSON.stringify({ mode: "diarize" }));
+                                resolve();
+                            } else if (data.error) {
+                                reject(new Error(data.error));
+                            }
+                        } catch {
+                            // ignore
+                        }
+                    };
+
+                    setTimeout(() => reject(new Error("WebSocket auth timeout")), 10000);
                 });
             }
 

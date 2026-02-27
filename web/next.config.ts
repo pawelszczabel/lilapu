@@ -25,20 +25,7 @@ const securityHeaders = [
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
-  {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://clerk.lilapu.com https://challenges.cloudflare.com https://*.posthog.com",
-      "style-src 'self' 'unsafe-inline'",
-      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud wss://*.runpod.net https://*.clerk.com https://clerk.lilapu.com https://api.runpod.ai https://*.posthog.com https://eu.i.posthog.com",
-      "img-src 'self' data: blob: https://img.clerk.com",
-      "frame-src https://*.clerk.com https://clerk.lilapu.com https://challenges.cloudflare.com",
-      "font-src 'self' data:",
-      "worker-src 'self' blob:",
-      "media-src 'self' blob:",
-    ].join("; "),
-  },
+  // CSP is generated per-request in middleware.ts with a fresh nonce
 ];
 
 const nextConfig: NextConfig = {

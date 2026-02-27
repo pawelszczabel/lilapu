@@ -12,6 +12,7 @@ Zero-retention: audio never touches disk, cleared from RAM after processing.
 """
 
 import asyncio
+import hmac
 import json
 import io
 import logging
@@ -46,14 +47,51 @@ VAD_THRESHOLD = 0.5
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 # Rate limiting: max concurrent WebSocket connections per IP
 MAX_CONNECTIONS_PER_IP = int(os.environ.get("MAX_CONNECTIONS_PER_IP", "5"))
-# Authentication keys (if empty, auth is disabled — dev mode)
-WS_API_KEY = os.environ.get("WS_API_KEY", "")
+# Authentication: HMAC token secret (shared with Convex backend)
+WS_TOKEN_SECRET = os.environ.get("WS_TOKEN_SECRET", "")
+WS_TOKEN_MAX_AGE = int(os.environ.get("WS_TOKEN_MAX_AGE", "60"))  # seconds
 DIARIZE_API_KEY = os.environ.get("DIARIZE_API_KEY", "")
 
 # ── Per-IP connection tracking ───────────────────────────────────────
 from collections import defaultdict
-from urllib.parse import urlparse, parse_qs
+import base64
+import time
 ip_connections: dict[str, int] = defaultdict(int)
+
+
+def verify_hmac_token(token: str) -> tuple[bool, str]:
+    """Verify HMAC-SHA256 signed token. Returns (is_valid, error_message)."""
+    if not WS_TOKEN_SECRET:
+        return True, ""  # Auth disabled in dev mode
+    try:
+        parts = token.split(":")
+        if len(parts) != 2:
+            return False, "Invalid token format"
+        payload_b64, sig_b64 = parts
+        payload = base64.b64decode(payload_b64).decode("utf-8")
+        provided_sig = base64.b64decode(sig_b64)
+        
+        # Verify signature
+        expected_sig = hmac.new(
+            WS_TOKEN_SECRET.encode("utf-8"),
+            payload.encode("utf-8"),
+            "sha256"
+        ).digest()
+        if not hmac.compare_digest(provided_sig, expected_sig):
+            return False, "Invalid signature"
+        
+        # Verify timestamp (max WS_TOKEN_MAX_AGE seconds)
+        payload_parts = payload.split(":")
+        if len(payload_parts) < 2:
+            return False, "Invalid payload"
+        timestamp = int(payload_parts[0])
+        age = int(time.time()) - timestamp
+        if age < 0 or age > WS_TOKEN_MAX_AGE:
+            return False, f"Token expired ({age}s old)"
+        
+        return True, ""
+    except Exception as e:
+        return False, f"Token verification failed: {e}"
 
 # ── Load models ──────────────────────────────────────────────────────
 
@@ -307,33 +345,47 @@ async def handle_client(websocket):
     """Handle one WebSocket client session."""
     client_id = id(websocket)
     
-    # ── Authentication: validate API key from query string ──
-    if WS_API_KEY:
-        try:
-            path = websocket.request.path if hasattr(websocket, 'request') and websocket.request else ""
-            params = parse_qs(urlparse(path).query)
-            token = params.get("token", [None])[0]
-            if token != WS_API_KEY:
-                logger.warning(f"[{client_id}] Unauthorized WebSocket connection (invalid token)")
-                await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
-                await websocket.close(4001, "Unauthorized")
-                return
-        except Exception as e:
-            logger.warning(f"[{client_id}] Auth check failed: {e}")
-            await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
-            await websocket.close(4001, "Unauthorized")
-            return
-    
     # ── Rate limiting: per-IP connection tracking ──
     client_ip = websocket.remote_address[0] if websocket.remote_address else "unknown"
     ip_connections[client_ip] += 1
     
     if ip_connections[client_ip] > MAX_CONNECTIONS_PER_IP:
         ip_connections[client_ip] -= 1
-        logger.warning(f"[{client_id}] Rate limit exceeded for {client_ip} ({ip_connections[client_ip]+1} connections)")
-        await websocket.send(json.dumps({"error": "Too many connections from this IP", "code": 429}))
+        logger.warning(f"[{client_id}] Rate limit exceeded for {client_ip}")
+        await websocket.send(json.dumps({"error": "Too many connections", "code": 429}))
         await websocket.close(4029, "Rate limit exceeded")
         return
+    
+    # ── Authentication: expect HMAC token as first message ──
+    if WS_TOKEN_SECRET:
+        try:
+            auth_msg = await asyncio.wait_for(websocket.recv(), timeout=10.0)
+            if not isinstance(auth_msg, str):
+                await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
+                await websocket.close(4001, "Unauthorized")
+                ip_connections[client_ip] -= 1
+                return
+            try:
+                auth_data = json.loads(auth_msg)
+                token = auth_data.get("auth", "")
+            except (json.JSONDecodeError, AttributeError):
+                token = ""
+            
+            is_valid, err_msg = verify_hmac_token(token)
+            if not is_valid:
+                logger.warning(f"[{client_id}] Unauthorized: {err_msg}")
+                await websocket.send(json.dumps({"error": "Unauthorized", "code": 401}))
+                await websocket.close(4001, "Unauthorized")
+                ip_connections[client_ip] -= 1
+                return
+            
+            await websocket.send(json.dumps({"status": "authenticated"}))
+        except asyncio.TimeoutError:
+            logger.warning(f"[{client_id}] Auth timeout")
+            await websocket.send(json.dumps({"error": "Auth timeout", "code": 401}))
+            await websocket.close(4001, "Auth timeout")
+            ip_connections[client_ip] -= 1
+            return
     
     logger.info(f"[{client_id}] Client connected from {client_ip} ({ip_connections[client_ip]} active)")
 
@@ -454,15 +506,15 @@ class DiarizeHandler(BaseHTTPRequestHandler):
     """HTTP handler for /transcribe-diarize endpoint."""
 
     def do_POST(self):
-        # ── Authentication: validate API key ──
+        # ── Authentication: validate API key (timing-safe) ──
         if DIARIZE_API_KEY:
             api_key = self.headers.get("X-API-Key", "")
-            if api_key != DIARIZE_API_KEY:
+            if not api_key or not hmac.compare_digest(api_key, DIARIZE_API_KEY):
                 self.send_response(401)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(b'{"error": "Unauthorized"}')
-                logger.warning(f"HTTP diarize: unauthorized request (invalid API key)")
+                logger.warning("HTTP diarize: unauthorized request")
                 return
 
         if self.path != "/transcribe-diarize":

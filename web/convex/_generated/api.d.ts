@@ -484,6 +484,9 @@ export declare const api: {
       "ok" | "exists"
     >;
   };
+  wsToken: {
+    generateWsToken: FunctionReference<"action", "public", {}, string>;
+  };
 };
 
 /**

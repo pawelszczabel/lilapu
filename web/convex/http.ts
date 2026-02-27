@@ -3,6 +3,16 @@ import { httpAction } from "./_generated/server";
 
 const http = httpRouter();
 
+// ── Constant-time string comparison (no node:crypto in Convex runtime) ──
+function timingSafeEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    return result === 0;
+}
+
 // ── Allowed origins for CORS ────────────────────────────────────────
 const ALLOWED_ORIGINS = [
     "https://lilapu.com",
@@ -36,10 +46,10 @@ http.route({
     path: "/upload-audio",
     method: "POST",
     handler: httpAction(async (ctx, req) => {
-        // ── Auth: require API key ──
+        // ── Auth: require API key (timing-safe comparison) ──
         const apiKey = req.headers.get("X-API-Key") ?? req.headers.get("Authorization")?.replace("Bearer ", "");
         const expectedKey = process.env.UPLOAD_API_KEY;
-        if (!expectedKey || !apiKey || apiKey !== expectedKey) {
+        if (!expectedKey || !apiKey || !timingSafeEqual(apiKey, expectedKey)) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), {
                 status: 401,
                 headers: { "Content-Type": "application/json" },

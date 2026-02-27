@@ -9,6 +9,7 @@ import CookieBanner from "./components/CookieBanner";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import PostHogTracker from "./components/PostHogTracker";
+import { headers } from "next/headers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,11 +46,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+
   return (
     <html lang="pl" className="dark">
       <body className={`${inter.variable} ${roboto.variable}`}>
@@ -77,14 +80,8 @@ export default function RootLayout({
         <Script
           id="sw-register"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-              }
-            `,
-          }}
-        />
+          nonce={nonce}
+        >{`if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }`}</Script>
         <Analytics />
       </body>
     </html>
