@@ -1084,7 +1084,7 @@ export default function DemoPage() {
                 <div className="demo-mobile-block-content">
                     <img src="/demo-mobile.png" alt="" className="demo-mobile-block-avatar" />
                     <h2 className="demo-mobile-block-title">Wersja demo działa tylko na desktop</h2>
-                    <p className="demo-mobile-block-desc">Sprawdź Lilapu na komputerze.<br />Dziękujemy za wyrozumiałość! 🙏</p>
+                    <p className="demo-mobile-block-desc">Sprawdź Lilapu na komputerze.<br />Albo przeczytaj więcej tutaj: <a href="/" className="demo-mobile-block-link">lilapu.com</a>.<br /><br />Dziękuję za wyrozumiałość! 🙏</p>
                 </div>
             </div>
         </div>

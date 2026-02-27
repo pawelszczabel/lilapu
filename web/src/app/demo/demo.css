@@ -1885,3 +1885,14 @@
     font-size: var(--text-base);
     line-height: 1.6;
 }
+
+.demo-mobile-block-link {
+    color: var(--accent);
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.demo-mobile-block-link:hover {
+    color: var(--accent-hover);
+}
