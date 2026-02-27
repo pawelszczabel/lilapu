@@ -469,59 +469,88 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
         isActive
     );
 
-    if (isActive) {
-        return (
-            <div>
-                <div className="demo-notes-header">
-                    <span className="demo-notes-header-title">NOTATKI</span>
-                </div>
-                <div className="demo-note-content">
-                    <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-                        {displayed}
-                        <span className="demo-typing-cursor" />
-                    </pre>
-                </div>
-                <div className="demo-security-badge" style={{ marginTop: "var(--space-4)" }}>
-                    🔒 Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu.
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div>
-            <div className="demo-notes-header">
-                <span className="demo-notes-header-title">NOTATKI</span>
-                <span className="demo-notes-header-icon">📋</span>
+        <div className="demo-notes-layout">
+            {/* Left sidebar — notes list */}
+            <div className="demo-notes-sidebar">
+                <div className="demo-notes-sidebar-header">
+                    <span className="demo-notes-sidebar-title">NOTATKI</span>
+                    <span className="demo-notes-sidebar-icon">📋</span>
+                </div>
+                <button className="demo-notes-new-btn" id="demo-new-note-btn">
+                    <span className="demo-notes-new-icon">+</span>
+                    Nowa notatka
+                </button>
+                {isActive ? (
+                    <div className="demo-notes-list-item">
+                        <span>Notatki ze spotkania</span>
+                        <span className="demo-notes-list-item-menu">⋮</span>
+                    </div>
+                ) : (
+                    <p className="demo-notes-empty-text">
+                        Brak notatek. Utwórz nową lub importuj plik.
+                    </p>
+                )}
             </div>
 
-            <button className="demo-new-note-btn" id="demo-new-note-btn">
-                <span className="demo-new-note-icon">+</span>
-                Nowa notatka
-            </button>
-
-            <p className="demo-empty-notes">Brak notatek. Utwórz nową lub importuj plik.</p>
-
-            <div className="demo-notes-cta">
-                <div className="demo-notes-cta-icon">📄</div>
-                <h2 className="demo-notes-cta-title">Notatki</h2>
-                <p className="demo-notes-cta-desc">
-                    Wybierz notatkę z listy, utwórz nową lub zaimportuj plik .txt, .md lub .docx
-                </p>
-                <div className="demo-notes-cta-actions">
-                    <div className="demo-notes-cta-action" id="demo-import-file">
-                        <span className="demo-notes-cta-action-icon">📥</span> Importuj plik
+            {/* Right content area */}
+            <div className="demo-notes-content-area">
+                {isActive ? (
+                    <>
+                        {/* Editor header */}
+                        <div className="demo-notes-editor-header">
+                            <input
+                                className="demo-notes-editor-title"
+                                value="Notatki ze spotkania"
+                                readOnly
+                            />
+                            <span style={{ fontSize: "var(--text-base)", color: "var(--text-muted)" }}>✏️</span>
+                            <button className="demo-notes-editor-btn demo-notes-editor-save">
+                                💾 Zapisz
+                            </button>
+                            <button className="demo-notes-editor-btn demo-notes-editor-cancel">
+                                Anuluj
+                            </button>
+                        </div>
+                        {/* E2EE banner */}
+                        <div className="demo-notes-e2ee-banner">
+                            🔒 Treść zaszyfrowana E2EE — Convex nie widzi Twoich notatek
+                        </div>
+                        {/* Editor body with typing */}
+                        <div className="demo-notes-editor-body">
+                            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", lineHeight: 1.8, color: "var(--text-primary)", margin: 0 }}>
+                                {displayed}
+                                <span className="demo-typing-cursor" />
+                            </pre>
+                        </div>
+                        {/* Footer */}
+                        <div className="demo-notes-editor-footer">
+                            27 lutego 2026 o 09:22 · MD
+                        </div>
+                    </>
+                ) : (
+                    <div className="demo-notes-content-empty">
+                        <div className="demo-notes-content-empty-icon">📓</div>
+                        <h2 className="demo-notes-content-empty-title">Notatki</h2>
+                        <p className="demo-notes-content-empty-desc">
+                            Wybierz notatkę z listy, utwórz nową lub zaimportuj plik .txt, .md lub .docx
+                        </p>
+                        <div className="demo-notes-content-empty-actions">
+                            <div className="demo-notes-content-empty-action" id="demo-import-file">
+                                📥 Importuj plik
+                            </div>
+                            <div className="demo-notes-content-empty-action" id="demo-record-audio">
+                                🎵 Wgraj audio
+                            </div>
+                            <div className="demo-notes-content-empty-action" id="demo-scan-note">
+                                📷 Skanuj notatkę
+                            </div>
+                        </div>
+                        <div className="demo-notes-e2ee-badge">
+                            🔒 Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu.
+                        </div>
                     </div>
-                    <div className="demo-notes-cta-action" id="demo-record-audio">
-                        <span className="demo-notes-cta-action-icon">🎵</span> Wgraj audio
-                    </div>
-                    <div className="demo-notes-cta-action" id="demo-scan-note">
-                        <span className="demo-notes-cta-action-icon">📷</span> Skanuj notatkę
-                    </div>
-                </div>
-                <div className="demo-security-badge">
-                    🔒 Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu.
-                </div>
+                )}
             </div>
         </div>
     );
