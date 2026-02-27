@@ -87,8 +87,8 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-dashboard",
         emoji: "🏠",
         title: "Twoje centrum dowodzenia",
-        story: "To jest Lilapu — Twój prywatny notatnik z AI. Wszystko w jednym miejscu: nagrywaj, transkrybuj, rób notatki i rozmawiaj z AI o swoich dokumentach.",
-        proTip: "Lilapu działa jak natywna aplikacja desktopowa. Wszystkie dane szyfrowane — nawet my ich nie widzimy.",
+        story: "To jest Lilapu — Twój prywatny notatnik AI. Wszystko w jednym miejscu: nagrywaj i transkrybuj rozmowy z podsumowaniem, a jeśli nie chcesz nagrywać rozmów, to zeskanuj swoje notatki z zeszytu. Rób nowe notatki i rozmawiaj z AI o swoich dokumentach — tylko Ty masz dostęp do swoich danych. Rozmowy z AI są prywatne i bezpieczne!",
+        proTip: "Lilapu to natywna aplikacja na macOS i Windows. Wszystkie dane są szyfrowane — nikt oprócz Ciebie nie ma do nich dostępu.",
         cardPosition: "center",
     },
     {
