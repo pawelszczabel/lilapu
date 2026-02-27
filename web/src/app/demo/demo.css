@@ -58,18 +58,161 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: var(--bg-primary);
+    background: #020205;
     font-family: var(--font-inter);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Ambient Glow ── */
+.demo-glow {
+    position: absolute;
+    width: 80%;
+    height: 70%;
+    top: 15%;
+    left: 10%;
+    background: radial-gradient(ellipse at 50% 50%,
+            rgba(124, 92, 252, 0.15) 0%,
+            rgba(124, 92, 252, 0.08) 30%,
+            rgba(124, 92, 252, 0.03) 50%,
+            transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: glowPulse 6s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+.demo-glow-accent {
+    position: absolute;
+    width: 40%;
+    height: 30%;
+    top: 5%;
+    left: 30%;
+    background: radial-gradient(ellipse at 50% 50%,
+            rgba(167, 139, 250, 0.12) 0%,
+            transparent 60%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: glowPulse 8s ease-in-out infinite 2s;
+}
+
+/* ── Native Window Frame ── */
+.demo-window {
+    position: relative;
+    z-index: 1;
+    width: calc(100vw - 80px);
+    height: calc(100vh - 60px);
+    max-width: 1400px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.6),
+        0 0 60px rgba(124, 92, 252, 0.08),
+        0 0 120px rgba(124, 92, 252, 0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Title Bar ── */
+.demo-titlebar {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 var(--space-4);
+    background: rgba(13, 13, 20, 0.95);
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: drag;
+    user-select: none;
+}
+
+.demo-traffic-lights {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    -webkit-app-region: no-drag;
+}
+
+.demo-traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+}
+
+.demo-traffic-light:hover {
+    transform: scale(1.15);
+}
+
+.demo-traffic-light.close {
+    background: #ff5f57;
+    border: 0.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.demo-traffic-light.close:hover {
+    background: #ff3b30;
+}
+
+.demo-traffic-light.minimize {
+    background: #febc2e;
+    border: 0.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.demo-traffic-light.minimize:hover {
+    background: #f5a623;
+}
+
+.demo-traffic-light.maximize {
+    background: #28c840;
+    border: 0.5px solid rgba(0, 0, 0, 0.12);
+}
+
+.demo-traffic-light.maximize:hover {
+    background: #1db954;
+}
+
+.demo-titlebar-text {
+    flex: 1;
+    text-align: center;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
 /* ── Dashboard Layout ── */
 .demo-dashboard {
     display: flex;
     flex-direction: row;
-    height: 100vh;
+    flex: 1;
     overflow: hidden;
     padding: var(--space-4);
     gap: var(--space-4);

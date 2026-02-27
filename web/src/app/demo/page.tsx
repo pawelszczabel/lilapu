@@ -848,6 +848,10 @@ export default function DemoPage() {
 
     return (
         <div className="demo-page">
+            {/* Ambient Glow */}
+            <div className="demo-glow" />
+            <div className="demo-glow-accent" />
+
             {/* Progress Bar */}
             <div className="demo-progress-bar">
                 <div className="demo-progress-bar-fill" style={{ width: `${progress}%` }} />
@@ -868,14 +872,27 @@ export default function DemoPage() {
                 </span>
             </div>
 
-            {/* Dashboard UI */}
-            <div className="demo-dashboard" id="demo-dashboard">
-                <MockSidebar activeStep={step.id} />
-                <MockMainPanel
-                    activeTab={activeTab}
-                    onTabClick={handleTabClick}
-                    activeStep={step.id}
-                />
+            {/* Native Window Frame */}
+            <div className="demo-window">
+                {/* macOS Title Bar */}
+                <div className="demo-titlebar">
+                    <div className="demo-traffic-lights">
+                        <button className="demo-traffic-light close" onClick={(e) => e.stopPropagation()} />
+                        <button className="demo-traffic-light minimize" onClick={(e) => e.stopPropagation()} />
+                        <button className="demo-traffic-light maximize" onClick={(e) => e.stopPropagation()} />
+                    </div>
+                    <span className="demo-titlebar-text">Lilapu — Prywatny Asystent Wiedzy</span>
+                </div>
+
+                {/* Dashboard UI */}
+                <div className="demo-dashboard" id="demo-dashboard">
+                    <MockSidebar activeStep={step.id} />
+                    <MockMainPanel
+                        activeTab={activeTab}
+                        onTabClick={handleTabClick}
+                        activeStep={step.id}
+                    />
+                </div>
             </div>
 
             {/* Spotlight Overlay */}
