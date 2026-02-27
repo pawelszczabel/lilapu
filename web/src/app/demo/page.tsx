@@ -256,15 +256,19 @@ function MockSidebar({ activeStep }: { activeStep: string }) {
                     className={`demo-sidebar-action-btn ${activeStep === "new-client" ? "demo-highlight" : ""}`}
                     id="demo-new-client-btn"
                 >
-                    <span className="demo-sidebar-action-icon">+</span>
-                    Nowy klient
+                    <div className="demo-sidebar-action-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span style={{ fontWeight: 500 }}>Nowy klient</span>
                 </button>
                 <button
                     className={`demo-sidebar-action-btn ${activeStep === "new-folder" ? "demo-highlight" : ""}`}
                     id="demo-new-folder-btn"
                 >
-                    <span className="demo-sidebar-action-icon">+</span>
-                    Nowy folder
+                    <div className="demo-sidebar-action-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span style={{ fontWeight: 500 }}>Nowy folder</span>
                 </button>
             </div>
 

@@ -284,21 +284,21 @@
 .demo-sidebar-action-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--accent-subtle);
-    color: var(--accent);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     font-size: var(--text-sm);
-    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid transparent;
     width: 100%;
 }
 
 .demo-sidebar-action-btn:hover {
-    background: rgba(124, 92, 252, 0.2);
+    background: var(--bg-surface-hover);
     border-color: rgba(124, 92, 252, 0.3);
 }
 
@@ -311,10 +311,9 @@
     border-radius: var(--radius-full);
     background: #ffffff;
     color: var(--accent);
-    font-size: var(--text-sm);
-    font-weight: 600;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.2);
+    box-shadow: 0 4px 12px rgba(124, 92, 252, 0.2);
+    border: 1px solid rgba(124, 92, 252, 0.1);
 }
 
 .demo-sidebar-list {
