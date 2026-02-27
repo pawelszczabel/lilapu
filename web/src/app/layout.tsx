@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Lilapu — Twój prywatny notatnik z AI",
+  title: "Lilapu — Twój prywatny asystent AI",
   description:
     "Privacy-first transkrypcja audio i inteligentny czat z notatkami. Twoje dane, Twój serwer.",
   manifest: "/manifest.json",

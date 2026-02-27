@@ -996,7 +996,7 @@ export default function DemoPage() {
                         <button className="demo-traffic-light minimize" onClick={(e) => e.stopPropagation()} />
                         <button className="demo-traffic-light maximize" onClick={(e) => e.stopPropagation()} />
                     </div>
-                    <span className="demo-titlebar-text">Lilapu — Twój prywatny notatnik z AI</span>
+                    <span className="demo-titlebar-text">Lilapu — Twój prywatny asystent AI</span>
                 </div>
 
                 {/* Dashboard UI */}
