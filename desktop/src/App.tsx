@@ -8,12 +8,12 @@ import TranscriptionList from "./components/TranscriptionList";
 import RecordPanel from "./components/RecordPanel";
 import NotesPanel from "./components/NotesPanel";
 import ChatPanel from "./components/ChatPanel";
-import CameraOCR from "./components/CameraOCR";
+
 import EncryptionPasswordDialog from "./components/EncryptionPasswordDialog";
 import { hasSessionKey } from "./crypto";
 import { useScreenshotShortcut, useFileDrop, useTrayRecording } from "./hooks/useTauriDesktop";
 
-type Tab = "transcriptions" | "notes" | "record" | "chat" | "camera";
+type Tab = "transcriptions" | "notes" | "record" | "chat";
 
 export default function App() {
   const { user, isLoaded: isClerkLoaded } = useUser();
@@ -96,7 +96,7 @@ export default function App() {
         <h2>Zaloguj się do Lilapu</h2>
         <p>Zaloguj się, aby uzyskać dostęp do swoich nagrań i notatek.</p>
         <SignInButton mode="modal">
-          <button className="encryption-submit" style={{ marginTop: '16px' }}>
+          <button className="encryption-submit" style={{ marginTop: '16px', maxWidth: '280px', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}>
             🔑 Zaloguj się
           </button>
         </SignInButton>
@@ -175,12 +175,7 @@ export default function App() {
                 >
                   💬 Czat AI
                 </button>
-                <button
-                  className={`main-tab ${activeTab === "camera" ? "active" : ""}`}
-                  onClick={() => setActiveTab("camera")}
-                >
-                  📷 Kamera OCR
-                </button>
+
               </div>
             </div>
 
@@ -214,12 +209,7 @@ export default function App() {
                   }}
                 />
               )}
-              {activeTab === "camera" && (
-                <CameraOCR
-                  projectId={activeProject._id}
-                  onNoteCreated={() => setActiveTab("notes")}
-                />
-              )}
+
             </div>
           </>
         ) : (

@@ -30,9 +30,13 @@ parking_lot = "0.12"
 # Base64 encoding for audio data
 base64 = "0.22"
 
+
 # Screenshot capture
 xcap = "0.8"
 image = { version = "0.25", default-features = false, features = ["png"] }
+tauri-plugin-clerk = "0.1.0"
+tauri-plugin-http = "2.5.7"
+tauri-plugin-store = "2.4.2"
 
 # macOS system audio capture via ScreenCaptureKit
 [target.'cfg(target_os = "macos")'.dependencies]

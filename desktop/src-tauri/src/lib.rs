@@ -1,12 +1,10 @@
 mod audio;
-mod proxy;
 mod screenshot;
 mod system_audio;
 mod tray;
 
 use std::sync::Arc;
 use parking_lot::Mutex;
-use tauri::Manager;
 
 /// Wrapper to make cpal::Stream usable across threads
 struct SendStream(cpal::Stream);
@@ -162,10 +160,23 @@ fn list_audio_devices() -> Vec<audio::AudioDeviceInfo> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let clerk_publishable_key = env!("VITE_CLERK_PUBLISHABLE_KEY").to_string();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        // Required for tauri-plugin-clerk to route FAPI requests via Rust
+        .plugin(tauri_plugin_http::init())
+        // Optional: persist auth state across restarts
+        .plugin(tauri_plugin_store::Builder::new().build())
+        // Clerk auth plugin – routes FAPI calls through Rust, bypassing WebView cookie issues
+        .plugin(
+            tauri_plugin_clerk::ClerkPluginBuilder::new()
+                .publishable_key(clerk_publishable_key)
+                .with_tauri_store()
+                .build(),
+        )
         .manage(AppState {
             recording: Arc::new(Mutex::new(audio::RecordingState::default())),
             mic_stream: Mutex::new(None),
@@ -181,7 +192,6 @@ pub fn run() {
             screenshot::capture_screenshot,
             screenshot::capture_screen_region,
             screenshot::read_file_as_base64,
-            proxy::proxy_request,
         ])
         .setup(|app| {
             let _ = tray::create_tray(app.handle());

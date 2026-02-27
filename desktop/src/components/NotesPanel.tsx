@@ -41,9 +41,23 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioFileInputRef = useRef<HTMLInputElement>(null);
     const ocrFileInputRef = useRef<HTMLInputElement>(null);
+    const scanBtnRef = useRef<HTMLButtonElement>(null);
     const [isAudioImporting, setIsAudioImporting] = useState(false);
     const [audioImportProgress, setAudioImportProgress] = useState("");
     const [isScanning, setIsScanning] = useState(false);
+    const [showScanMenu, setShowScanMenu] = useState(false);
+    const [scanMenuPos, setScanMenuPos] = useState({ top: 0, left: 0 });
+
+    // Camera OCR state
+    const [showCamera, setShowCamera] = useState(false);
+    const [isCameraOn, setIsCameraOn] = useState(false);
+    const [isCameraProcessing, setIsCameraProcessing] = useState(false);
+    const [cameraOcrResult, setCameraOcrResult] = useState<string | null>(null);
+    const [cameraError, setCameraError] = useState<string | null>(null);
+    const [isCameraSaving, setIsCameraSaving] = useState(false);
+    const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+    const cameraCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const cameraStreamRef = useRef<MediaStream | null>(null);
 
     // Queries
     const notes = useQuery(api.notes.listByProject, { projectId });
@@ -417,7 +431,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
         }
     }, [transcribeFast]);
 
-    // ── OCR Scan Handler ──
+    // ── OCR Scan Handler (file picker) ──
     const handleScanNote = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -426,10 +440,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
         setIsScanning(true);
 
         try {
-            // Read image as base64
             const arrayBuffer = await file.arrayBuffer();
-
-            // Resize if too large (max 1024px) for faster upload
             const blob = new Blob([arrayBuffer], { type: file.type });
             const imageBitmap = await createImageBitmap(blob);
             const maxDim = 1024;
@@ -448,7 +459,6 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             const dataUrl = canvas.toDataURL("image/png", 0.9);
             const base64 = dataUrl.split(",")[1];
 
-            // Run OCR
             const text = await ocrHandwriting({ imageBase64: base64 });
             const trimmed = text?.trim();
 
@@ -457,7 +467,6 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                 return;
             }
 
-            // Create new note with scanned content
             const key = await getSessionKeyOrThrow();
             const title = `Skan ${new Date().toLocaleDateString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
             const encryptedContent = await encryptString(key, trimmed);
@@ -478,6 +487,91 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
             setIsScanning(false);
         }
     }, [ocrHandwriting, projectId, createNote]);
+
+    // ── Camera OCR helpers ──
+    const startCamera = useCallback(async () => {
+        try {
+            setCameraError(null);
+            setShowCamera(true);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment", width: { ideal: 1080 }, height: { ideal: 1920 } },
+            });
+            cameraStreamRef.current = stream;
+            // Wait for the video element to mount
+            setTimeout(() => {
+                if (cameraVideoRef.current) {
+                    cameraVideoRef.current.srcObject = stream;
+                    cameraVideoRef.current.play();
+                }
+            }, 100);
+            setIsCameraOn(true);
+        } catch (err) {
+            console.error("Camera error:", err);
+            setCameraError("Nie udało się uruchomić kamery. Sprawdź uprawnienia.");
+        }
+    }, []);
+
+    const stopCamera = useCallback(() => {
+        if (cameraStreamRef.current) {
+            cameraStreamRef.current.getTracks().forEach((t) => t.stop());
+            cameraStreamRef.current = null;
+        }
+        if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+        setIsCameraOn(false);
+        setShowCamera(false);
+        setCameraOcrResult(null);
+        setCameraError(null);
+    }, []);
+
+    const captureFrame = useCallback(async () => {
+        if (!cameraVideoRef.current || !cameraCanvasRef.current) return;
+        setIsCameraProcessing(true);
+        setCameraError(null);
+        setCameraOcrResult(null);
+
+        try {
+            const video = cameraVideoRef.current;
+            const canvas = cameraCanvasRef.current;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("Canvas context error");
+            ctx.drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL("image/png");
+            const base64 = dataUrl.split(",")[1];
+            const text = await ocrHandwriting({ imageBase64: base64, postProcess: true });
+            if (text && text.trim()) {
+                setCameraOcrResult(text);
+            } else {
+                setCameraError("OCR nie rozpoznał tekstu na zdjęciu.");
+            }
+        } catch (err) {
+            console.error("OCR error:", err);
+            setCameraError(`Błąd OCR: ${err}`);
+        } finally {
+            setIsCameraProcessing(false);
+        }
+    }, [ocrHandwriting]);
+
+    const saveCameraOcrAsNote = useCallback(async () => {
+        if (!cameraOcrResult) return;
+        setIsCameraSaving(true);
+        try {
+            const key = await getSessionKeyOrThrow();
+            const title = `📷 Skan z kamery ${new Date().toLocaleDateString("pl-PL")}`;
+            const encryptedContent = await encryptString(key, cameraOcrResult);
+            const encryptedTitle = await encryptString(key, title);
+            const id = await createNote({ projectId, title: encryptedTitle, content: encryptedContent });
+            setActiveNoteId(id);
+            setIsEditing(false);
+            stopCamera();
+        } catch (err) {
+            console.error("Save error:", err);
+            setCameraError(`Błąd zapisu: ${err}`);
+        } finally {
+            setIsCameraSaving(false);
+        }
+    }, [cameraOcrResult, projectId, createNote, stopCamera]);
 
     // ── Simple markdown renderer ──
     const renderMarkdown = (text: string): React.ReactNode[] => {
@@ -961,8 +1055,11 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                 {isAudioImporting ? `⏳ ${audioImportProgress}` : "🎵 Wgraj audio"}
                             </button>
                             <button
+                                ref={scanBtnRef}
                                 className="btn btn-outline"
-                                onClick={() => ocrFileInputRef.current?.click()}
+                                onClick={() => {
+                                    setShowScanMenu(!showScanMenu);
+                                }}
                                 disabled={isScanning}
                                 style={{
                                     display: 'flex',
@@ -983,7 +1080,146 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                         </p>
                     </div>
                 )}
+
+                {/* Inline Camera OCR View */}
+                {showCamera && (
+                    <div style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.85)',
+                        zIndex: 200,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 'var(--space-4)',
+                        padding: 'var(--space-4)',
+                    }}>
+                        {/* Camera preview */}
+                        <div style={{
+                            position: 'relative',
+                            width: '100%',
+                            maxWidth: 360,
+                            borderRadius: 'var(--radius-lg)',
+                            overflow: 'hidden',
+                            background: '#111',
+                            aspectRatio: '9/16',
+                            border: isCameraOn ? '2px solid var(--accent)' : '2px solid var(--border)',
+                        }}>
+                            <video
+                                ref={cameraVideoRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: isCameraOn ? 'block' : 'none' }}
+                            />
+                            {!isCameraOn && (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', gap: 'var(--space-2)' }}>
+                                    <span style={{ fontSize: 48 }}>📷</span>
+                                    <span>Uruchamianie kamery...</span>
+                                </div>
+                            )}
+                            {isCameraProcessing && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 'var(--text-lg)', fontWeight: 600 }}>
+                                    ⏳ Rozpoznawanie tekstu...
+                                </div>
+                            )}
+                        </div>
+
+                        <canvas ref={cameraCanvasRef} style={{ display: 'none' }} />
+
+                        {/* Camera controls */}
+                        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {isCameraOn && (
+                                <button
+                                    onClick={captureFrame}
+                                    disabled={isCameraProcessing}
+                                    style={{ padding: 'var(--space-3) var(--space-6)', borderRadius: 'var(--radius-lg)', border: 'none', background: isCameraProcessing ? 'var(--text-muted)' : 'var(--accent)', color: 'white', cursor: isCameraProcessing ? 'wait' : 'pointer', fontSize: 'var(--text-md)', fontWeight: 600 }}
+                                >
+                                    {isCameraProcessing ? '⏳ Przetwarzam...' : '📸 Zrób zdjęcie i OCR'}
+                                </button>
+                            )}
+                            <button
+                                onClick={stopCamera}
+                                style={{ padding: 'var(--space-3) var(--space-6)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 'var(--text-md)' }}
+                            >
+                                ✕ Zamknij
+                            </button>
+                        </div>
+
+                        {/* Camera error */}
+                        {cameraError && (
+                            <div style={{ padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-md)', background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: 'var(--text-sm)', width: '100%', maxWidth: 640 }}>
+                                ⚠️ {cameraError}
+                            </div>
+                        )}
+
+                        {/* Camera OCR result */}
+                        {cameraOcrResult && (
+                            <div style={{ width: '100%', maxWidth: 640, display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>📝 Rozpoznany tekst:</h3>
+                                <div style={{ padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--bg-surface)', border: '1px solid var(--border)', whiteSpace: 'pre-wrap', fontSize: 'var(--text-sm)', lineHeight: 1.6, color: 'var(--text-primary)', maxHeight: 200, overflowY: 'auto' }}>
+                                    {cameraOcrResult}
+                                </div>
+                                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                                    <button
+                                        onClick={saveCameraOcrAsNote}
+                                        disabled={isCameraSaving}
+                                        style={{ flex: 1, padding: 'var(--space-3)', borderRadius: 'var(--radius-lg)', border: 'none', background: 'var(--accent)', color: 'white', cursor: isCameraSaving ? 'wait' : 'pointer', fontSize: 'var(--text-md)', fontWeight: 600 }}
+                                    >
+                                        {isCameraSaving ? '⏳ Zapisywanie...' : '💾 Zapisz jako notatkę'}
+                                    </button>
+                                    <button
+                                        onClick={() => setCameraOcrResult(null)}
+                                        style={{ padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 'var(--text-md)' }}
+                                    >
+                                        🗑️ Odrzuć
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
+
+            {/* Scan dropdown — rendered OUTSIDE .notes-main to escape overflow:hidden */}
+            {showScanMenu && (() => {
+                const rect = scanBtnRef.current?.getBoundingClientRect();
+                if (!rect) return null;
+                return (
+                    <>
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setShowScanMenu(false)} />
+                        <div className="mention-dropdown" style={{
+                            position: 'fixed',
+                            top: rect.bottom + 4,
+                            left: rect.left + rect.width / 2,
+                            right: 'auto',
+                            bottom: 'auto',
+                            transform: 'translateX(-50%)',
+                            marginTop: 0,
+                            marginBottom: 0,
+                            width: 200,
+                            zIndex: 9999,
+                            overflow: 'visible',
+                        }}>
+                            <div
+                                className="mention-option"
+                                style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                                onClick={() => { setShowScanMenu(false); ocrFileInputRef.current?.click(); }}
+                            >
+                                📁 Pobierz z dysku
+                            </div>
+                            <div
+                                className="mention-option"
+                                style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                                onClick={() => { setShowScanMenu(false); startCamera(); }}
+                            >
+                                📸 Zrób zdjęcie
+                            </div>
+                        </div>
+                    </>
+                );
+            })()}
 
             {/* Rename modal */}
             {

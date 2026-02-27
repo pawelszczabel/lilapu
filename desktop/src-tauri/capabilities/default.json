@@ -10,6 +10,16 @@
     "core:event:default",
     "opener:default",
     "global-shortcut:default",
-    "updater:default"
+    "updater:default",
+    "clerk:default",
+    "store:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://*"
+        }
+      ]
+    }
   ]
 }
