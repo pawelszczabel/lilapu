@@ -95,7 +95,7 @@ const STEPS: OnboardingStep[] = [
         id: "new-client",
         targetId: "demo-new-client-btn",
         emoji: "👤",
-        title: "Nowy klient / projekt",
+        title: "Nowy klient / pacjent",
         story: "Każda osoba, sprawa lub projekt to oddzielny workspace. Tworzysz go jednym kliknięciem — i od razu masz osobne miejsce na nagrania, notatki i czaty z AI.",
         proTip: "Dodajesz klienta raz, a potem wszystko co nagrasz, zapiszesz lub zapytasz AI — automatycznie trafia pod jego profil, widzisz tylko jego dane.",
         cardPosition: "right",
