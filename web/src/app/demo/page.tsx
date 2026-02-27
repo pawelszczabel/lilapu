@@ -1079,12 +1079,12 @@ export default function DemoPage() {
                 {soundEnabled ? "🔊" : "🔇"}
             </button>
 
-            {/* Mobile Portrait — Rotate Screen */}
-            <div className="demo-rotate-screen">
-                <div className="demo-rotate-screen-content">
-                    <div className="demo-rotate-screen-icon">📱</div>
-                    <h2 className="demo-rotate-screen-title">Obróć telefon</h2>
-                    <p className="demo-rotate-screen-desc">Demo najlepiej wygląda w trybie poziomym.<br />Obróć urządzenie, żeby zobaczyć więcej.</p>
+            {/* Mobile — Desktop Only */}
+            <div className="demo-mobile-block">
+                <div className="demo-mobile-block-content">
+                    <img src="/demo-mobile.png" alt="" className="demo-mobile-block-avatar" />
+                    <h2 className="demo-mobile-block-title">Wersja demo działa tylko na desktop</h2>
+                    <p className="demo-mobile-block-desc">Sprawdź Lilapu na komputerze.<br />Dziękujemy za wyrozumiałość! 🙏</p>
                 </div>
             </div>
         </div>
