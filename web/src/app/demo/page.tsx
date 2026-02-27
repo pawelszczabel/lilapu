@@ -742,7 +742,7 @@ function StoryCard({
                     )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <span className="demo-story-card-remaining">{remaining > 0 ? `${remaining} kroków do mety` : ""}</span>
+                    <span className="demo-story-card-remaining">{remaining > 0 ? `${remaining} ${remaining === 1 ? "krok" : remaining <= 4 ? "kroki" : "kroków"} do mety` : ""}</span>
                     <button className="demo-story-card-next" onClick={onNext}>
                         {isFirstStep ? "Sprawdzam →" : isLastRealStep ? "Zakończ tour →" : "Dalej →"}
                     </button>
