@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import posthog from "posthog-js";
 
 type CookieConsent = "all" | "essential" | null;
 
@@ -15,15 +16,23 @@ export default function CookieBanner() {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (!getCookieConsent()) {
+        const consent = getCookieConsent();
+        if (!consent) {
             // Slight delay so it doesn't flash on page load
             const t = setTimeout(() => setVisible(true), 800);
             return () => clearTimeout(t);
         }
+        // Restore PostHog consent for returning users
+        if (consent === "all") posthog.opt_in_capturing();
     }, []);
 
     function accept(level: "all" | "essential") {
         localStorage.setItem("cookie-consent", level);
+        if (level === "all") {
+            posthog.opt_in_capturing();
+        } else {
+            posthog.opt_out_capturing();
+        }
         setVisible(false);
     }
 

@@ -7,6 +7,8 @@ import { plPL } from "@clerk/localizations";
 import Script from "next/script";
 import CookieBanner from "./components/CookieBanner";
 import { Analytics } from "@vercel/analytics/next";
+import { Suspense } from "react";
+import PostHogTracker from "./components/PostHogTracker";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -67,6 +69,9 @@ export default function RootLayout({
           taskUrls={{ 'setup-mfa': '/setup-mfa' }}
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Suspense fallback={null}>
+            <PostHogTracker />
+          </Suspense>
         </ClerkProvider>
         <CookieBanner />
         <Script
