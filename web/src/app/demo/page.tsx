@@ -554,7 +554,9 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
                                 📷 Skanuj notatkę
                             </div>
                         </div>
-
+                        <div className="demo-notes-e2ee-badge">
+                            🔒 Treść notatek jest szyfrowana E2EE
+                        </div>
                     </div>
                 )}
             </div>
