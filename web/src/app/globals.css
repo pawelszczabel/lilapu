@@ -1985,19 +1985,12 @@ textarea:focus {
   padding: var(--space-4) var(--space-8);
   font-size: var(--text-base);
   font-weight: 700;
-  color: #0d0d14;
-  background: #ffffff;
+  color: #ffffff;
+  background: transparent;
   border: 2px solid #ffffff;
   border-radius: var(--radius-xl);
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.2s;
-}
-
-.btn-demo:hover {
-  background: transparent;
-  color: #ffffff;
-  border-color: #ffffff;
 }
 
 .landing-stats {
@@ -2432,6 +2425,10 @@ textarea:focus {
   background:
     radial-gradient(ellipse at 50% 0%, rgba(124, 92, 252, 0.08) 0%, transparent 60%),
     var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .landing-waitlist h2 {
