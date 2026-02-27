@@ -974,22 +974,22 @@
 .demo-notes-new-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--accent-subtle);
-    color: var(--accent);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     font-size: var(--text-sm);
-    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    border: 1px solid transparent;
     width: 100%;
     margin-bottom: var(--space-3);
 }
 
 .demo-notes-new-btn:hover {
-    background: rgba(124, 92, 252, 0.2);
+    background: var(--bg-surface-hover);
     border-color: rgba(124, 92, 252, 0.3);
 }
 
@@ -1016,19 +1016,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
-    background: var(--accent-subtle);
-    color: var(--accent);
+    color: var(--text-secondary);
     font-size: var(--text-sm);
-    font-weight: 500;
     cursor: pointer;
-    margin-top: var(--space-2);
+    transition: all 0.15s;
 }
 
-.demo-notes-list-item-menu {
-    color: var(--text-muted);
-    font-size: var(--text-sm);
+.demo-notes-list-item:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-primary);
 }
 
 .demo-notes-content-area {

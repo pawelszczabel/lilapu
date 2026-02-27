@@ -314,7 +314,7 @@ function MockMainPanel({
     return (
         <div className="demo-main" id="demo-main">
             <div className="demo-main-header">
-                <h1>Klient X — Umowa dostawy</h1>
+                <h1>Paweł Szczabel</h1>
                 <div className="demo-main-tabs">
                     <button
                         className={`demo-main-tab ${activeTab === "record" ? "active" : ""} ${activeStep === "tab-record" ? "demo-pulse-hint" : ""}`}
@@ -477,16 +477,22 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
             <div className="demo-notes-sidebar">
                 <div className="demo-notes-sidebar-header">
                     <span className="demo-notes-sidebar-title">NOTATKI</span>
-                    <span className="demo-notes-sidebar-icon">📋</span>
+                    <button className="demo-sidebar-toggle" style={{ width: 24, height: 24 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    </button>
                 </div>
                 <button className="demo-notes-new-btn" id="demo-new-note-btn">
-                    <span className="demo-notes-new-icon">+</span>
-                    Nowa notatka
+                    <div className="demo-sidebar-action-icon" style={{ width: 28, height: 28 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <span style={{ fontWeight: 500 }}>Nowa notatka</span>
                 </button>
                 {isActive ? (
                     <div className="demo-notes-list-item">
-                        <span>Notatki ze spotkania</span>
-                        <span className="demo-notes-list-item-menu">⋮</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>Notatki ze spotkania</span>
+                        <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                        </button>
                     </div>
                 ) : (
                     <p className="demo-notes-empty-text">
