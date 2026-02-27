@@ -87,7 +87,7 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-dashboard",
         emoji: "🏠",
         title: "Twoje centrum dowodzenia",
-        story: "To jest Lilapu — Twój prywatny notatnik AI. Wszystko w jednym miejscu: nagrywaj i transkrybuj rozmowy z podsumowaniem, a jeśli nie chcesz nagrywać rozmów, to zeskanuj swoje notatki z zeszytu. Rób nowe notatki i rozmawiaj z AI o swoich dokumentach — tylko Ty masz dostęp do swoich danych. Rozmowy z AI są prywatne i bezpieczne!",
+        story: "To jest Lilapu — Twój prywatny asystent AI. Wszystko w jednym miejscu: nagrywaj i transkrybuj rozmowy z podsumowaniem, a jeśli nie chcesz nagrywać rozmów, to zeskanuj swoje notatki z zeszytu. Rób nowe notatki i rozmawiaj z AI o swoich dokumentach — tylko Ty masz dostęp do swoich danych. Rozmowy z AI są prywatne i bezpieczne!",
         proTip: "Lilapu to natywna aplikacja na macOS i Windows. Wszystkie dane są szyfrowane — nikt oprócz Ciebie nie ma do nich dostępu.",
         cardPosition: "center",
     },
@@ -706,6 +706,7 @@ function StoryCard({
         setPosition({ top: `${top}px`, left: `${left}px` });
     }, [step]);
 
+    const isFirstStep = stepIndex === 0;
     const isLastRealStep = stepIndex === totalSteps - 2; // before waitlist
     const remaining = totalSteps - stepIndex - 1;
 
@@ -719,6 +720,9 @@ function StoryCard({
                 transform: step.cardPosition === "center" ? "translate(-50%, -50%)" : "none",
             }}
         >
+            {isFirstStep && (
+                <div className="demo-story-card-supertitle">POZNAJ LILAPU</div>
+            )}
             <div className="demo-story-card-emoji">{step.emoji}</div>
             <h3 className="demo-story-card-title">{step.title}</h3>
             <p className="demo-story-card-story">{step.story}</p>
@@ -726,6 +730,9 @@ function StoryCard({
                 <div className="demo-story-card-protip-label">💡 Pro Tip</div>
                 {step.proTip}
             </div>
+            {isFirstStep && (
+                <div className="demo-story-card-subtitle">SPRAWDŹ W KILKU KROKACH JAK DZIAŁA LILAPU</div>
+            )}
             <div className="demo-story-card-actions">
                 <div>
                     {stepIndex > 0 && (
@@ -735,9 +742,9 @@ function StoryCard({
                     )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <span className="demo-story-card-remaining">{remaining > 0 ? `Zostało ${remaining}` : ""}</span>
+                    <span className="demo-story-card-remaining">{remaining > 0 ? `${remaining} kroków do mety` : ""}</span>
                     <button className="demo-story-card-next" onClick={onNext}>
-                        {isLastRealStep ? "Zakończ tour →" : "Dalej →"}
+                        {isFirstStep ? "Sprawdzam →" : isLastRealStep ? "Zakończ tour →" : "Dalej →"}
                     </button>
                 </div>
             </div>
@@ -1009,6 +1016,11 @@ export default function DemoPage() {
                     />
                 </div>
             </div>
+
+            {/* Fog Overlay (step 0 only — covers background with soft mist) */}
+            {!showWaitlist && currentStep === 0 && (
+                <div className="demo-fog-overlay" />
+            )}
 
             {/* Spotlight Overlay */}
             {!showWaitlist && (
