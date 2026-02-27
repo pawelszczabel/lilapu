@@ -32,7 +32,7 @@ export default function LandingPage() {
   return (
     <div className="login-page">
       <div className="login-logo">Lilapu</div>
-      <p className="login-subtitle">Prywatny Asystent Wiedzy</p>
+      <p className="login-subtitle">Twój prywatny notatnik z AI</p>
 
       <div className="login-card">
         <h2>Witaj</h2>

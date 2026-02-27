@@ -87,7 +87,7 @@ const STEPS: OnboardingStep[] = [
         targetId: "demo-dashboard",
         emoji: "🏠",
         title: "Twoje centrum dowodzenia",
-        story: "To jest Lilapu — Twój prywatny asystent wiedzy. Wszystko w jednym miejscu: nagrywaj, transkrybuj, rób notatki i rozmawiaj z AI o swoich dokumentach.",
+        story: "To jest Lilapu — Twój prywatny notatnik z AI. Wszystko w jednym miejscu: nagrywaj, transkrybuj, rób notatki i rozmawiaj z AI o swoich dokumentach.",
         proTip: "Lilapu działa jak natywna aplikacja desktopowa. Wszystkie dane szyfrowane — nawet my ich nie widzimy.",
         cardPosition: "center",
     },
@@ -923,7 +923,7 @@ export default function DemoPage() {
                         <button className="demo-traffic-light minimize" onClick={(e) => e.stopPropagation()} />
                         <button className="demo-traffic-light maximize" onClick={(e) => e.stopPropagation()} />
                     </div>
-                    <span className="demo-titlebar-text">Lilapu — Prywatny Asystent Wiedzy</span>
+                    <span className="demo-titlebar-text">Lilapu — Twój prywatny notatnik z AI</span>
                 </div>
 
                 {/* Dashboard UI */}
