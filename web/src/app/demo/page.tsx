@@ -361,7 +361,7 @@ function MockMainPanel({
 function MockRecordContent({ activeStep }: { activeStep: string }) {
     const isActive = activeStep === "tab-record";
     const { displayed } = useTypingEffect(
-        "Dzisiaj omawiamy warunki kontraktu na dostawę komponentów elektronicznych. Pan Nowak proponuje termin realizacji na 15 marca, z opcją przedłużenia do końca kwartału...",
+        "— Jak się Pan czuje od naszego ostatniego spotkania? — Szczerze mówiąc, ten tydzień był ciężki. Znowu miałem problemy ze snem, budziłem się o trzeciej w nocy i nie mogłem zasnąć. — Rozumiem. Czy próbował Pan tych ćwiczeń oddechowych, o których rozmawialiśmy? — Tak, pomagają trochę, ale...",
         40,
         isActive
     );
@@ -419,24 +419,24 @@ function MockRecordContent({ activeStep }: { activeStep: string }) {
 function MockTranscriptionsContent() {
     const transcriptions = [
         {
-            title: "Spotkanie z klientem X",
+            title: "Sesja — problemy ze snem",
             date: "27 lut 2026, 14:30",
             duration: "45 min",
-            preview: "Omówiliśmy warunki umowy na dostawę komponentów elektronicznych. Pan Nowak proponuje termin realizacji...",
+            preview: "— Jak się Pan czuje od naszego ostatniego spotkania? — Szczerze mówiąc, ten tydzień był ciężki. Znowu miałem problemy ze snem...",
             verified: true,
         },
         {
-            title: "Wywiad telefoniczny",
-            date: "25 lut 2026, 10:00",
-            duration: "22 min",
-            preview: "Rozmowa z panem Kowalskim o nowym projekcie badawczym. Wstępne ustalenia dotyczące budżetu i harmonogramu...",
+            title: "Sesja — lęk przed wystąpieniami",
+            date: "20 lut 2026, 14:30",
+            duration: "50 min",
+            preview: "— Opowiedział Pan, że w pracy pojawiła się prezentacja. Jak się Pan z tym czuje? — Boję się, że znowu zapomnę co mówić...",
             verified: true,
         },
         {
-            title: "Wizyta w kancelarii",
-            date: "22 lut 2026, 11:15",
-            duration: "1h 12min",
-            preview: "Spotkanie dotyczące due diligence prawnego. Przegląd dokumentacji korporacyjnej i umów handlowych...",
+            title: "Sesja wstępna — wywiad",
+            date: "13 lut 2026, 14:00",
+            duration: "1h 10min",
+            preview: "— Cieszę się, że Pan przyszedł. Na początek chciałbym zapytać, co Pana skłoniło do szukania pomocy? — Od kilku miesięcy...",
             verified: true,
         },
     ];
@@ -466,7 +466,7 @@ function MockTranscriptionsContent() {
 function MockNotesContent({ activeStep }: { activeStep: string }) {
     const isActive = activeStep === "tab-notes";
     const { displayed } = useTypingEffect(
-        "# Notatki ze spotkania\n\nKlient X potwierdził budżet na Q2. Kluczowe ustalenia:\n- Termin dostawy: 15 marca\n- Budżet: 450k PLN\n- Kolejne spotkanie: piątek 10:00",
+        "# Notatka po sesji — 27 lut 2026\n\nPacjent zgłasza nasilenie problemów ze snem (budzi się ok. 3:00). Nawracające myśli o pracy.\n- Ćwiczenia oddechowe — częściowa poprawa\n- Zlecono: dziennik snu do następnej sesji\n- Następna sesja: piątek 14:30",
         25,
         isActive
     );
@@ -489,7 +489,7 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
                 </button>
                 {isActive ? (
                     <div className="demo-notes-list-item">
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>Notatki ze spotkania</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>Notatka po sesji</span>
                         <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                         </button>
@@ -509,7 +509,7 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
                         <div className="demo-notes-editor-header">
                             <input
                                 className="demo-notes-editor-title"
-                                value="Notatki ze spotkania"
+                                value="Notatka po sesji"
                                 readOnly
                             />
                             <span style={{ fontSize: "var(--text-base)", color: "var(--text-muted)" }}>✏️</span>
@@ -522,7 +522,7 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
                         </div>
                         {/* E2EE banner */}
                         <div className="demo-notes-e2ee-banner">
-                            🔒 Treść zaszyfrowana E2EE — Convex nie widzi Twoich notatek
+                            🔒 Treść zaszyfrowana E2EE
                         </div>
                         {/* Editor body with typing */}
                         <div className="demo-notes-editor-body">
@@ -554,9 +554,7 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
                                 📷 Skanuj notatkę
                             </div>
                         </div>
-                        <div className="demo-notes-e2ee-badge">
-                            🔒 Treść notatek jest szyfrowana E2EE — Convex nigdy nie widzi odszyfrowanego tekstu.
-                        </div>
+
                     </div>
                 )}
             </div>
@@ -568,18 +566,18 @@ function MockNotesContent({ activeStep }: { activeStep: string }) {
 function MockChatContent({ activeStep }: { activeStep: string }) {
     const isActive = activeStep === "tab-chat";
     const { displayed: userMsg } = useTypingEffect(
-        "Co ustaliliśmy z klientem na ostatnim spotkaniu?",
+        "Jakie techniki relaksacyjne omawialiśmy z pacjentem?",
         35,
         isActive
     );
     const { displayed: aiMsg } = useTypingEffect(
-        "Na podstawie transkrypcji ze spotkania z 27 lutego 2026:\n\n" +
-        "Kluczowe ustalenia:\n" +
-        "- Termin dostawy komponentow: 15 marca 2026\n" +
-        "- Budzet projektu: 450 000 PLN\n" +
-        "- Pan Nowak podtrzymal opcje przedluzenia do konca Q1\n" +
-        "- Kolejne spotkanie: piatek, godz. 10:00\n\n" +
-        "Zrodlo: Spotkanie z klientem (27 lut 2026, 14:30)",
+        "Na podstawie transkrypcji z sesji 27 lutego 2026:\n\n" +
+        "Omawiane techniki:\n" +
+        "- Ćwiczenia oddechowe (4-7-8) — pacjent stosuje, częściowa poprawa\n" +
+        "- Dziennik snu — zlecony do następnej sesji\n" +
+        "- Pacjent budzi się ok. 3:00, nawracające myśli o pracy\n" +
+        "- Następna sesja: piątek, godz. 14:30\n\n" +
+        "Źródło: Sesja — problemy ze snem (27 lut 2026, 14:30)",
         20,
         isActive
     );
