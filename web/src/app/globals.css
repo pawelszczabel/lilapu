@@ -1978,6 +1978,28 @@ textarea:focus {
   }
 }
 
+.btn-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: #0d0d14;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-demo:hover {
+  background: transparent;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
 .landing-stats {
   display: flex;
   gap: var(--space-10);

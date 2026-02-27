@@ -134,6 +134,9 @@ export default function LandingPage() {
                     >
                         Zapisuję się na waitlistę →
                     </button>
+                    <a href="/demo" className="btn btn-demo">
+                        Zobacz Demo →
+                    </a>
                     <p className="landing-hero-subinfo">
                         Otrzymasz możliwość darmowego testowania Lilapu, gdy aplikacja będzie gotowa.
                     </p>
@@ -470,6 +473,9 @@ export default function LandingPage() {
                 >
                     Zapisuję się na waitlistę →
                 </button>
+                <a href="/demo" className="btn btn-demo">
+                    Zobacz Demo →
+                </a>
             </section>
 
             {/* Footer */}
