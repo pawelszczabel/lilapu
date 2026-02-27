@@ -1082,20 +1082,9 @@ export default function DemoPage() {
             {/* Mobile Portrait — Rotate Screen */}
             <div className="demo-rotate-screen">
                 <div className="demo-rotate-screen-content">
-                    <div className="demo-rotate-screen-icon">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-                            <line x1="12" y1="18" x2="12" y2="18" strokeWidth="3" strokeLinecap="round" />
-                        </svg>
-                        <div className="demo-rotate-screen-arrows">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="1 4 1 10 7 10" />
-                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                            </svg>
-                        </div>
-                    </div>
-                    <h2 className="demo-rotate-screen-title">Obróć ekran</h2>
-                    <p className="demo-rotate-screen-desc">Demo najlepiej wygląda w trybie poziomym</p>
+                    <div className="demo-rotate-screen-icon">📱</div>
+                    <h2 className="demo-rotate-screen-title">Obróć telefon</h2>
+                    <p className="demo-rotate-screen-desc">Demo najlepiej wygląda w trybie poziomym.<br />Obróć urządzenie, żeby zobaczyć więcej.</p>
                 </div>
             </div>
         </div>

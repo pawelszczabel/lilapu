@@ -1842,27 +1842,33 @@
     background: var(--bg-app);
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
 
-/* Show only on portrait mobile screens */
+/* Show ONLY on portrait mobile — covers everything */
 @media (max-width: 900px) and (orientation: portrait) {
     .demo-rotate-screen {
         display: flex;
+    }
+
+    /* Hide everything behind */
+    .demo-page>*:not(.demo-rotate-screen) {
+        display: none !important;
     }
 }
 
 .demo-rotate-screen-content {
     text-align: center;
     padding: var(--space-8);
-    animation: storyCardEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: fadeIn 0.5s ease;
 }
 
 .demo-rotate-screen-icon {
-    position: relative;
-    display: inline-block;
+    font-size: 5rem;
     margin-bottom: var(--space-6);
-    color: var(--accent);
-    animation: rotatePhone 2s ease-in-out infinite;
+    display: inline-block;
+    animation: rotatePhone 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(124, 92, 252, 0.3));
 }
 
 @keyframes rotatePhone {
@@ -1872,25 +1878,13 @@
         transform: rotate(0deg);
     }
 
-    25% {
-        transform: rotate(-15deg);
-    }
-
-    50% {
+    30% {
         transform: rotate(-90deg);
     }
 
-    75% {
+    70% {
         transform: rotate(-90deg);
     }
-}
-
-.demo-rotate-screen-arrows {
-    position: absolute;
-    top: -8px;
-    right: -28px;
-    color: var(--text-muted);
-    opacity: 0.6;
 }
 
 .demo-rotate-screen-title {
@@ -1898,10 +1892,36 @@
     font-weight: 700;
     font-family: var(--font-roboto);
     color: var(--text-primary);
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 .demo-rotate-screen-desc {
     color: var(--text-muted);
     font-size: var(--text-base);
+    line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE LANDSCAPE — Scale demo to fit
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .demo-window {
+        transform: scale(0.7);
+        transform-origin: top center;
+    }
+
+    .demo-story-card {
+        width: 320px;
+        padding: var(--space-4);
+        font-size: 0.85rem;
+    }
+
+    .demo-story-card-title {
+        font-size: var(--text-lg);
+    }
+
+    .demo-story-card-story {
+        font-size: var(--text-xs);
+    }
 }
