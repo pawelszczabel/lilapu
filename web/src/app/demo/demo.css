@@ -249,19 +249,12 @@
 .demo-sidebar-brand {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
 }
 
-.demo-sidebar-brand-icon {
-    font-size: 1.5rem;
-}
-
-.demo-sidebar-brand-text {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.demo-sidebar-brand-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
 }
 
 .demo-sidebar-toggle {
@@ -316,10 +309,12 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-full);
-    background: var(--accent);
-    color: white;
+    background: #ffffff;
+    color: var(--accent);
     font-size: var(--text-sm);
+    font-weight: 600;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(124, 92, 252, 0.2);
 }
 
 .demo-sidebar-list {
@@ -350,12 +345,12 @@
 }
 
 .demo-sidebar-folder-chevron {
-    font-size: 0.6rem;
-    transition: transform 0.2s;
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .demo-sidebar-folder-chevron.open {
-    transform: rotate(90deg);
+    /* already pointing down via ˅ character */
 }
 
 .demo-sidebar-folder-menu {
@@ -367,12 +362,11 @@
     margin-left: auto;
     color: var(--text-muted);
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
+    transition: color 0.2s;
 }
 
-.demo-sidebar-folder-header:hover .demo-sidebar-folder-menu {
-    opacity: 1;
+.demo-sidebar-folder-menu:hover {
+    color: var(--text-secondary);
 }
 
 .demo-sidebar-item {

@@ -240,8 +240,7 @@ function MockSidebar({ activeStep }: { activeStep: string }) {
             {/* Header */}
             <div className="demo-sidebar-header">
                 <div className="demo-sidebar-brand">
-                    <span className="demo-sidebar-brand-icon">🔥</span>
-                    <span className="demo-sidebar-brand-text">Lilapu</span>
+                    <img src="/logo.svg" alt="Lilapu" className="demo-sidebar-brand-logo" />
                 </div>
                 <div className="demo-sidebar-toggle">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -273,14 +272,13 @@ function MockSidebar({ activeStep }: { activeStep: string }) {
             <div className="demo-sidebar-list">
                 <div className="demo-sidebar-folder">
                     <div className="demo-sidebar-folder-header">
-                        <span className="demo-sidebar-folder-chevron open">▶</span>
+                        <span className="demo-sidebar-folder-chevron open">˅</span>
                         <span>TESTOWY FOLDER</span>
                         <span className="demo-sidebar-folder-menu">⋮</span>
                     </div>
                     <div className="demo-sidebar-item active">
-                        <span className="demo-sidebar-item-icon">📋</span>
-                        <span className="demo-sidebar-item-name">Klient X — Umowa</span>
-                        <span className="demo-sidebar-item-badge">✅</span>
+                        <span className="demo-sidebar-item-name">Paweł Szczabel</span>
+                        <span className="demo-sidebar-folder-menu">⋮</span>
                     </div>
                 </div>
             </div>
