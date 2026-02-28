@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { validateStringLength, MAX_TITLE_LENGTH } from "./validation";
 
 // ── Auth helpers ────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ export const create = mutation({
     returns: v.id("folders"),
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
+        validateStringLength(args.name, MAX_TITLE_LENGTH, "name");
         return await ctx.db.insert("folders", {
             userId,
             name: args.name,
@@ -70,6 +72,7 @@ export const update = mutation({
     returns: v.null(),
     handler: async (ctx, args) => {
         await verifyFolderAccess(ctx, args.folderId);
+        validateStringLength(args.name, MAX_TITLE_LENGTH, "name");
         await ctx.db.patch(args.folderId, { name: args.name });
         return null;
     },

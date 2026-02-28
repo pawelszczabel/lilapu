@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { validateStringLength, MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH } from "./validation";
 
 // ── Auth helpers ────────────────────────────────────────────────────
 
@@ -87,6 +88,8 @@ export const create = mutation({
     returns: v.id("notes"),
     handler: async (ctx, args) => {
         await verifyProjectAccess(ctx, args.projectId);
+        validateStringLength(args.title, MAX_TITLE_LENGTH, "title");
+        validateStringLength(args.content, MAX_CONTENT_LENGTH, "content");
         return await ctx.db.insert("notes", {
             projectId: args.projectId,
             title: args.title,
@@ -107,6 +110,8 @@ export const update = mutation({
     returns: v.null(),
     handler: async (ctx, args) => {
         await verifyNoteAccess(ctx, args.noteId);
+        validateStringLength(args.title, MAX_TITLE_LENGTH, "title");
+        validateStringLength(args.content, MAX_CONTENT_LENGTH, "content");
         const { noteId, ...fields } = args;
         const updates: Record<string, string> = {};
         if (fields.title !== undefined) updates.title = fields.title;

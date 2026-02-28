@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { validateStringLength, MAX_TITLE_LENGTH, MAX_DESCRIPTION_LENGTH } from "./validation";
 
 // ── Auth helpers ────────────────────────────────────────────────────
 
@@ -80,6 +81,8 @@ export const create = mutation({
     returns: v.id("projects"),
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
+        validateStringLength(args.name, MAX_TITLE_LENGTH, "name");
+        validateStringLength(args.description, MAX_DESCRIPTION_LENGTH, "description");
         return await ctx.db.insert("projects", {
             userId,
             name: args.name,
@@ -100,6 +103,8 @@ export const update = mutation({
     returns: v.null(),
     handler: async (ctx, args) => {
         await verifyProjectAccess(ctx, args.projectId);
+        validateStringLength(args.name, MAX_TITLE_LENGTH, "name");
+        validateStringLength(args.description, MAX_DESCRIPTION_LENGTH, "description");
         const { projectId, folderId, ...updates } = args;
 
         const patchData: any = { ...updates };

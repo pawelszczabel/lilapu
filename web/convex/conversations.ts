@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { validateStringLength, MAX_TITLE_LENGTH } from "./validation";
 
 // ── Auth helpers ────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ export const create = mutation({
     returns: v.id("conversations"),
     handler: async (ctx, args) => {
         await verifyProjectAccess(ctx, args.projectId);
+        validateStringLength(args.title, MAX_TITLE_LENGTH, "title");
         return await ctx.db.insert("conversations", {
             projectId: args.projectId,
             title: args.title,
@@ -152,6 +154,7 @@ export const updateTitle = mutation({
     returns: v.null(),
     handler: async (ctx, args) => {
         await verifyConversationAccess(ctx, args.conversationId);
+        validateStringLength(args.title, MAX_TITLE_LENGTH, "title");
         await ctx.db.patch(args.conversationId, { title: args.title });
         return null;
     },

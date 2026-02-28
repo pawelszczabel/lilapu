@@ -1,6 +1,7 @@
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { validateStringLength, MAX_MESSAGE_LENGTH } from "./validation";
 
 // ── Auth helpers ────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ export const send = mutation({
     returns: v.id("messages"),
     handler: async (ctx, args) => {
         await verifyConversationAccess(ctx, args.conversationId);
+        validateStringLength(args.content, MAX_MESSAGE_LENGTH, "content");
         return await ctx.db.insert("messages", {
             conversationId: args.conversationId,
             role: "user" as const,
@@ -84,6 +86,7 @@ export const addAssistant = mutation({
     returns: v.id("messages"),
     handler: async (ctx, args) => {
         await verifyConversationAccess(ctx, args.conversationId);
+        validateStringLength(args.content, MAX_MESSAGE_LENGTH, "content");
         return await ctx.db.insert("messages", {
             conversationId: args.conversationId,
             role: "assistant" as const,

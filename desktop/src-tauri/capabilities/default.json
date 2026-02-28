@@ -17,7 +17,25 @@
       "identifier": "http:default",
       "allow": [
         {
-          "url": "https://*"
+          "url": "https://*.convex.cloud"
+        },
+        {
+          "url": "https://*.convex.site"
+        },
+        {
+          "url": "https://*.clerk.accounts.dev"
+        },
+        {
+          "url": "https://*.clerk.dev"
+        },
+        {
+          "url": "https://lilapu.com"
+        },
+        {
+          "url": "https://www.lilapu.com"
+        },
+        {
+          "url": "https://*.proxy.runpod.net"
         }
       ]
     }

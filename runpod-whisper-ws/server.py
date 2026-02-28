@@ -53,8 +53,8 @@ WS_TOKEN_MAX_AGE = int(os.environ.get("WS_TOKEN_MAX_AGE", "60"))  # seconds
 DIARIZE_API_KEY = os.environ.get("DIARIZE_API_KEY", "")
 ALLOW_LOCALHOST = os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true"
 # Payload size limits
-MAX_AUDIO_BUFFER_BYTES = int(os.environ.get("MAX_AUDIO_BUFFER_BYTES", str(100 * 1024 * 1024)))  # 100MB WS
-MAX_HTTP_BODY_BYTES = int(os.environ.get("MAX_HTTP_BODY_BYTES", str(50 * 1024 * 1024)))  # 50MB HTTP
+MAX_AUDIO_BUFFER_BYTES = int(os.environ.get("MAX_AUDIO_BUFFER_BYTES", str(150 * 1024 * 1024)))  # 150MB WS
+MAX_HTTP_BODY_BYTES = int(os.environ.get("MAX_HTTP_BODY_BYTES", str(75 * 1024 * 1024)))  # 75MB HTTP
 
 # ── Per-IP connection tracking ───────────────────────────────────────
 from collections import defaultdict

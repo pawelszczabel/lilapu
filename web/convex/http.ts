@@ -42,7 +42,7 @@ http.route({
 });
 
 // ── Rate limiting for upload endpoint ───────────────────────────────
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // max 10 uploads per minute per key
 const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
