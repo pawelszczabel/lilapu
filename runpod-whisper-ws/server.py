@@ -52,6 +52,9 @@ WS_TOKEN_SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 WS_TOKEN_MAX_AGE = int(os.environ.get("WS_TOKEN_MAX_AGE", "60"))  # seconds
 DIARIZE_API_KEY = os.environ.get("DIARIZE_API_KEY", "")
 ALLOW_LOCALHOST = os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true"
+# Payload size limits
+MAX_AUDIO_BUFFER_BYTES = int(os.environ.get("MAX_AUDIO_BUFFER_BYTES", str(100 * 1024 * 1024)))  # 100MB WS
+MAX_HTTP_BODY_BYTES = int(os.environ.get("MAX_HTTP_BODY_BYTES", str(50 * 1024 * 1024)))  # 50MB HTTP
 
 # ── Per-IP connection tracking ───────────────────────────────────────
 from collections import defaultdict
@@ -450,6 +453,12 @@ async def handle_client(websocket):
                 all_audio_for_diarize.extend(message)
             chunk_count += 1
 
+            # ── Payload size limit: reject if buffer exceeds max ──
+            if len(audio_buffer) > MAX_AUDIO_BUFFER_BYTES or len(all_audio_for_diarize) > MAX_AUDIO_BUFFER_BYTES:
+                logger.warning(f"[{client_id}] Audio buffer exceeded {MAX_AUDIO_BUFFER_BYTES} bytes, closing")
+                await websocket.send(json.dumps({"error": "Audio too large", "code": 413}))
+                break
+
             # Process when we have enough audio
             buffer_duration = len(audio_buffer) / 2 / SAMPLE_RATE  # Int16 = 2 bytes per sample
             if buffer_duration >= BUFFER_DURATION_SEC:
@@ -526,6 +535,16 @@ class DiarizeHandler(BaseHTTPRequestHandler):
 
         try:
             content_length = int(self.headers.get("Content-Length", 0))
+            
+            # ── Payload size limit ──
+            if content_length > MAX_HTTP_BODY_BYTES:
+                self.send_response(413)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"error": "Payload too large"}')
+                logger.warning(f"HTTP diarize: payload too large ({content_length} bytes)")
+                return
+            
             body = self.rfile.read(content_length)
             data = json.loads(body)
 

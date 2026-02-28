@@ -41,6 +41,23 @@ http.route({
     }),
 });
 
+// ── Rate limiting for upload endpoint ───────────────────────────────
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // max 10 uploads per minute per key
+const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(key: string): boolean {
+    const now = Date.now();
+    const entry = uploadRateMap.get(key);
+    if (!entry || now > entry.resetAt) {
+        uploadRateMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+        return true;
+    }
+    entry.count++;
+    return entry.count <= RATE_LIMIT_MAX_REQUESTS;
+}
+
 // Audio upload endpoint for transcription (requires API key)
 http.route({
     path: "/upload-audio",
@@ -56,10 +73,34 @@ http.route({
             });
         }
 
+        // ── Rate limiting ──
+        if (!checkRateLimit(apiKey)) {
+            return new Response(JSON.stringify({ error: "Too many requests" }), {
+                status: 429,
+                headers: { "Content-Type": "application/json", "Retry-After": "60" },
+            });
+        }
+
         // ── CORS ──
         const corsOrigin = getCorsOrigin(req);
 
+        // ── Payload size limit ──
+        const contentLength = parseInt(req.headers.get("Content-Length") ?? "0", 10);
+        if (contentLength > MAX_UPLOAD_BYTES) {
+            return new Response(JSON.stringify({ error: "Payload too large" }), {
+                status: 413,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
         const body = await req.bytes();
+        if (body.length > MAX_UPLOAD_BYTES) {
+            return new Response(JSON.stringify({ error: "Payload too large" }), {
+                status: 413,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
         const base64Audio = Buffer.from(body).toString("base64");
 
         // Run transcription action
