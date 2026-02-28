@@ -23,6 +23,18 @@ const USE_RUNPOD = !!(RUNPOD_API_KEY && WHISPER_ENDPOINT_ID);
 const USE_PARAKEET = !!(RUNPOD_API_KEY && PARAKEET_ENDPOINT_ID);
 const USE_OCR = !!(RUNPOD_API_KEY && OCR_ENDPOINT_ID);
 
+// ── Auth helper ──────────────────────────────────────────────────────
+async function requireAuth(ctx: { auth: { getUserIdentity: () => Promise<unknown> } }) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    return identity;
+}
+
+// ── Input limits ─────────────────────────────────────────────────────
+const MAX_AUDIO_BASE64_SIZE = 50 * 1024 * 1024; // 50MB (~30min WAV)
+const MAX_IMAGE_BASE64_SIZE = 20 * 1024 * 1024;  // 20MB
+const MAX_TEXT_SIZE = 500_000;                    // 500K chars
+
 // ── RunPod helpers ───────────────────────────────────────────────────
 
 async function runpodRequest(
@@ -63,7 +75,9 @@ export const transcribe = action({
         audioBase64: v.string(),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.audioBase64.length > MAX_AUDIO_BASE64_SIZE) throw new Error("Audio too large");
         if (USE_RUNPOD) {
             // RunPod Faster Whisper endpoint — optimized for anti-hallucination
             const result = await runpodRequest(WHISPER_ENDPOINT_ID, {
@@ -154,7 +168,9 @@ export const transcribeFast = action({
         audioBase64: v.string(),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.audioBase64.length > MAX_AUDIO_BASE64_SIZE) throw new Error("Audio too large");
         if (USE_PARAKEET) {
             const result = await runpodRequest(PARAKEET_ENDPOINT_ID, {
                 audio_base64: args.audioBase64,
@@ -223,7 +239,9 @@ export const transcribeWithDiarization = action({
         contentWithSpeakers: v.optional(v.string()),
         speakerCount: v.optional(v.number()),
     }),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.audioBase64.length > MAX_AUDIO_BASE64_SIZE) throw new Error("Audio too large");
         if (WHISPER_WS_HTTP_URL) {
             // Use the HTTP diarization endpoint on the Whisper WS server
             const diarizeApiKey = process.env.DIARIZE_API_KEY ?? "";
@@ -352,7 +370,10 @@ export const chat = action({
         hasScope: v.optional(v.boolean()),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.userMessage.length > MAX_TEXT_SIZE) throw new Error("Input too large");
+        if (args.context && args.context.length > MAX_TEXT_SIZE) throw new Error("Context too large");
         // Server-side system prompt — NOT client-controlled (prevents prompt injection)
         const formatRule = "FORMATOWANIE: Używaj akapitów, wypunktowań (- lub •), numeracji i pogrubionych nagłówków. NIE pisz ścian tekstu. Oddzielaj sekcje pustą linią.";
 
@@ -437,7 +458,9 @@ export const embed = action({
         text: v.string(),
     },
     returns: v.array(v.float64()),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.text.length > MAX_TEXT_SIZE) throw new Error("Input too large");
         if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
             // RunPod vLLM embedding — pass text directly
             const result = await runpodRequest(BIELIK_ENDPOINT_ID, {
@@ -475,7 +498,9 @@ export const polishTranscription = action({
         rawText: v.string(),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.rawText.length > MAX_TEXT_SIZE) throw new Error("Input too large");
         if (!args.rawText.trim()) return "";
 
         const systemPrompt = [
@@ -541,7 +566,9 @@ export const summarizeSession = action({
         title: v.optional(v.string()),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.content.length > MAX_TEXT_SIZE) throw new Error("Input too large");
         if (!args.content.trim()) return "";
 
         const systemPrompt = [
@@ -610,7 +637,9 @@ export const ocrHandwriting = action({
         postProcess: v.optional(v.boolean()),
     },
     returns: v.string(),
-    handler: async (_ctx, args) => {
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.imageBase64.length > MAX_IMAGE_BASE64_SIZE) throw new Error("Image too large");
         if (!USE_OCR) {
             throw new Error("OCR not configured: set OCR_ENDPOINT_ID in Convex env");
         }

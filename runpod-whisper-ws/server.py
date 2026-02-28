@@ -51,6 +51,7 @@ MAX_CONNECTIONS_PER_IP = int(os.environ.get("MAX_CONNECTIONS_PER_IP", "5"))
 WS_TOKEN_SECRET = os.environ.get("WS_TOKEN_SECRET", "")
 WS_TOKEN_MAX_AGE = int(os.environ.get("WS_TOKEN_MAX_AGE", "60"))  # seconds
 DIARIZE_API_KEY = os.environ.get("DIARIZE_API_KEY", "")
+ALLOW_LOCALHOST = os.environ.get("ALLOW_LOCALHOST", "false").lower() == "true"
 
 # ── Per-IP connection tracking ───────────────────────────────────────
 from collections import defaultdict
@@ -479,7 +480,7 @@ async def handle_client(websocket):
     except Exception as e:
         logger.error(f"[{client_id}] Error: {e}")
         try:
-            await websocket.send(json.dumps({"error": str(e)}))
+            await websocket.send(json.dumps({"error": "Internal server error"}))
         except:
             pass
     finally:
@@ -589,7 +590,7 @@ class DiarizeHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             origin = self.headers.get("Origin", "")
-            allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or origin.startswith("http://localhost:") else "https://lilapu.com"
+            allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or (ALLOW_LOCALHOST and origin.startswith("http://localhost:")) else "https://lilapu.com"
             self.send_header("Access-Control-Allow-Origin", allowed_origin)
             self.end_headers()
             self.wfile.write(response_data.encode())
@@ -600,13 +601,13 @@ class DiarizeHandler(BaseHTTPRequestHandler):
             logger.error(f"HTTP diarize error: {e}")
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e)}).encode())
+            self.wfile.write(json.dumps({"error": "Internal server error"}).encode())
 
     def do_OPTIONS(self):
         """Handle CORS preflight."""
         self.send_response(200)
         origin = self.headers.get("Origin", "")
-        allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or origin.startswith("http://localhost:") else "https://lilapu.com"
+        allowed_origin = origin if origin in ("https://lilapu.com", "https://www.lilapu.com") or (ALLOW_LOCALHOST and origin.startswith("http://localhost:")) else "https://lilapu.com"
         self.send_header("Access-Control-Allow-Origin", allowed_origin)
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")

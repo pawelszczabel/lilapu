@@ -11,6 +11,17 @@ const BIELIK_ENDPOINT_ID = process.env.BIELIK_ENDPOINT_ID ?? "";
 const LOCAL_AI_URL = process.env.AI_SERVER_URL ?? "http://localhost:8080";
 const USE_RUNPOD = !!(RUNPOD_API_KEY && BIELIK_ENDPOINT_ID);
 
+// ── Auth helper ──────────────────────────────────────────────────────
+async function requireAuth(ctx: { auth: { getUserIdentity: () => Promise<unknown> } }) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+    return identity;
+}
+
+// ── Input limits ─────────────────────────────────────────────────────
+const MAX_QUERY_LENGTH = 10_000; // 10K chars
+const MAX_PLAINTEXT_LENGTH = 500_000; // 500K chars
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 const CHUNK_MAX_WORDS = 300;
@@ -76,6 +87,10 @@ export const indexTranscription = action({
     },
     returns: v.number(),
     handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.plaintextContent && args.plaintextContent.length > MAX_PLAINTEXT_LENGTH) {
+            throw new Error("Input too large");
+        }
         // Use plaintext from client if provided (E2EE: content in DB is encrypted)
         // Fall back to reading from DB for legacy unencrypted transcriptions
         const content = args.plaintextContent || await ctx.runQuery(
@@ -141,6 +156,8 @@ export const search = action({
         })
     ),
     handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.query.length > MAX_QUERY_LENGTH) throw new Error("Query too long");
         const k = args.topK ?? 5;
 
         let queryEmbedding: number[];
@@ -224,6 +241,8 @@ export const searchByTranscriptions = action({
         })
     ),
     handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.query.length > MAX_QUERY_LENGTH) throw new Error("Query too long");
         const k = args.topK ?? 5;
 
         let queryEmbedding: number[];

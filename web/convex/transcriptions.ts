@@ -57,8 +57,15 @@ export const getAudioUrl = query({
     args: { storageId: v.id("_storage") },
     returns: v.union(v.string(), v.null()),
     handler: async (ctx, args) => {
-        // Require authentication
-        await getAuthUserId(ctx);
+        const userId = await getAuthUserId(ctx);
+        // Ownership check: verify storageId belongs to user's transcription
+        const transcription = await ctx.db
+            .query("transcriptions")
+            .filter((q) => q.eq(q.field("audioStorageId"), args.storageId))
+            .first();
+        if (!transcription) return null;
+        const project = await ctx.db.get(transcription.projectId);
+        if (!project || project.userId !== userId) return null;
         return await ctx.storage.getUrl(args.storageId);
     },
 });

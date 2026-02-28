@@ -8,6 +8,12 @@ export const join = mutation({
     },
     returns: v.union(v.literal("ok"), v.literal("exists")),
     handler: async (ctx, args) => {
+        // Email validation
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!EMAIL_REGEX.test(args.email) || args.email.length > 320) {
+            throw new Error("Nieprawidłowy adres email.");
+        }
+
         // Rate limiting: max 5 signups in the last 10 minutes
         const TEN_MINUTES = 10 * 60 * 1000;
         const cutoff = Date.now() - TEN_MINUTES;

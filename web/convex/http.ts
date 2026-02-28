@@ -3,16 +3,6 @@ import { httpAction } from "./_generated/server";
 
 const http = httpRouter();
 
-// ── Constant-time string comparison (no node:crypto in Convex runtime) ──
-function timingSafeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return result === 0;
-}
-
 // ── Allowed origins for CORS ────────────────────────────────────────
 const ALLOWED_ORIGINS = [
     "https://lilapu.com",
@@ -27,6 +17,16 @@ function getCorsOrigin(req: Request): string {
     // Allow localhost in development
     if (origin.startsWith("http://localhost:")) return origin;
     return "";
+}
+
+// ── Timing-safe key comparison (pure JS — Convex HTTP runs in edge runtime) ──
+function timingSafeEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    return result === 0;
 }
 
 // Health check
