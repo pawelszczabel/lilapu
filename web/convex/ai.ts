@@ -65,35 +65,104 @@ function sanitizeRagContext(text: string): string {
 
 // ── RunPod helpers ───────────────────────────────────────────────────
 
+const RUNPOD_POLL_INTERVAL_MS = 1_000; // poll every 1s
+
 async function runpodRequest(
     endpointId: string,
     input: Record<string, unknown>,
     timeoutMs = 120_000
 ): Promise<Record<string, unknown>> {
-    const url = `https://api.runpod.ai/v2/${endpointId}/runsync`;
+    const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RUNPOD_API_KEY}`,
+    };
 
-    const response = await fetch(url, {
+    // 1. Try /runsync first — instant response if worker is warm
+    const runsyncUrl = `https://api.runpod.ai/v2/${endpointId}/runsync`;
+    const runsyncResponse = await fetch(runsyncUrl, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RUNPOD_API_KEY}`,
-        },
+        headers,
         body: JSON.stringify({ input }),
         signal: AbortSignal.timeout(timeoutMs),
     });
 
-    if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`RunPod error ${response.status}: ${text}`);
+    if (runsyncResponse.ok) {
+        const result = await runsyncResponse.json();
+        if (result.status === "COMPLETED") {
+            return result.output ?? result;
+        }
+        if (result.status === "FAILED") {
+            throw new Error(`RunPod job failed: ${JSON.stringify(result.error)}`);
+        }
+        // IN_QUEUE or IN_PROGRESS — fall through to polling with this job id
+        if (result.id) {
+            return pollRunpodJob(endpointId, result.id, headers, timeoutMs);
+        }
     }
 
-    const result = await response.json();
+    // 2. /runsync failed (404 during cold start) — use async /run which queues
+    const runUrl = `https://api.runpod.ai/v2/${endpointId}/run`;
+    const runResponse = await fetch(runUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ input }),
+        signal: AbortSignal.timeout(30_000),
+    });
 
-    if (result.status === "FAILED") {
-        throw new Error(`RunPod job failed: ${JSON.stringify(result.error)}`);
+    if (!runResponse.ok) {
+        const text = await runResponse.text();
+        throw new Error(`RunPod error ${runResponse.status}: ${text}`);
     }
 
-    return result.output ?? result;
+    const job = await runResponse.json();
+    if (!job.id) {
+        throw new Error(`RunPod /run did not return job id: ${JSON.stringify(job)}`);
+    }
+
+    return pollRunpodJob(endpointId, job.id, headers, timeoutMs);
+}
+
+async function pollRunpodJob(
+    endpointId: string,
+    jobId: string,
+    headers: Record<string, string>,
+    timeoutMs: number
+): Promise<Record<string, unknown>> {
+    const statusUrl = `https://api.runpod.ai/v2/${endpointId}/status/${jobId}`;
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, RUNPOD_POLL_INTERVAL_MS));
+
+        const statusResponse = await fetch(statusUrl, { headers });
+        if (!statusResponse.ok) {
+            // Transient error — retry
+            continue;
+        }
+
+        const result = await statusResponse.json();
+
+        if (result.status === "COMPLETED") {
+            return result.output ?? result;
+        }
+        if (result.status === "FAILED") {
+            throw new Error(`RunPod job failed: ${JSON.stringify(result.error)}`);
+        }
+        if (result.status === "CANCELLED") {
+            throw new Error("RunPod job was cancelled");
+        }
+        // IN_QUEUE or IN_PROGRESS — keep polling
+    }
+
+    // Timeout — try to cancel the job
+    try {
+        await fetch(`https://api.runpod.ai/v2/${endpointId}/cancel/${jobId}`, {
+            method: "POST",
+            headers,
+        });
+    } catch { /* ignore cancel errors */ }
+
+    throw new Error(`RunPod job timed out after ${timeoutMs / 1000}s`);
 }
 
 // ── Transcribe ───────────────────────────────────────────────────────

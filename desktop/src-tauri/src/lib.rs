@@ -166,6 +166,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         // Required for tauri-plugin-clerk to route FAPI requests via Rust
         .plugin(tauri_plugin_http::init())
         // Optional: persist auth state across restarts

@@ -36,6 +36,7 @@ export default function ChatPanel({
     const [openDropdownId, setOpenDropdownId] = useState<Id<"conversations"> | null>(null);
     const [convToRename, setConvToRename] = useState<{ _id: Id<"conversations">; title: string } | null>(null);
     const [renameValue, setRenameValue] = useState("");
+    const [convToDelete, setConvToDelete] = useState<Id<"conversations"> | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [newChatTitle, setNewChatTitle] = useState("");
 
@@ -791,14 +792,10 @@ export default function ChatPanel({
                                         <div
                                             className="mention-option"
                                             style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: '#ef4444' }}
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation();
                                                 setOpenDropdownId(null);
-                                                if (!confirm("Czy na pewno chcesz usunąć tę rozmowę?")) return;
-                                                await removeConversation({ conversationId: conv._id });
-                                                if (activeConversationId === conv._id) {
-                                                    setActiveConversationId(null);
-                                                }
+                                                setConvToDelete(conv._id);
                                             }}
                                         >
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -986,6 +983,34 @@ export default function ChatPanel({
                                     setRenameValue("");
                                 }
                             }}>Zapisz</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete confirmation modal */}
+            {convToDelete && (
+                <div className="modal-overlay" onClick={() => setConvToDelete(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>Usuń rozmowę</h2>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
+                            Czy na pewno chcesz usunąć tę rozmowę? Tej operacji nie można cofnąć.
+                        </p>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={() => setConvToDelete(null)}>Anuluj</button>
+                            <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={async () => {
+                                const idToDelete = convToDelete;
+                                setConvToDelete(null);
+                                try {
+                                    await removeConversation({ conversationId: idToDelete });
+                                    if (activeConversationId === idToDelete) {
+                                        setActiveConversationId(null);
+                                    }
+                                } catch (err) {
+                                    console.error("Delete conversation error:", err);
+                                    alert("Błąd podczas usuwania rozmowy: " + (err instanceof Error ? err.message : "Nieznany błąd"));
+                                }
+                            }}>Usuń</button>
                         </div>
                     </div>
                 </div>
