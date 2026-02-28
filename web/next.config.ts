@@ -25,6 +25,18 @@ const securityHeaders = [
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
+  {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  {
+    key: "Cross-Origin-Resource-Policy",
+    value: "same-origin",
+  },
+  {
+    key: "X-Permitted-Cross-Domain-Policies",
+    value: "none",
+  },
   // CSP is generated per-request in middleware.ts with a fresh nonce
 ];
 

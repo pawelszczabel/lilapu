@@ -18,10 +18,18 @@ export default clerkMiddleware(async (_auth, req: NextRequest) => {
         `font-src 'self' data:`,
         `worker-src 'self' blob:`,
         `media-src 'self' blob:`,
+        `base-uri 'self'`,
+        `form-action 'self'`,
+        `report-uri /api/csp-report`,
+        `report-to csp-endpoint`,
     ].join("; ");
 
     response.headers.set("Content-Security-Policy", csp);
     response.headers.set("x-nonce", nonce);
+    response.headers.set(
+        "Reporting-Endpoints",
+        `csp-endpoint="/api/csp-report"`
+    );
 
     return response;
 });
