@@ -35,6 +35,34 @@ const MAX_AUDIO_BASE64_SIZE = 50 * 1024 * 1024; // 50MB (~30min WAV)
 const MAX_IMAGE_BASE64_SIZE = 20 * 1024 * 1024;  // 20MB
 const MAX_TEXT_SIZE = 500_000;                    // 500K chars
 
+// ── RAG context sanitizer (anti-injection) ───────────────────────────
+const INJECTION_PATTERNS = [
+    /\[system\]/gi,
+    /\[assistant\]/gi,
+    /\[instrukcj[ae]\]/gi,
+    /ignore (?:all )?previous/gi,
+    /ignoruj (?:wszystkie )?(?:poprzednie|wcześniejsze)/gi,
+    /you are now/gi,
+    /jesteś teraz/gi,
+    /new instructions?:/gi,
+    /nowe instrukcje:/gi,
+    /forget (?:everything|all)/gi,
+    /zapomnij (?:wszystko|o wszystkim)/gi,
+    /override (?:system|instructions)/gi,
+    /nadpisz (?:system|instrukcje)/gi,
+    /act as/gi,
+    /zachowuj się jak/gi,
+    /udawaj że/gi,
+];
+
+function sanitizeRagContext(text: string): string {
+    let clean = text;
+    for (const pattern of INJECTION_PATTERNS) {
+        clean = clean.replace(pattern, "[—]");
+    }
+    return clean;
+}
+
 // ── RunPod helpers ───────────────────────────────────────────────────
 
 async function runpodRequest(
@@ -402,7 +430,8 @@ export const chat = action({
         // Merge system prompt and context into one system message
         let systemContent = systemPrompt;
         if (args.context) {
-            systemContent += `\n\nKontekst z notatek:\n${args.context}`;
+            const safeContext = sanitizeRagContext(args.context);
+            systemContent += `\n\nKontekst z notatek:\n${safeContext}`;
         }
 
         const messages = [
