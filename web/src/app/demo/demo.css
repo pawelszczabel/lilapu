@@ -2025,6 +2025,7 @@
     flex: 1;
     overflow: hidden;
     min-height: 0;
+    min-width: 0;
 }
 
 .demo-preview .demo-sidebar {
@@ -2036,6 +2037,7 @@
 
 .demo-preview .demo-main {
     min-height: 0;
+    min-width: 0;
     overflow: hidden;
 }
 
@@ -2056,6 +2058,23 @@
     height: auto !important;
     margin: 0 !important;
     overflow: auto;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Chat: prevent double-sidebar from shrinking the container */
+.demo-preview .demo-chat-sidebar {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    flex-shrink: 0;
+}
+
+/* Record: ensure panel fills all available space */
+.demo-preview .demo-record-panel {
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 /* ═══════════════════════════════════════════════════
