@@ -150,7 +150,7 @@ export default function LandingPage() {
                     </p>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem 0", gap: "2rem" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem 0", gap: "2rem", width: "100%", maxWidth: "1100px" }}>
                     <DemoPreview />
                     <button
                         className="btn btn-primary btn-waitlist-hero"
