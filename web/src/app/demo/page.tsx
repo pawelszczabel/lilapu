@@ -1005,9 +1005,9 @@ export function DemoContent({ onClose }: { onClose?: () => void }) {
                 <button
                     className="demo-story-card-skip"
                     onClick={onClose}
-                    style={{ top: 20, right: 20, bottom: "auto", zIndex: 50001 }}
+                    style={{ top: 12, left: 20, right: "auto", bottom: "auto", zIndex: 50001 }}
                 >
-                    ✕ Zamknij demo
+                    ← Zamknij demo
                 </button>
             )}
 
