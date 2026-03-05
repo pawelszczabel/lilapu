@@ -2027,14 +2027,25 @@
     width: 240px;
 }
 
+/* Force all children to fill the fixed 720px height */
+.demo-preview .demo-main {
+    min-height: 0;
+}
+
 .demo-preview .demo-main-body {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
 }
 
-.demo-preview .demo-main-body>* {
+.demo-preview .demo-record-panel,
+.demo-preview .demo-transcription-list,
+.demo-preview .demo-notes-layout,
+.demo-preview .demo-chat-layout {
     flex: 1;
     min-height: 0;
+    height: auto;
 }
 
 /* ═══════════════════════════════════════════════════
