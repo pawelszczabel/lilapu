@@ -886,10 +886,10 @@ function WaitlistCTA({ onRestart }: { onRestart: () => void }) {
 }
 
 /* ═══════════════════════════════════════════════════
-   MAIN PAGE COMPONENT
+   MAIN DEMO COMPONENT (reusable as overlay or standalone page)
    ═══════════════════════════════════════════════════ */
 
-export default function DemoPage() {
+export function DemoContent({ onClose }: { onClose?: () => void }) {
     const [currentStep, setCurrentStep] = useState(0);
     const [activeTab, setActiveTab] = useState<string>("notes");
     const [soundEnabled, setSoundEnabled] = useState(true);
@@ -977,19 +977,39 @@ export default function DemoPage() {
         const handler = (e: KeyboardEvent) => {
             if (e.key === "ArrowRight" || e.key === "Enter") goNext();
             else if (e.key === "ArrowLeft") goBack();
-            else if (e.key === "Escape") skipToEnd();
+            else if (e.key === "Escape") {
+                if (onClose) onClose();
+                else skipToEnd();
+            }
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-    }, [goNext, goBack, skipToEnd]);
+    }, [goNext, goBack, skipToEnd, onClose]);
+
+    // Lock body scroll when demo is active
+    useEffect(() => {
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = ""; };
+    }, []);
 
     const progress = ((currentStep + 1) / STEPS.length) * 100;
 
     return (
-        <div className="demo-page">
+        <div className="demo-page" style={onClose ? { position: "fixed", inset: 0, zIndex: 50000 } : undefined}>
             {/* Ambient Glow */}
             <div className="demo-glow" />
             <div className="demo-glow-accent" />
+
+            {/* Close button (when used as overlay) */}
+            {onClose && (
+                <button
+                    className="demo-story-card-skip"
+                    onClick={onClose}
+                    style={{ top: 20, right: 20, bottom: "auto", zIndex: 50001 }}
+                >
+                    ✕ Zamknij demo
+                </button>
+            )}
 
             {/* Progress Bar */}
             <div className="demo-progress-bar">
@@ -1058,7 +1078,7 @@ export default function DemoPage() {
             )}
 
             {/* Skip Button */}
-            {!showWaitlist && (
+            {!showWaitlist && !onClose && (
                 <button className="demo-story-card-skip" onClick={skipToEnd}>
                     Pomiń tour ⏭
                 </button>
@@ -1084,9 +1104,17 @@ export default function DemoPage() {
                 <div className="demo-mobile-block-content">
                     <img src="/demo-mobile.png" alt="" className="demo-mobile-block-avatar" />
                     <h2 className="demo-mobile-block-title">Wersja demo działa tylko na desktop</h2>
-                    <p className="demo-mobile-block-desc">Sprawdź Lilapu na komputerze.<br />Albo przeczytaj więcej tutaj: <a href="/" className="demo-mobile-block-link">lilapu.com</a>.<br /><br />Dziękuję za wyrozumiałość! 🙏</p>
+                    <p className="demo-mobile-block-desc">Sprawdź Lilapu na komputerze.<br />Albo przeczytaj więcej tutaj: {onClose ? <button onClick={onClose} className="demo-mobile-block-link" style={{ background: "none", border: "none", cursor: "pointer" }}>Wróć do strony</button> : <a href="/" className="demo-mobile-block-link">lilapu.com</a>}.<br /><br />Dziękuję za wyrozumiałość! 🙏</p>
                 </div>
             </div>
         </div>
     );
+}
+
+/* ═══════════════════════════════════════════════════
+   PAGE COMPONENT (standalone /demo route)
+   ═══════════════════════════════════════════════════ */
+
+export default function DemoPage() {
+    return <DemoContent />;
 }

@@ -2,13 +2,20 @@
 
 import { useState } from "react";
 import { Waitlist } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
+
+const DemoContent = dynamic(() => import("./demo/page").then((m) => m.DemoContent), { ssr: false });
 
 export default function LandingPage() {
     const [showWaitlist, setShowWaitlist] = useState(false);
     const [gdprConsent, setGdprConsent] = useState(false);
+    const [showDemo, setShowDemo] = useState(false);
 
     return (
         <div className="landing">
+            {/* Demo Overlay */}
+            {showDemo && <DemoContent onClose={() => setShowDemo(false)} />}
+
             {/* Waitlist Modal Overlay */}
             {showWaitlist && (
                 <div
@@ -134,9 +141,9 @@ export default function LandingPage() {
                     >
                         Zapisuję się na waitlistę →
                     </button>
-                    <a href="/demo" className="btn btn-demo">
+                    <button className="btn btn-demo" onClick={() => setShowDemo(true)}>
                         Zobacz Demo →
-                    </a>
+                    </button>
                     <p className="landing-hero-subinfo">
                         Otrzymasz możliwość darmowego testowania Lilapu, gdy aplikacja będzie gotowa.
                     </p>
@@ -473,9 +480,9 @@ export default function LandingPage() {
                 >
                     Zapisuję się na waitlistę →
                 </button>
-                <a href="/demo" className="btn btn-demo">
+                <button className="btn btn-demo" onClick={() => setShowDemo(true)}>
                     Zobacz Demo →
-                </a>
+                </button>
             </section>
 
             {/* Footer */}
