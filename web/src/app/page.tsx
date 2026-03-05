@@ -150,8 +150,19 @@ export default function LandingPage() {
                     </p>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "center", padding: "3rem 0" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "3rem 0", gap: "2rem" }}>
                     <DemoPreview />
+                    <button
+                        className="btn btn-primary btn-waitlist-hero"
+                        onClick={() => setShowDemo(true)}
+                        style={{
+                            fontSize: "1.25rem",
+                            padding: "1rem 3rem",
+                            letterSpacing: "0.02em",
+                        }}
+                    >
+                        🎬 Zobacz interaktywne Demo →
+                    </button>
                 </div>
 
                 <div className="landing-trust-hero">
