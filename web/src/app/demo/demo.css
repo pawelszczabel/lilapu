@@ -1996,6 +1996,10 @@
     font-family: var(--font-inter);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
+    /* RIGID height — nothing inside may change this */
+    height: 720px;
+    min-height: 720px;
+    max-height: 720px;
 }
 
 .demo-preview .demo-preview-inner {
@@ -2012,12 +2016,15 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    height: 720px;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
 }
 
 .demo-preview .demo-dashboard {
     flex: 1;
     overflow: hidden;
+    min-height: 0;
 }
 
 .demo-preview .demo-sidebar {
@@ -2027,9 +2034,9 @@
     width: 240px;
 }
 
-/* Force all children to fill the fixed 720px height */
 .demo-preview .demo-main {
     min-height: 0;
+    overflow: hidden;
 }
 
 .demo-preview .demo-main-body {
@@ -2044,8 +2051,11 @@
 .demo-preview .demo-notes-layout,
 .demo-preview .demo-chat-layout {
     flex: 1;
-    min-height: 0;
-    height: auto;
+    min-height: 0 !important;
+    max-height: 100%;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: auto;
 }
 
 /* ═══════════════════════════════════════════════════
