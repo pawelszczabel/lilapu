@@ -151,7 +151,7 @@ export function MockMainPanel({
                 </div>
             </div>
 
-            <div className="demo-main-body">
+            <div className="demo-main-body" style={{ display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
                 {activeTab === "record" && <MockRecordContent activeStep={activeStep} />}
                 {activeTab === "transcriptions" && <MockTranscriptionsContent />}
                 {activeTab === "notes" && <MockNotesContent activeStep={activeStep} />}
@@ -171,7 +171,7 @@ export function MockRecordContent({ activeStep }: { activeStep: string }) {
     );
 
     return (
-        <div className="demo-record-panel">
+        <div className="demo-record-panel" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             {isActive ? (
                 <>
                     <div className="demo-record-status">
@@ -246,7 +246,7 @@ export function MockTranscriptionsContent() {
     ];
 
     return (
-        <div className="demo-transcription-list">
+        <div className="demo-transcription-list" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
             {transcriptions.map((t, i) => (
                 <div key={i} className="demo-transcription-card">
                     <div className="demo-transcription-card-header">
@@ -276,7 +276,7 @@ export function MockNotesContent({ activeStep }: { activeStep: string }) {
     );
 
     return (
-        <div className="demo-notes-layout">
+        <div className="demo-notes-layout" style={{ flex: 1, minHeight: 0, overflow: "hidden", margin: 0 }}>
             {/* Left sidebar — notes list */}
             <div className="demo-notes-sidebar">
                 <div className="demo-notes-sidebar-header">
@@ -389,7 +389,7 @@ export function MockChatContent({ activeStep }: { activeStep: string }) {
     );
 
     return (
-        <div className="demo-chat-layout">
+        <div className="demo-chat-layout" style={{ flex: 1, minHeight: 0, overflow: "hidden", margin: 0 }}>
             {/* Chat Sidebar */}
             <div className="demo-chat-sidebar">
                 <div className="demo-notes-sidebar-header">
