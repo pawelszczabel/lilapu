@@ -691,8 +691,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: var(--space-6);
     padding: var(--space-8);
+    flex: 1;
+    min-height: 0;
 }
 
 .demo-record-status {
@@ -1112,6 +1115,9 @@
     color: var(--text-muted);
     font-size: var(--text-xs);
     line-height: 1.5;
+    font-family: var(--font-inter);
+    text-align: center;
+    padding: var(--space-4) var(--space-3);
 }
 
 .demo-notes-list-item {
