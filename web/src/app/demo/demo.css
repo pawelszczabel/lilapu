@@ -2027,6 +2027,16 @@
     width: 240px;
 }
 
+.demo-preview .demo-main-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.demo-preview .demo-main-body>* {
+    flex: 1;
+    min-height: 0;
+}
+
 /* ═══════════════════════════════════════════════════
    MOBILE — DESKTOP ONLY BLOCK
    ═══════════════════════════════════════════════════ */
