@@ -1945,6 +1945,89 @@
 }
 
 /* ═══════════════════════════════════════════════════
+   INLINE DEMO PREVIEW (for landing page)
+   ═══════════════════════════════════════════════════ */
+
+.demo-preview {
+    --bg-primary: rgba(255, 255, 255, 0.03);
+    --bg-secondary: rgba(255, 255, 255, 0.06);
+    --bg-surface: rgba(255, 255, 255, 0.08);
+    --bg-surface-hover: rgba(255, 255, 255, 0.14);
+    --bg-elevated: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #a8a8c0;
+    --text-muted: #6e6e90;
+    --accent: #7c5cfc;
+    --accent-hover: #9179ff;
+    --accent-subtle: rgba(124, 92, 252, 0.15);
+    --success: #22c55e;
+    --border: rgba(255, 255, 255, 0.12);
+    --border-hover: rgba(255, 255, 255, 0.22);
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-blur: 40px;
+    --glass-specular: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 20px rgba(255, 255, 255, 0.02);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+    --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-roboto: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "SF Mono", "Fira Code", monospace;
+    --text-xs: 0.75rem;
+    --text-sm: 0.8125rem;
+    --text-base: 0.9375rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+    --sidebar-width: 220px;
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    font-family: var(--font-inter);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+.demo-preview .demo-preview-inner {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    background: rgba(10, 10, 20, 0.55);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.5),
+        0 0 80px rgba(124, 92, 252, 0.1),
+        0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 540px;
+}
+
+.demo-preview .demo-dashboard {
+    flex: 1;
+    overflow: hidden;
+}
+
+.demo-preview .demo-sidebar {
+    --sidebar-width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    width: 200px;
+}
+
+/* ═══════════════════════════════════════════════════
    MOBILE — DESKTOP ONLY BLOCK
    ═══════════════════════════════════════════════════ */
 

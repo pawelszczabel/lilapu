@@ -5,6 +5,7 @@ import { Waitlist } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 
 const DemoContent = dynamic(() => import("./demo/page").then((m) => m.DemoContent), { ssr: false });
+const DemoPreview = dynamic(() => import("./demo/DemoPreview"), { ssr: false });
 
 export default function LandingPage() {
     const [showWaitlist, setShowWaitlist] = useState(false);
@@ -150,17 +151,7 @@ export default function LandingPage() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "center", padding: "3rem 0" }}>
-                    <img
-                        src="/demo.gif"
-                        alt="Demo aplikacji Lilapu"
-                        style={{
-                            maxWidth: "100%",
-                            width: 700,
-                            borderRadius: "16px",
-                            boxShadow: "0 8px 40px rgba(124, 92, 252, 0.2)",
-                            border: "1px solid rgba(124, 92, 252, 0.15)",
-                        }}
-                    />
+                    <DemoPreview />
                 </div>
 
                 <div className="landing-trust-hero">
