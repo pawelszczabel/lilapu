@@ -11,6 +11,7 @@
     "opener:default",
     "global-shortcut:default",
     "updater:default",
+    "process:default",
     "clerk:default",
     "store:default",
     {
@@ -29,6 +30,15 @@
           "url": "https://*.clerk.dev"
         },
         {
+          "url": "https://*.clerk.com"
+        },
+        {
+          "url": "https://clerk.lilapu.com"
+        },
+        {
+          "url": "https://api.clerk.com"
+        },
+        {
           "url": "https://lilapu.com"
         },
         {
@@ -36,6 +46,9 @@
         },
         {
           "url": "https://*.proxy.runpod.net"
+        },
+        {
+          "url": "https://github.com"
         }
       ]
     }

@@ -22,6 +22,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     const [newTitle, setNewTitle] = useState("");
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [openDropdownId, setOpenDropdownId] = useState<Id<"notes"> | null>(null);
+    const [noteToDelete, setNoteToDelete] = useState<Id<"notes"> | null>(null);
     const [noteToRename, setNoteToRename] = useState<{ _id: Id<"notes">; title: string } | null>(null);
     const [renameValue, setRenameValue] = useState("");
 
@@ -173,10 +174,10 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     // ── Edit ──
     const handleStartEdit = useCallback(() => {
         if (!activeNote) return;
-        setEditTitle(activeNote.title);
+        setEditTitle(decryptedTitles[activeNote._id] || activeNote.title);
         setEditContent(decryptedContent);
         setIsEditing(true);
-    }, [activeNote, decryptedContent]);
+    }, [activeNote, decryptedContent, decryptedTitles]);
 
     const handleSave = useCallback(async () => {
         if (!activeNoteId) return;
@@ -199,13 +200,10 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
     }, []);
 
     // ── Delete ──
-    const handleDelete = useCallback(async () => {
+    const handleDelete = useCallback(() => {
         if (!activeNoteId) return;
-        if (!confirm("Czy na pewno chcesz usunąć tę notatkę?")) return;
-        await removeNote({ noteId: activeNoteId });
-        setActiveNoteId(null);
-        setIsEditing(false);
-    }, [activeNoteId, removeNote]);
+        setNoteToDelete(activeNoteId);
+    }, [activeNoteId]);
 
     // ── Import ──
     const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +254,7 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
         if (!activeNote) return;
         setShowExportMenu(false);
 
-        const fileName = `${activeNote.title || "notatka"}`;
+        const fileName = `${decryptedTitles[activeNote._id] || activeNote.title || "notatka"}`;
         const content = decryptedContent; // Already decrypted
 
         if (exportFormat === "txt" || exportFormat === "md") {
@@ -811,15 +809,10 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                                         <div
                                             className="mention-option"
                                             style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: '#ef4444' }}
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation();
                                                 setOpenDropdownId(null);
-                                                if (!confirm("Czy na pewno chcesz usunąć tę notatkę?")) return;
-                                                await removeNote({ noteId: note._id });
-                                                if (activeNoteId === note._id) {
-                                                    setActiveNoteId(null);
-                                                    setIsEditing(false);
-                                                }
+                                                setNoteToDelete(note._id);
                                             }}
                                         >
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -1260,6 +1253,35 @@ export default function NotesPanel({ projectId }: NotesPanelProps) {
                     </div>
                 )
             }
+
+            {/* Delete confirmation modal */}
+            {noteToDelete && (
+                <div className="modal-overlay" onClick={() => setNoteToDelete(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>Usuń notatkę</h2>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
+                            Czy na pewno chcesz usunąć tę notatkę? Tej operacji nie można cofnąć.
+                        </p>
+                        <div className="modal-actions">
+                            <button className="btn btn-secondary" onClick={() => setNoteToDelete(null)}>Anuluj</button>
+                            <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={async () => {
+                                const idToDelete = noteToDelete;
+                                setNoteToDelete(null);
+                                try {
+                                    await removeNote({ noteId: idToDelete });
+                                    if (activeNoteId === idToDelete) {
+                                        setActiveNoteId(null);
+                                        setIsEditing(false);
+                                    }
+                                } catch (err) {
+                                    console.error("Delete note error:", err);
+                                    alert("Błąd podczas usuwania notatki: " + (err instanceof Error ? err.message : "Nieznany błąd"));
+                                }
+                            }}>Usuń</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

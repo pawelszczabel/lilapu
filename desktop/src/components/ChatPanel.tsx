@@ -164,9 +164,14 @@ export default function ChatPanel({
         if (!transcription) return;
 
         (async () => {
+            let chatTitle = transcription.title ?? "Transkrypcja";
+            try {
+                const key = await getSessionKeyOrThrow();
+                chatTitle = await decryptString(key, chatTitle);
+            } catch { /* legacy plaintext */ }
             const convId = await createConversation({
                 projectId,
-                title: `Czat: ${transcription.title ?? "Transkrypcja"}`,
+                title: `Czat: ${chatTitle}`,
                 chatMode: "transcription",
                 scopedTranscriptionIds: [initialTranscriptionId],
             });
@@ -476,8 +481,9 @@ export default function ChatPanel({
                             const noteTitle = decryptedTitles[noteId] || note.title;
                             noteTexts.push(`[Notatka: "${noteTitle}"]:\n${decrypted}`);
                         } catch {
-                            // Legacy unencrypted note
-                            noteTexts.push(`[Notatka: "${note.title}"]:\n${note.content}`);
+                            // Legacy unencrypted note — but don't send ciphertext to AI
+                            const fallbackTitle = decryptedTitles[noteId] || "Notatka";
+                            noteTexts.push(`[Notatka: "${fallbackTitle}"]:\n${note.content}`);
                         }
                     }
 

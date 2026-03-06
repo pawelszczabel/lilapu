@@ -1112,6 +1112,8 @@
     color: var(--text-muted);
     font-size: var(--text-xs);
     line-height: 1.5;
+    text-align: center;
+    padding: var(--space-4);
 }
 
 .demo-notes-list-item {
@@ -1164,7 +1166,7 @@
 
 .demo-notes-content-empty-desc {
     color: var(--text-muted);
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     max-width: 300px;
 }
 

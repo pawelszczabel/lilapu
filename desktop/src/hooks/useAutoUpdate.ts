@@ -54,11 +54,8 @@ export function useAutoUpdate() {
                 }
             } catch (err) {
                 console.error("[Lilapu] Update check failed:", err);
-                setState(s => ({
-                    ...s,
-                    status: "error",
-                    error: err instanceof Error ? err.message : "Błąd sprawdzania aktualizacji",
-                }));
+                // Silently fail — don't show error modal for background check
+                setState(s => ({ ...s, status: "idle" }));
             }
         };
 
