@@ -115,6 +115,7 @@ export type DataModel = {
         timestamp?: string;
         transcriptionId: Id<"transcriptions">;
       }>;
+      visualization?: string;
       _id: Id<"messages">;
       _creationTime: number;
     };
@@ -124,7 +125,8 @@ export type DataModel = {
       | "content"
       | "conversationId"
       | "role"
-      | "sources";
+      | "sources"
+      | "visualization";
     indexes: {
       by_id: ["_id"];
       by_creation_time: ["_creationTime"];

@@ -41,6 +41,7 @@ const messageShape = v.object({
     conversationId: v.id("conversations"),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
+    visualization: v.optional(v.string()),
     sources: v.optional(v.array(sourceValidator)),
 });
 
@@ -81,6 +82,7 @@ export const addAssistant = mutation({
     args: {
         conversationId: v.id("conversations"),
         content: v.string(),
+        visualization: v.optional(v.string()),
         sources: v.optional(v.array(sourceValidator)),
     },
     returns: v.id("messages"),
@@ -91,6 +93,7 @@ export const addAssistant = mutation({
             conversationId: args.conversationId,
             role: "assistant" as const,
             content: args.content,
+            visualization: args.visualization,
             sources: args.sources,
         });
     },

@@ -549,6 +549,164 @@ export const chat = action({
     },
 });
 
+// ── Chat with Visualization ─────────────────────────────────────────
+
+const VISUALIZATION_INSTRUCTION = [
+    "",
+    "WIZUALIZACJA: Jeśli użytkownik prosi o statystyki, analizę ilościową, porównanie lub zestawienie danych — oprócz tekstowej odpowiedzi, dodaj na końcu blok JSON w formacie:",
+    "```json",
+    '{"type":"bar|pie|line|timeline","title":"Tytuł wykresu","data":[{"name":"Etykieta","value":123}],"config":{"xKey":"name","yKey":"value"}}',
+    "```",
+    "ZASADY WIZUALIZACJI:",
+    "- type: bar (wykres słupkowy), pie (kołowy), line (liniowy), timeline (oś czasu)",
+    "- data: tablica obiektów z danymi liczbowymi",
+    "- config.xKey: klucz dla osi X lub etykiet (domyślnie 'name')",
+    "- config.yKey: klucz dla wartości (domyślnie 'value')",
+    "- Dla pie: użyj config.nameKey i config.valueKey zamiast xKey/yKey",
+    "- GENERUJ wykres TYLKO gdy masz konkretne dane liczbowe z kontekstu",
+    "- NIE generuj wykresu gdy odpowiadasz na pytania opisowe",
+    "- Blok JSON umieść NA KOŃCU odpowiedzi, po tekście",
+].join("\n");
+
+/** Extract JSON visualization block from LLM response text */
+function extractVisualizationPayload(text: string): { text: string; visualization?: string } {
+    // Match ```json ... ``` block at the end of response
+    const jsonBlockRegex = /```json\s*\n?([\s\S]*?)\n?\s*```\s*$/;
+    const match = text.match(jsonBlockRegex);
+
+    if (!match || !match[1]) {
+        return { text: text.trim() };
+    }
+
+    const jsonStr = match[1].trim();
+    const cleanText = text.slice(0, match.index).trim();
+
+    try {
+        const parsed = JSON.parse(jsonStr);
+
+        // Validate structure
+        const validTypes = ["bar", "pie", "line", "timeline"];
+        if (
+            !parsed.type ||
+            !validTypes.includes(parsed.type) ||
+            !Array.isArray(parsed.data) ||
+            parsed.data.length === 0 ||
+            !parsed.title
+        ) {
+            // Invalid structure — return as text only
+            return { text: text.trim() };
+        }
+
+        // Security: ensure data values are only strings/numbers (no code injection)
+        for (const item of parsed.data) {
+            for (const val of Object.values(item)) {
+                if (typeof val !== "string" && typeof val !== "number") {
+                    return { text: text.trim() };
+                }
+            }
+        }
+
+        return {
+            text: cleanText || text.trim(),
+            visualization: jsonStr,
+        };
+    } catch {
+        // JSON parse failed — return full text
+        return { text: text.trim() };
+    }
+}
+
+export const chatWithVisualization = action({
+    args: {
+        userMessage: v.string(),
+        context: v.optional(v.string()),
+        hasScope: v.optional(v.boolean()),
+    },
+    returns: v.object({
+        text: v.string(),
+        visualization: v.optional(v.string()),
+    }),
+    handler: async (ctx, args) => {
+        await requireAuth(ctx);
+        if (args.userMessage.length > MAX_TEXT_SIZE) throw new Error("Input too large");
+        if (args.context && args.context.length > MAX_TEXT_SIZE) throw new Error("Context too large");
+
+        const formatRule = "FORMATOWANIE: Używaj akapitów, wypunktowań (- lub •), numeracji i pogrubionych nagłówków. NIE pisz ścian tekstu. Oddzielaj sekcje pustą linią.";
+
+        const systemPrompt = args.hasScope
+            ? [
+                "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
+                "1. Odpowiadaj WYŁĄCZNIE po polsku.",
+                "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
+                "3. Odpowiadaj na podstawie podanego kontekstu.",
+                "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem tej informacji w podanych źródłach.'",
+                "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                formatRule,
+                VISUALIZATION_INSTRUCTION,
+            ].join("\n")
+            : [
+                "Jesteś Lilapu — prywatny asystent wiedzy dla profesjonalistów (terapeutów, coachów, prawników). ZASADY:",
+                "1. Odpowiadaj WYŁĄCZNIE po polsku.",
+                "2. Odpowiadaj wyczerpująco — tyle ile wymaga pytanie.",
+                "3. Masz dostęp do WSZYSTKICH transkrypcji i notatek tego klienta. Odpowiadaj na podstawie podanego kontekstu.",
+                "4. ZAWSZE podawaj z jakiej transkrypcji lub notatki pochodzi informacja.",
+                "5. Jeśli kontekst nie zawiera odpowiedzi, powiedz: 'Nie znalazłem informacji na ten temat w danych tego klienta.'",
+                "6. NIE wymyślaj informacji. NIE pisz po angielsku.",
+                formatRule,
+                VISUALIZATION_INSTRUCTION,
+            ].join("\n");
+
+        let systemContent = systemPrompt;
+        if (args.context) {
+            const safeContext = sanitizeRagContext(args.context);
+            systemContent += `\n\nKontekst z notatek:\n${safeContext}`;
+        }
+
+        const messages = [
+            { role: "system", content: systemContent },
+            { role: "user", content: args.userMessage },
+        ];
+
+        if (USE_RUNPOD && BIELIK_ENDPOINT_ID) {
+            const result = await runpodRequest(
+                BIELIK_ENDPOINT_ID,
+                {
+                    messages,
+                    sampling_params: {
+                        max_tokens: 2048,
+                        temperature: 0.5,
+                    },
+                },
+                180_000
+            );
+
+            const rawResponse = extractChatResponse(result);
+            return extractVisualizationPayload(rawResponse);
+        }
+
+        // Local llama.cpp fallback
+        const response = await fetch(`${LOCAL_AI_URL}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages,
+                max_tokens: 2048,
+                temperature: 0.5,
+                stream: false,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`LLM error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const rawResponse = result.choices?.[0]?.message?.content ?? "";
+        return extractVisualizationPayload(rawResponse);
+    },
+});
+
 // ── Embeddings ───────────────────────────────────────────────────────
 
 export const embed = action({

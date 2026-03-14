@@ -49,6 +49,7 @@ export default defineSchema({
     conversationId: v.id("conversations"),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
+    visualization: v.optional(v.string()),  // E2EE JSON — chart configuration
     sources: v.optional(
       v.array(
         v.object({

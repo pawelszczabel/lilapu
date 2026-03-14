@@ -27,6 +27,12 @@ export declare const api: {
       { context?: string; hasScope?: boolean; userMessage: string },
       string
     >;
+    chatWithVisualization: FunctionReference<
+      "action",
+      "public",
+      { context?: string; hasScope?: boolean; userMessage: string },
+      { text: string; visualization?: string }
+    >;
     embed: FunctionReference<
       "action",
       "public",
@@ -208,6 +214,7 @@ export declare const api: {
           timestamp?: string;
           transcriptionId: Id<"transcriptions">;
         }>;
+        visualization?: string;
       },
       Id<"messages">
     >;
@@ -226,6 +233,7 @@ export declare const api: {
           timestamp?: string;
           transcriptionId: Id<"transcriptions">;
         }>;
+        visualization?: string;
       }>
     >;
     listByConversations: FunctionReference<
@@ -243,6 +251,7 @@ export declare const api: {
           timestamp?: string;
           transcriptionId: Id<"transcriptions">;
         }>;
+        visualization?: string;
       }>
     >;
     send: FunctionReference<

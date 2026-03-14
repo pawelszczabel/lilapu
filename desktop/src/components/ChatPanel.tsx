@@ -5,6 +5,7 @@ import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "@convex/api";
 import { Id } from "@convex/dataModel";
 import { getSessionKeyOrThrow, decryptString, encryptString } from "../crypto";
+import ChartRenderer from "./ChartRenderer";
 
 interface ChatPanelProps {
     projectId: Id<"projects">;
@@ -69,7 +70,7 @@ export default function ChatPanel({
     const addAssistant = useMutation(api.messages.addAssistant);
     const updateConvTitle = useMutation(api.conversations.updateTitle);
     const removeConversation = useMutation(api.conversations.remove);
-    const chatAction = useAction(api.ai.chat);
+    const chatAction = useAction(api.ai.chatWithVisualization);
     const ragSearch = useAction(api.rag.search);
     const ragSearchByTranscriptions = useAction(api.rag.searchByTranscriptions);
     const createNote = useMutation(api.notes.create);
@@ -82,6 +83,7 @@ export default function ChatPanel({
 
     // ── E2EE: Decrypt messages for display ──
     const [decryptedMessages, setDecryptedMessages] = useState<Record<string, string>>({});
+    const [decryptedVisualizations, setDecryptedVisualizations] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (!messages || messages.length === 0) return;
@@ -91,6 +93,7 @@ export default function ChatPanel({
             try {
                 const key = await getSessionKeyOrThrow();
                 const newMap: Record<string, string> = {};
+                const newVizMap: Record<string, string> = {};
 
                 for (const msg of messages) {
                     try {
@@ -99,9 +102,21 @@ export default function ChatPanel({
                         // Legacy plaintext
                         newMap[msg._id] = msg.content;
                     }
+                    // Decrypt visualization field if present
+                    if (msg.visualization) {
+                        try {
+                            newVizMap[msg._id] = await decryptString(key, msg.visualization);
+                        } catch {
+                            // Legacy plaintext or raw JSON
+                            newVizMap[msg._id] = msg.visualization;
+                        }
+                    }
                 }
 
-                if (!cancelled) setDecryptedMessages(newMap);
+                if (!cancelled) {
+                    setDecryptedMessages(newMap);
+                    setDecryptedVisualizations(newVizMap);
+                }
             } catch {
                 // No key — show as-is
             }
@@ -522,8 +537,8 @@ export default function ChatPanel({
             // System prompt is now built server-side — client only sends hasScope flag
             const hasScope = scopedTranscriptionIds.length > 0 || scopedNoteIds.length > 0 || scopedConversationIds.length > 0;
 
-            // Call AI
-            let response: string;
+            // Call AI with visualization support
+            let response: { text: string; visualization?: string };
             try {
                 response = await chatAction({
                     userMessage: userMsg,
@@ -532,13 +547,24 @@ export default function ChatPanel({
                 });
             } catch (err) {
                 const msg = err instanceof Error ? err.message : "Nieznany błąd";
-                response = `⚠️ Nie udało się połączyć z serwerem AI. Spróbuj ponownie za chwilę. (${msg})`;
+                response = { text: `⚠️ Nie udało się połączyć z serwerem AI. Spróbuj ponownie za chwilę. (${msg})` };
                 sources = [];
+            }
+
+            // Encrypt visualization if present
+            let encryptedVisualization: string | undefined;
+            if (response.visualization) {
+                try {
+                    encryptedVisualization = await encryptString(key, response.visualization);
+                } catch {
+                    // Skip visualization if encryption fails
+                }
             }
 
             await addAssistant({
                 conversationId: convId,
-                content: await encryptString(key, response),
+                content: await encryptString(key, response.text),
+                visualization: encryptedVisualization,
                 sources: sources.length > 0 ? sources : undefined,
             });
         } catch (err) {
@@ -868,6 +894,9 @@ export default function ChatPanel({
                         >
                             <div className="chat-message-content">
                                 {msg.role === "assistant" ? renderChatMarkdown(decryptedMessages[msg._id] || msg.content) : (decryptedMessages[msg._id] || msg.content)}
+                                {msg.role === "assistant" && decryptedVisualizations[msg._id] && (
+                                    <ChartRenderer visualizationJson={decryptedVisualizations[msg._id]} />
+                                )}
                             </div>
                             {msg.sources && msg.sources.length > 0 && (
                                 <div className="chat-message-sources">
