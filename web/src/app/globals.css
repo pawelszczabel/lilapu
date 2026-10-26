@@ -2491,12 +2491,12 @@ textarea:focus {
 
 .landing-about-photo img:last-child {
   opacity: 0;
-  animation: aboutCrossfade 9s ease-in-out infinite;
+  animation: aboutCrossfade 4s ease-in-out infinite;
 }
 
 @keyframes aboutCrossfade {
-  0%, 38% { opacity: 0; }
-  50%, 88% { opacity: 1; }
+  0%, 35% { opacity: 0; }
+  50%, 85% { opacity: 1; }
   100% { opacity: 0; }
 }
 
