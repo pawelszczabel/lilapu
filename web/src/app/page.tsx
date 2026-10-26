@@ -124,7 +124,16 @@ export default function LandingPage() {
 
             {/* Hero */}
             <section className="landing-hero">
-                <div className="landing-hero-badge">🔒 6‑poziomowe bezpieczeństwo danych</div>
+                <div className="landing-hero-badges">
+                    <div className="landing-hero-badge">🔒 6‑poziomowe bezpieczeństwo danych</div>
+                    <a href="#o-mnie" className="landing-hero-award">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="8" r="6" />
+                            <path d="M8.2 12.9 7 22l5-3 5 3-1.2-9.1" />
+                        </svg>
+                        Półfinalista EEC Startup Challenge 2026
+                    </a>
+                </div>
 
                 <h1>Bądź w 100% obecny z klientem. Lilapu zrobi transkrypcję rozmowy.</h1>
 
@@ -465,6 +474,33 @@ export default function LandingPage() {
                             Szyfrowanie E2E + blockchain notaryzacja = niepodważalny dowód
                             autentyczności zapisu. Zgodne z wymogami poufności.
                         </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* O mnie */}
+            <section id="o-mnie" className="landing-about">
+                <div className="landing-about-inner">
+                    <div className="landing-about-photo" aria-hidden="true">
+                        <img src="/o-mnie/pawel-1.webp" alt="" width={840} height={973} loading="lazy" />
+                        <img src="/o-mnie/pawel-2.webp" alt="" width={840} height={973} loading="lazy" />
+                    </div>
+                    <div className="landing-about-text">
+                        <span className="landing-about-eyebrow">O mnie</span>
+                        <h2>Paweł Szczabel</h2>
+                        <p className="landing-about-role">Twórca Lilapu</p>
+                        <div className="landing-about-award">
+                            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="8" r="6" />
+                                <path d="M8.2 12.9 7 22l5-3 5 3-1.2-9.1" />
+                            </svg>
+                            <div>
+                                <p className="landing-about-award-title">Półfinalista EEC Startup Challenge 2026</p>
+                                <p>Kategoria 4CLIENT – rozwiązania dla ludzi</p>
+                                <p>Lilapu w gronie 80 najlepszych startupów</p>
+                                <p className="landing-about-award-meta">23.04.2026 · Międzynarodowe Centrum Kongresowe &amp; Spodek, Katowice</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

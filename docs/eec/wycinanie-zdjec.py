@@ -1,0 +1,33 @@
+import cv2, numpy as np, sys
+src, out = sys.argv[1], sys.argv[2]
+img = cv2.imread(src).astype(np.float32)
+m = cv2.imread(src + '.mask.png', 0).astype(np.float32) / 255
+# tylko największa plama (osoba)
+n, lab, st, _ = cv2.connectedComponentsWithStats((m > 0.5).astype(np.uint8))
+keep = (lab == 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])).astype(np.uint8)
+keep = cv2.dilate(keep, np.ones((21, 21), np.uint8))
+a = np.clip(m * keep, 0, 1)
+# lekkie dociągnięcie alfy (bez półprzezroczystych mgiełek)
+a = np.clip((a - 0.06) / 0.88, 0, 1)
+# model szarego tła: wypełnienie dziur z czystego tła (inpaint w małej skali)
+bgmask = (a < 0.02).astype(np.uint8)
+small = cv2.resize(img, None, fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
+sm = cv2.resize(1 - bgmask, (small.shape[1], small.shape[0]), interpolation=cv2.INTER_AREA)
+sm = cv2.dilate((sm > 0).astype(np.uint8), np.ones((3, 3), np.uint8))
+bg_small = cv2.inpaint(small.clip(0, 255).astype(np.uint8), sm, 6, cv2.INPAINT_TELEA).astype(np.float32)
+bg = cv2.GaussianBlur(cv2.resize(bg_small, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_CUBIC), (0, 0), 6)
+# piksele w kolorze tła na krawędzi -> przezroczyste (usuwa szarą mgiełkę nad włosami)
+d = np.linalg.norm(img - bg, axis=2)
+fgl = np.clip((d - 8) / 22, 0, 1)
+core = cv2.erode((a > 0.95).astype(np.uint8), np.ones((9, 9), np.uint8)).astype(np.float32)
+core = cv2.GaussianBlur(core, (0, 0), 2)
+a = a * np.maximum(fgl, core)
+a = cv2.GaussianBlur(a, (0, 0), 0.8)
+# dekontaminacja koloru: F = (I - (1-a)B) / a
+A = a[..., None]
+F = (img - (1 - A) * bg) / np.maximum(A, 0.15)
+F = np.where(A > 0.97, img, F).clip(0, 255)
+# na skrajnych krawędziach przyciemnij do koloru włosów z wnętrza (bez szarej poświaty)
+rgba = np.dstack([F, (a * 255)]).astype(np.uint8)
+cv2.imwrite(out, rgba)
+print('ok', out)
